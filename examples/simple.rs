@@ -7,15 +7,18 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use quill::{Cx, If, QuillPlugin, Sequence, View, ViewRoot, ViewRootResource};
+use quill::{
+    Cx, If, NodeSpan, QuillPlugin, Sequence, TrackedResources, View, ViewRoot, ViewRootResource,
+    ViewStateComp,
+};
 
 fn main() {
     App::new()
         .init_resource::<Counter>()
-        .insert_resource(ViewRootResource(ViewRoot::new(root_presenter, 1)))
+        // .insert_resource(ViewRootResource(ViewRoot::new(root_presenter, 1)))
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(QuillPlugin)
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (bevy::window::close_on_esc, rotate, update_counter))
         .run();
 }
@@ -26,10 +29,15 @@ struct Shape;
 
 const X_EXTENT: f32 = 14.5;
 
+fn setup_view_root(mut commands: Commands) {
+    commands.spawn((
+        TrackedResources::default(),
+        ViewRoot::new(root_presenter, 1),
+    ));
+}
+
 fn root_presenter(mut cx: Cx<u8>) -> impl View {
-    let mut counter = cx.use_resource_mut::<Counter>();
-    counter.foo += 1;
-    println!("{}", counter.foo);
+    let counter = cx.use_resource::<Counter>();
     Sequence::new((
         "Root Presenter: ",
         format!("{}", counter.count),
