@@ -8,7 +8,11 @@ pub use plugin::QuillPlugin;
 pub use view::Cx;
 pub use view::If;
 pub use view::Sequence;
+pub use view::TrackedResources;
 pub use view::View;
 pub use view::ViewTuple;
 pub use view_root::ViewRoot;
 pub use view_root::ViewRootResource;
+
+pub use view::*;
+pub use view_root::*;
