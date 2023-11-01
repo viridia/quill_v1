@@ -1,11 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    view::{self, TrackedResources},
-    view_root, ElementContext, ViewRoot, ViewStateComp,
-};
-
-use super::view_root::ViewRootResource;
+use crate::{view::TrackedResources, ElementContext, ViewRoot};
 
 pub struct QuillPlugin;
 
@@ -15,7 +10,7 @@ impl Plugin for QuillPlugin {
     }
 }
 
-pub fn render_views(world: &mut World) {
+pub fn render_views(_world: &mut World) {
     // TODO: figure out how to put the ViewRoot in a component rather than a resource.
     // for mut root in world.query::<&mut ViewRoot>().iter_mut(world) {
     //     // roots.push(root.handle.clone())

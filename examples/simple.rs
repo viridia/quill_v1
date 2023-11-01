@@ -7,15 +7,11 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use quill::{
-    Cx, If, NodeSpan, QuillPlugin, Sequence, TrackedResources, View, ViewRoot, ViewRootResource,
-    ViewStateComp,
-};
+use quill::{Cx, If, QuillPlugin, Sequence, TrackedResources, View, ViewRoot};
 
 fn main() {
     App::new()
         .init_resource::<Counter>()
-        // .insert_resource(ViewRootResource(ViewRoot::new(root_presenter, 1)))
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (setup, setup_view_root))
