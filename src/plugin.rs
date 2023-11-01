@@ -6,20 +6,8 @@ pub struct QuillPlugin;
 
 impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (render_views, update_views));
+        app.add_systems(Update, render_views);
     }
-}
-
-pub fn render_views(_world: &mut World) {
-    // TODO: figure out how to put the ViewRoot in a component rather than a resource.
-    // for mut root in world.query::<&mut ViewRoot>().iter_mut(world) {
-    //     // roots.push(root.handle.clone())
-    //     root.build(world);
-    // }
-
-    // world.resource_scope(|world, mut res: Mut<ViewRootResource>| {
-    //     res.0.build(world);
-    // });
 }
 
 // Updating views needs to be split in 3 phases for borrowing issues
@@ -27,7 +15,7 @@ pub fn render_views(_world: &mut World) {
 // Phase 2: Use Option::take() to remove the ViewRoot::handle from the World
 // Phase 3: Use the taken handle and call AnyViewState::build() on it.
 //          Since the handle isn't part of the World we can freely pass a mutable reference to the World.
-fn update_views(world: &mut World) {
+fn render_views(world: &mut World) {
     // phase 1
     let mut q = world.query::<(Entity, &TrackedResources)>();
     let mut v = vec![];
