@@ -6,6 +6,16 @@ foundation of Bevy ECS state management.
 
 Currently in "proof of concept" phase.
 
+## Getting started
+
+For now, you can run the example:
+
+```sh
+cargo run --example simple
+```
+
+When the window opens, hit the spacebar to update the counter.
+
 ## Aspirations / guiding principles:
 
 * Allows easy composition and re-use of hierarchical components (called "presenters" to avoid
