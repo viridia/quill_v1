@@ -27,7 +27,13 @@ pub fn render_views(world: &mut World) {
     // });
 }
 
+// Updating views needs to be split in 3 phases for borrowing issues
+// Phase 1: Identify which ViewRoot Entity needs to re-render
+// Phase 2: Use Option::take() to remove the ViewRoot::handle from the World
+// Phase 3: Use the taken handle and call AnyViewState::build() on it.
+//          Since the handle isn't part of the World we can freely pass a mutable reference to the World.
 fn update_views(world: &mut World) {
+    // phase 1
     let mut q = world.query::<(Entity, &TrackedResources)>();
     let mut v = vec![];
     for (e, tracked) in q.iter(world) {
@@ -42,6 +48,7 @@ fn update_views(world: &mut World) {
         v.push(e);
     }
 
+    // phase 2
     let mut v2 = vec![];
     for e in v {
         if let Some(mut view_root) = world.get_mut::<ViewRoot>(e) {
@@ -50,6 +57,7 @@ fn update_views(world: &mut World) {
         }
     }
 
+    // phase 3
     for (e, handle) in v2 {
         let Some(mut handle) = handle else {
             continue;
