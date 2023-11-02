@@ -5,6 +5,7 @@ mod view_root;
 
 pub use node_span::NodeSpan;
 pub use plugin::QuillPlugin;
+pub use view::Bind;
 pub use view::Cx;
 pub use view::If;
 pub use view::Sequence;
