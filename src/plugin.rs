@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{view::TrackedResources, ElementContext, ViewRoot};
+use crate::{view::TrackedResources, ElementContext, ViewHandle};
 
 pub struct QuillPlugin;
 
@@ -26,7 +26,7 @@ fn render_views(world: &mut World) {
     }
 
     // force build every view that just got spawned
-    let mut qf = world.query_filtered::<Entity, Added<ViewRoot>>();
+    let mut qf = world.query_filtered::<Entity, Added<ViewHandle>>();
     for e in qf.iter(world) {
         v.push(e);
     }
@@ -34,7 +34,7 @@ fn render_views(world: &mut World) {
     // phase 2
     let mut v2 = vec![];
     for e in v {
-        if let Some(mut view_root) = world.get_mut::<ViewRoot>(e) {
+        if let Some(mut view_root) = world.get_mut::<ViewHandle>(e) {
             // take the view handle out of the world
             v2.push((e, view_root.handle.take()));
         }
@@ -48,7 +48,7 @@ fn render_views(world: &mut World) {
         let mut ec = ElementContext { world };
         handle.build(&mut ec, e);
 
-        if let Some(mut view_root) = world.get_mut::<ViewRoot>(e) {
+        if let Some(mut view_root) = world.get_mut::<ViewHandle>(e) {
             // Now that we are done with the handle we can put it back in the world
             view_root.handle = Some(handle);
         }

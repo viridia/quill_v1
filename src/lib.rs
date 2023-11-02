@@ -12,7 +12,7 @@ pub use view::Sequence;
 pub use view::TrackedResources;
 pub use view::View;
 pub use view::ViewTuple;
-pub use view_root::ViewRoot;
+pub use view_root::ViewHandle;
 pub use view_root::ViewRootResource;
 
 pub use view::*;

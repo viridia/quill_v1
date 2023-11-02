@@ -1,7 +1,7 @@
 //! Example of a simple UI layout
 
 use bevy::prelude::*;
-use quill::{Bind, Cx, If, QuillPlugin, Sequence, TrackedResources, View, ViewRoot};
+use quill::{Bind, Cx, If, QuillPlugin, Sequence, TrackedResources, View, ViewHandle};
 
 fn main() {
     App::new()
@@ -20,7 +20,7 @@ struct Shape;
 fn setup_view_root(mut commands: Commands) {
     commands.spawn((
         TrackedResources::default(),
-        ViewRoot::new(root_presenter, ()),
+        ViewHandle::new(root_presenter, ()),
     ));
 }
 

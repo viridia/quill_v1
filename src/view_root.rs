@@ -6,14 +6,14 @@ use super::{
 };
 
 #[derive(Resource)]
-pub struct ViewRootResource(pub ViewRoot);
+pub struct ViewRootResource(pub ViewHandle);
 
 #[derive(Component)]
-pub struct ViewRoot {
+pub struct ViewHandle {
     pub handle: Option<Box<dyn AnyViewState>>,
 }
 
-impl ViewRoot {
+impl ViewHandle {
     /// Construct a new ViewRoot from a presenter and props.
     pub fn new<V: View + 'static, Props: Send + Sync + 'static + Clone>(
         presenter: fn(cx: Cx<Props>) -> V,
@@ -33,27 +33,6 @@ impl ViewRoot {
     pub fn build(&mut self, world: &mut World, entity: Entity) {
         let mut ec = ElementContext { world };
         self.handle.as_mut().unwrap().build(&mut ec, entity);
-    }
-}
-
-// pub struct ViewHandle {
-//     pub(crate) state: Box<dyn AnyViewHandle>,
-// }
-
-#[derive(Component)]
-pub struct ViewStateComp {
-    pub handle: Option<Box<dyn AnyViewState>>,
-}
-
-impl ViewStateComp {
-    /// Construct a new ViewRoot from a presenter and props.
-    pub fn new<V: View + 'static, Props: Send + Sync + 'static + Clone>(
-        presenter: fn(cx: Cx<Props>) -> V,
-        props: Props,
-    ) -> Self {
-        Self {
-            handle: Some(Box::new(ViewState::new(presenter, props))),
-        }
     }
 }
 

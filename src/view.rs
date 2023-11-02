@@ -5,7 +5,7 @@ use bevy::{
     text::{Text, TextStyle},
 };
 
-use crate::ViewStateComp;
+use crate::ViewHandle;
 
 use super::node_span::NodeSpan;
 
@@ -240,7 +240,7 @@ impl<V: View + 'static, Props: Send + Sync + 'static + Clone> View for Bind<V, P
                     .world
                     .spawn((
                         TrackedResources::default(),
-                        ViewStateComp::new(self.presenter, self.props.clone()),
+                        ViewHandle::new(self.presenter, self.props.clone()),
                     ))
                     .id();
                 *state = Some(entity);
@@ -250,7 +250,7 @@ impl<V: View + 'static, Props: Send + Sync + 'static + Clone> View for Bind<V, P
 
         // get the handle from the current view state
         let mut entt = ecx.world.entity_mut(entity);
-        let Some(mut view_state) = entt.get_mut::<ViewStateComp>() else {
+        let Some(mut view_state) = entt.get_mut::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
         let mut handle = view_state
@@ -264,7 +264,7 @@ impl<V: View + 'static, Props: Send + Sync + 'static + Clone> View for Bind<V, P
 
         // put back the handle
         let mut entt = ecx.world.entity_mut(entity);
-        let Some(mut view_state) = entt.get_mut::<ViewStateComp>() else {
+        let Some(mut view_state) = entt.get_mut::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
         view_state.handle = Some(handle);

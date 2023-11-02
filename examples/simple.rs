@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use quill::{Cx, If, QuillPlugin, Sequence, TrackedResources, View, ViewRoot};
+use quill::{Cx, If, QuillPlugin, Sequence, TrackedResources, View, ViewHandle};
 
 fn main() {
     App::new()
@@ -27,7 +27,7 @@ const X_EXTENT: f32 = 14.5;
 fn setup_view_root(mut commands: Commands) {
     commands.spawn((
         TrackedResources::default(),
-        ViewRoot::new(root_presenter, 1),
+        ViewHandle::new(root_presenter, 1),
     ));
 }
 
