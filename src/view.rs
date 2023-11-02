@@ -80,21 +80,17 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
 pub trait View: Send + Sync {
     type State: Send + Sync + Default;
 
-    fn build<'w>(
-        &self,
-        ecx: &mut ElementContext<'w>,
-        state: &mut Self::State,
-        prev: &NodeSpan,
-    ) -> NodeSpan;
+    fn build(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan)
+        -> NodeSpan;
 }
 
 /// View which renders nothing
 impl View for () {
     type State = ();
 
-    fn build<'w>(
+    fn build(
         &self,
-        _ecx: &mut ElementContext<'w>,
+        _ecx: &mut ElementContext,
         _state: &mut Self::State,
         _prev: &NodeSpan,
     ) -> NodeSpan {
@@ -106,9 +102,9 @@ impl View for () {
 impl View for String {
     type State = ();
 
-    fn build<'w>(
+    fn build(
         &self,
-        ecx: &mut ElementContext<'w>,
+        ecx: &mut ElementContext,
         _state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
@@ -149,9 +145,9 @@ impl View for String {
 impl View for &'static str {
     type State = ();
 
-    fn build<'w>(
+    fn build(
         &self,
-        ecx: &mut ElementContext<'w>,
+        ecx: &mut ElementContext,
         _state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
@@ -192,9 +188,9 @@ impl View for &'static str {
 impl<A: View + 'static> View for fn(cx: Cx) -> A {
     type State = Option<Entity>;
 
-    fn build<'w>(
+    fn build(
         &self,
-        ecx: &mut ElementContext<'w>,
+        ecx: &mut ElementContext,
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
@@ -203,7 +199,7 @@ impl<A: View + 'static> View for fn(cx: Cx) -> A {
             Some(entity) => *entity,
             None => {
                 let entity = ecx.world.spawn(TrackedResources::default()).id();
-                *state = Some(entity.clone());
+                *state = Some(entity);
                 entity
             }
         };
@@ -231,30 +227,49 @@ impl<V: View, Props: Send + Sync + Clone> Bind<V, Props> {
 impl<V: View + 'static, Props: Send + Sync + 'static + Clone> View for Bind<V, Props> {
     type State = Option<Entity>;
 
-    fn build<'w>(
+    fn build(
         &self,
-        ecx: &mut ElementContext<'w>,
+        ecx: &mut ElementContext,
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
-        let entity: Entity = match state {
+        let entity = match state {
             Some(entity) => *entity,
             None => {
                 let entity = ecx
                     .world
-                    .spawn(ViewStateComp::new(self.presenter, self.props.clone()))
+                    .spawn((
+                        TrackedResources::default(),
+                        ViewStateComp::new(self.presenter, self.props.clone()),
+                    ))
                     .id();
-                *state = Some(entity.clone());
+                *state = Some(entity);
                 entity
             }
         };
-        let mut vsp = ecx
-            .world
-            .entity_mut(entity)
-            .get_mut::<ViewStateComp>()
-            .unwrap();
-        vsp.handle.build(ecx, entity);
-        vsp.handle.nodes(prev)
+
+        // get the handle from the current view state
+        let mut entt = ecx.world.entity_mut(entity);
+        let Some(mut view_state) = entt.get_mut::<ViewStateComp>() else {
+            return NodeSpan::Empty;
+        };
+        let mut handle = view_state
+            .handle
+            .take()
+            .expect("ViewState::handle should be present at this point");
+
+        // build the view
+        handle.build(ecx, entity);
+        let nodes = handle.nodes(prev);
+
+        // put back the handle
+        let mut entt = ecx.world.entity_mut(entity);
+        let Some(mut view_state) = entt.get_mut::<ViewStateComp>() else {
+            return NodeSpan::Empty;
+        };
+        view_state.handle = Some(handle);
+
+        nodes
     }
 }
 
@@ -262,18 +277,18 @@ pub struct Sequence<A: ViewTuple> {
     items: A,
 }
 
-impl<'a, A: ViewTuple> Sequence<A> {
+impl<A: ViewTuple> Sequence<A> {
     pub fn new(items: A) -> Self {
         Self { items }
     }
 }
 
-impl<'a, A: ViewTuple> View for Sequence<A> {
+impl<A: ViewTuple> View for Sequence<A> {
     type State = A::State;
 
-    fn build<'w>(
+    fn build(
         &self,
-        ecx: &mut ElementContext<'w>,
+        ecx: &mut ElementContext,
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
@@ -358,9 +373,9 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
     // TODO: Make this a union instead.
     type State = (Pos::State, Neg::State);
 
-    fn build<'w>(
+    fn build(
         &self,
-        ecx: &mut ElementContext<'w>,
+        ecx: &mut ElementContext,
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
@@ -381,12 +396,7 @@ pub trait ViewTuple: Send + Sync {
 
     fn len(&self) -> usize;
 
-    fn build_spans<'w>(
-        &self,
-        cx: &mut ElementContext<'w>,
-        state: &mut Self::State,
-        out: &mut [NodeSpan],
-    );
+    fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]);
 }
 
 impl<A: View> ViewTuple for A {
@@ -396,12 +406,7 @@ impl<A: View> ViewTuple for A {
         1
     }
 
-    fn build_spans<'w>(
-        &self,
-        cx: &mut ElementContext<'w>,
-        state: &mut Self::State,
-        out: &mut [NodeSpan],
-    ) {
+    fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]) {
         out[0] = self.build(cx, state, &out[0])
     }
 }
@@ -413,12 +418,7 @@ impl<A: View> ViewTuple for (A,) {
         1
     }
 
-    fn build_spans<'w>(
-        &self,
-        cx: &mut ElementContext<'w>,
-        state: &mut Self::State,
-        out: &mut [NodeSpan],
-    ) {
+    fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]) {
         out[0] = self.0.build(cx, &mut state.0, &out[0])
     }
 }
@@ -430,12 +430,7 @@ impl<A0: View, A1: View> ViewTuple for (A0, A1) {
         2
     }
 
-    fn build_spans<'w>(
-        &self,
-        cx: &mut ElementContext<'w>,
-        state: &mut Self::State,
-        out: &mut [NodeSpan],
-    ) {
+    fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]) {
         out[0] = self.0.build(cx, &mut state.0, &out[0]);
         out[1] = self.1.build(cx, &mut state.1, &out[1]);
     }
@@ -448,12 +443,7 @@ impl<A0: View, A1: View, A2: View> ViewTuple for (A0, A1, A2) {
         3
     }
 
-    fn build_spans<'w>(
-        &self,
-        cx: &mut ElementContext<'w>,
-        state: &mut Self::State,
-        out: &mut [NodeSpan],
-    ) {
+    fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]) {
         out[0] = self.0.build(cx, &mut state.0, &out[0]);
         out[1] = self.1.build(cx, &mut state.1, &out[1]);
         out[2] = self.2.build(cx, &mut state.2, &out[2]);

@@ -42,7 +42,7 @@ impl ViewRoot {
 
 #[derive(Component)]
 pub struct ViewStateComp {
-    pub handle: Box<dyn AnyViewState>,
+    pub handle: Option<Box<dyn AnyViewState>>,
 }
 
 impl ViewStateComp {
@@ -52,7 +52,7 @@ impl ViewStateComp {
         props: Props,
     ) -> Self {
         Self {
-            handle: Box::new(ViewState::new(presenter, props)),
+            handle: Some(Box::new(ViewState::new(presenter, props))),
         }
     }
 }
@@ -86,7 +86,7 @@ pub trait AnyViewState: Send + Sync {
     fn nodes(&self, prev: &NodeSpan) -> NodeSpan;
 
     // Rebuild the NodeSpans for this view and update the state.
-    fn build<'w>(&mut self, cx: &'w mut ElementContext<'w>, entity: Entity);
+    fn build(&mut self, cx: &mut ElementContext, entity: Entity);
 }
 
 impl<V: View, Props: Send + Sync + Clone> AnyViewState for ViewState<V, Props> {
@@ -94,7 +94,7 @@ impl<V: View, Props: Send + Sync + Clone> AnyViewState for ViewState<V, Props> {
         self.nodes.count()
     }
 
-    fn build<'w>(&mut self, ecx: &'w mut ElementContext<'w>, entity: Entity) {
+    fn build(&mut self, ecx: &mut ElementContext, entity: Entity) {
         let cx = Cx::<Props> {
             sys: ecx,
             props: &self.props,
