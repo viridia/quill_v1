@@ -2,7 +2,7 @@
 
 * Prototype `For` iteration.
 * Leaf nodes render when dependencies change.
-* Nested presenter invocations.
+* Option for ViewHandle to parent to an explicit UiNode.
 * Detect changes to presenter props.
 * `use` hooks for components, events, etc.
 * Local state for presenters (`use_state`).
