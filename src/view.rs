@@ -11,6 +11,7 @@ use super::node_span::NodeSpan;
 
 pub struct ElementContext<'w> {
     pub(crate) world: &'w mut World,
+    pub(crate) entity: Entity,
 }
 
 pub trait AnyResource: Send + Sync {
@@ -38,17 +39,18 @@ where
 }
 
 /// Tracks resources used by each ViewState
-/// the key is the ViewState id
 #[derive(Component, Default)]
 pub struct TrackedResources {
     pub data: Vec<Box<dyn AnyResource>>,
 }
 
+/// Cx is a context parameter that is passed to presenters. It contains the presenter's
+/// properties (passed from the parent presenter), plus other context information needed
+/// in building the view state graph.
 // TODO: Move this to it's own file once it's stable.
 pub struct Cx<'w, 'p, Props = ()> {
     pub props: &'p Props,
     pub sys: &'p mut ElementContext<'w>,
-    pub entity: Entity,
 }
 
 impl<'w, 'p, Props> Cx<'w, 'p, Props> {
@@ -56,7 +58,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         let mut tracked = self
             .sys
             .world
-            .get_mut::<TrackedResources>(self.entity)
+            .get_mut::<TrackedResources>(self.sys.entity)
             .expect("TrackedResources not found for this entity");
         tracked.data.push(Box::new(AnyRes::<T>::new()));
         self.sys.world.resource::<T>()
@@ -66,22 +68,26 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         let mut tracked = self
             .sys
             .world
-            .get_mut::<TrackedResources>(self.entity)
+            .get_mut::<TrackedResources>(self.sys.entity)
             .expect("TrackedResources not found for this entity");
         tracked.data.push(Box::new(AnyRes::<T>::new()));
         self.sys.world.resource_mut::<T>()
     }
 }
 
-// pub struct ClassList {
-//     classes: HashSet<String>,
-// }
-
 pub trait View: Send + Sync {
     type State: Send + Sync + Default;
 
+    /// Construct and patch the tree of UiNodes produced by this view.
+    /// This may also spawn child entities representing nested components.
     fn build(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan)
         -> NodeSpan;
+
+    /// Recursively despawn any child entities that were created as a result of calling `.build()`.
+    /// This calls `.teardown()` for any nested views within the current view state, but only
+    /// within the current presenter function. Nested presenters are handled via the standard
+    /// ECS `.despawn_recursive()` (for now, anyway).
+    fn teardown(&self, _ecx: &mut ElementContext, _state: &mut Self::State) {}
 }
 
 /// View which renders nothing
@@ -190,7 +196,7 @@ impl<A: View + 'static> View for fn(cx: Cx) -> A {
 
     fn build(
         &self,
-        ecx: &mut ElementContext,
+        parent_ecx: &mut ElementContext,
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
@@ -198,17 +204,24 @@ impl<A: View + 'static> View for fn(cx: Cx) -> A {
         let entity: Entity = match state {
             Some(entity) => *entity,
             None => {
-                let entity = ecx.world.spawn(TrackedResources::default()).id();
+                let entity = parent_ecx
+                    .world
+                    .spawn(TrackedResources::default())
+                    .set_parent(parent_ecx.entity)
+                    .id();
                 *state = Some(entity);
                 entity
             }
         };
-        let cx = Cx {
-            sys: ecx,
-            props: &(),
+        let mut child_context = ElementContext {
+            world: parent_ecx.world,
             entity,
         };
-        self(cx).build(ecx, &mut child_state, prev)
+        let cx = Cx {
+            sys: &mut child_context,
+            props: &(),
+        };
+        self(cx).build(parent_ecx, &mut child_state, prev)
     }
 }
 
@@ -229,19 +242,20 @@ impl<V: View + 'static, Props: Send + Sync + 'static + Clone> View for Bind<V, P
 
     fn build(
         &self,
-        ecx: &mut ElementContext,
+        parent_ecx: &mut ElementContext,
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
         let entity = match state {
             Some(entity) => *entity,
             None => {
-                let entity = ecx
+                let entity = parent_ecx
                     .world
                     .spawn((
                         TrackedResources::default(),
                         ViewHandle::new(self.presenter, self.props.clone()),
                     ))
+                    .set_parent(parent_ecx.entity)
                     .id();
                 *state = Some(entity);
                 entity
@@ -249,7 +263,7 @@ impl<V: View + 'static, Props: Send + Sync + 'static + Clone> View for Bind<V, P
         };
 
         // get the handle from the current view state
-        let mut entt = ecx.world.entity_mut(entity);
+        let mut entt = parent_ecx.world.entity_mut(entity);
         let Some(mut view_state) = entt.get_mut::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
@@ -258,18 +272,29 @@ impl<V: View + 'static, Props: Send + Sync + 'static + Clone> View for Bind<V, P
             .take()
             .expect("ViewState::handle should be present at this point");
 
+        let mut child_context = ElementContext {
+            world: parent_ecx.world,
+            entity,
+        };
+
         // build the view
-        handle.build(ecx, entity);
+        handle.build(&mut child_context, entity);
         let nodes = handle.nodes(prev);
 
         // put back the handle
-        let mut entt = ecx.world.entity_mut(entity);
+        let mut entt = parent_ecx.world.entity_mut(entity);
         let Some(mut view_state) = entt.get_mut::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
         view_state.handle = Some(handle);
 
         nodes
+    }
+
+    fn teardown(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        if let Some(entity) = state.take() {
+            ecx.world.entity_mut(entity).despawn_recursive();
+        }
     }
 }
 
@@ -347,6 +372,10 @@ impl<A: ViewTuple> View for Sequence<A> {
 
         NodeSpan::Node(new_entity)
     }
+
+    fn teardown(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        self.items.teardown_spans(ecx, state);
+    }
 }
 
 /// Component for a sequence, tracks the list of children by span.
@@ -356,6 +385,14 @@ pub struct SequenceComponent {
 }
 
 // If
+
+#[derive(Default)]
+pub enum IfState<Pos, Neg> {
+    #[default]
+    Indeterminate,
+    True(Pos),
+    False(Neg),
+}
 
 pub struct If<Pos: View, Neg: View> {
     test: bool,
@@ -370,8 +407,8 @@ impl<Pos: View, Neg: View> If<Pos, Neg> {
 }
 
 impl<Pos: View, Neg: View> View for If<Pos, Neg> {
-    // TODO: Make this a union instead.
-    type State = (Pos::State, Neg::State);
+    /// Union of true and false states.
+    type State = IfState<Pos::State, Neg::State>;
 
     fn build(
         &self,
@@ -380,9 +417,45 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
         prev: &NodeSpan,
     ) -> NodeSpan {
         if self.test {
-            self.pos.build(ecx, &mut state.0, prev)
+            match state {
+                Self::State::True(ref mut true_state) => {
+                    // Mutate state in place
+                    self.pos.build(ecx, true_state, prev)
+                }
+
+                _ => {
+                    // Despawn old state and construct new state
+                    self.teardown(ecx, state);
+                    let mut true_state: Pos::State = Default::default();
+                    let nodes = self.pos.build(ecx, &mut true_state, prev);
+                    *state = Self::State::True(true_state);
+                    nodes
+                }
+            }
         } else {
-            self.neg.build(ecx, &mut state.1, prev)
+            match state {
+                Self::State::False(ref mut false_state) => {
+                    // Mutate state in place
+                    self.neg.build(ecx, false_state, prev)
+                }
+
+                _ => {
+                    // Despawn old state and construct new state
+                    self.teardown(ecx, state);
+                    let mut false_state: Neg::State = Default::default();
+                    let nodes = self.neg.build(ecx, &mut false_state, prev);
+                    *state = Self::State::False(false_state);
+                    nodes
+                }
+            }
+        }
+    }
+
+    fn teardown(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        match state {
+            Self::State::True(ref mut true_state) => self.pos.teardown(ecx, true_state),
+            Self::State::False(ref mut false_state) => self.neg.teardown(ecx, false_state),
+            _ => (),
         }
     }
 }
@@ -397,6 +470,8 @@ pub trait ViewTuple: Send + Sync {
     fn len(&self) -> usize;
 
     fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]);
+
+    fn teardown_spans(&self, ecx: &mut ElementContext, state: &mut Self::State);
 }
 
 impl<A: View> ViewTuple for A {
@@ -409,6 +484,10 @@ impl<A: View> ViewTuple for A {
     fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]) {
         out[0] = self.build(cx, state, &out[0])
     }
+
+    fn teardown_spans(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        self.teardown(ecx, state)
+    }
 }
 
 impl<A: View> ViewTuple for (A,) {
@@ -420,6 +499,10 @@ impl<A: View> ViewTuple for (A,) {
 
     fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]) {
         out[0] = self.0.build(cx, &mut state.0, &out[0])
+    }
+
+    fn teardown_spans(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        self.0.teardown(ecx, &mut state.0);
     }
 }
 
@@ -434,6 +517,11 @@ impl<A0: View, A1: View> ViewTuple for (A0, A1) {
         out[0] = self.0.build(cx, &mut state.0, &out[0]);
         out[1] = self.1.build(cx, &mut state.1, &out[1]);
     }
+
+    fn teardown_spans(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        self.0.teardown(ecx, &mut state.0);
+        self.1.teardown(ecx, &mut state.1);
+    }
 }
 
 impl<A0: View, A1: View, A2: View> ViewTuple for (A0, A1, A2) {
@@ -447,5 +535,11 @@ impl<A0: View, A1: View, A2: View> ViewTuple for (A0, A1, A2) {
         out[0] = self.0.build(cx, &mut state.0, &out[0]);
         out[1] = self.1.build(cx, &mut state.1, &out[1]);
         out[2] = self.2.build(cx, &mut state.2, &out[2]);
+    }
+
+    fn teardown_spans(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        self.0.teardown(ecx, &mut state.0);
+        self.1.teardown(ecx, &mut state.1);
+        self.2.teardown(ecx, &mut state.2);
     }
 }

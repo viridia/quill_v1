@@ -45,7 +45,7 @@ fn render_views(world: &mut World) {
         let Some(mut handle) = handle else {
             continue;
         };
-        let mut ec = ElementContext { world };
+        let mut ec = ElementContext { world, entity: e };
         handle.build(&mut ec, e);
 
         if let Some(mut view_root) = world.get_mut::<ViewHandle>(e) {

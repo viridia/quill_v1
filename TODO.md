@@ -12,3 +12,4 @@
 * Misc cleanup and reorganization.
 * Input handling / callbacks / message dispatch.
 * Basic widgets: Button, Slider, Text Input.
+* ElementContext shouldn't need to be mutable except for world - use a refcell?

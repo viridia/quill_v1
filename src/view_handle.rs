@@ -29,7 +29,7 @@ impl ViewHandle {
 
     /// Rebuild the UiNodes.
     pub fn build(&mut self, world: &mut World, entity: Entity) {
-        let mut ec = ElementContext { world };
+        let mut ec = ElementContext { world, entity };
         self.handle.as_mut().unwrap().build(&mut ec, entity);
     }
 }
@@ -75,13 +75,16 @@ impl<V: View, Props: Send + Sync + Clone> AnyViewState for ViewState<V, Props> {
     }
 
     fn build(&mut self, ecx: &mut ElementContext, entity: Entity) {
-        let cx = Cx::<Props> {
-            sys: ecx,
-            props: &self.props,
+        let mut child_context = ElementContext {
+            world: ecx.world,
             entity,
         };
+        let cx = Cx::<Props> {
+            sys: &mut child_context,
+            props: &self.props,
+        };
         let v = (self.presenter)(cx);
-        self.nodes = v.build(ecx, &mut self.state, &self.nodes);
+        self.nodes = v.build(&mut child_context, &mut self.state, &self.nodes);
     }
 
     fn nodes(&self, _prev: &NodeSpan) -> NodeSpan {
