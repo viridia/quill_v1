@@ -36,7 +36,7 @@ fn render_views(world: &mut World) {
     for e in v {
         if let Some(mut view_root) = world.get_mut::<ViewHandle>(e) {
             // take the view handle out of the world
-            v2.push((e, view_root.handle.take()));
+            v2.push((e, view_root.inner.take()));
         }
     }
 
@@ -50,7 +50,7 @@ fn render_views(world: &mut World) {
 
         if let Some(mut view_root) = world.get_mut::<ViewHandle>(e) {
             // Now that we are done with the handle we can put it back in the world
-            view_root.handle = Some(handle);
+            view_root.inner = Some(handle);
         }
     }
 }

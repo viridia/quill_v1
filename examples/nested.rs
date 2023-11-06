@@ -34,8 +34,20 @@ fn nested(mut cx: Cx<&str>) -> impl View {
     Sequence::new((
         "Nested Presenter: ",
         format!("{}: {}", name, counter.count),
-        If::new(counter.count & 1 == 0, " [even]", " [odd]"),
+        If::new(
+            counter.count & 1 == 0,
+            Bind::new(even, ()),
+            Bind::new(odd, ()),
+        ),
     ))
+}
+
+fn even(mut _cx: Cx) -> impl View {
+    " [even]"
+}
+
+fn odd(mut _cx: Cx) -> impl View {
+    " [odd]"
 }
 
 #[derive(Resource, Default)]
