@@ -1,11 +1,12 @@
-//! Example of nested presenter functions.
+//! Example of a For view.
 
 use bevy::prelude::*;
-use quill::{Bind, Cx, If, QuillPlugin, Sequence, TrackedResources, View, ViewHandle};
+use quill::{Cx, For, QuillPlugin, Sequence, TrackedResources, View, ViewHandle};
 
 fn main() {
     App::new()
-        .init_resource::<Counter>()
+        .init_resource::<List>()
+        .init_resource::<Random32>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (setup, setup_view_root))
@@ -24,41 +25,32 @@ fn setup_view_root(mut commands: Commands) {
     ));
 }
 
-fn root_presenter(mut _cx: Cx) -> impl View {
-    Sequence::new(("Root Presenter: ", Bind::new(nested, "Fred")))
-}
+const SUITS: &[&str] = &["hearts", "spades", "clubs", "diamonds"];
 
-fn nested(mut cx: Cx<&str>) -> impl View {
-    let name = *cx.props;
-    let counter = cx.use_resource::<Counter>();
+fn root_presenter(mut cx: Cx) -> impl View {
+    let items = cx.use_resource::<List>();
     Sequence::new((
-        "Nested Presenter: ",
-        format!("{}: {}", name, counter.count),
-        If::new(
-            counter.count & 1 == 0,
-            Bind::new(even, ()),
-            Bind::new(odd, ()),
-        ),
+        "Suits: ",
+        For::index(&items.items, |item, index| format!("[{}: {}]", index, item)),
     ))
 }
 
-fn even(mut _cx: Cx) -> impl View {
-    " [even]"
-}
-
-fn odd(mut _cx: Cx) -> impl View {
-    " [odd]"
-}
-
 #[derive(Resource, Default)]
-pub struct Counter {
-    pub count: u32,
-    pub foo: usize,
+pub struct List {
+    pub items: Vec<String>,
 }
 
-fn update_counter(mut counter: ResMut<Counter>, key: Res<Input<KeyCode>>) {
+fn update_counter(
+    mut counter: ResMut<List>,
+    key: Res<Input<KeyCode>>,
+    mut random: ResMut<Random32>,
+) {
     if key.pressed(KeyCode::Space) {
-        counter.count += 1;
+        let i = (random.next() as usize) % SUITS.len();
+        counter.items.push(SUITS[i].to_string());
+        while counter.items.len() > 10 {
+            counter.items.remove(0);
+        }
     }
 }
 
@@ -90,4 +82,29 @@ fn setup(
         transform: Transform::from_xyz(0.0, 6., 12.0).looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
         ..default()
     });
+}
+
+#[derive(Resource)]
+struct Random32 {
+    state: u32,
+}
+
+impl Random32 {
+    // Generate a pseudo-random number
+    fn next(&mut self) -> u32 {
+        // Constants for 32-bit LCG (example values, you might want to choose different ones)
+        let a: u32 = 1664525; // Multiplier
+        let c: u32 = 1013904223; // Increment
+        let m: u32 = 2u32.pow(31); // Modulus, often set to 2^31 for a 32-bit generator
+
+        // Simple LCG formula: X_{n+1} = (aX_n + c) mod m
+        self.state = (a.wrapping_mul(self.state).wrapping_add(c)) % m;
+        self.state
+    }
+}
+
+impl Default for Random32 {
+    fn default() -> Self {
+        Self { state: 17 }
+    }
 }
