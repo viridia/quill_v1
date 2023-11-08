@@ -31,7 +31,7 @@ fn root_presenter(mut cx: Cx) -> impl View {
     let items = cx.use_resource::<List>();
     Sequence::new((
         "Suits: ",
-        For::index(&items.items, |item, index| format!("[{}: {}]", index, item)),
+        For::each(&items.items, |item| format!("[{}]", item)),
     ))
 }
 
