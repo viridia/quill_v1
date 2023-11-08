@@ -201,7 +201,8 @@ impl View for &'static str {
 }
 
 /// View which renders a bare presenter with no arguments
-impl<A: View + 'static> View for fn(cx: Cx) -> A {
+// TODO: This doesn't work
+impl<A: View> View for fn(cx: Cx<()>) -> A {
     type State = Option<Entity>;
 
     fn build(
@@ -240,18 +241,29 @@ impl<A: View + 'static> View for fn(cx: Cx) -> A {
 }
 
 /// Binds a presenter to properties and implements a view
-pub struct Bind<V: View, Props: Send + Sync + Clone> {
-    presenter: fn(cx: Cx<Props>) -> V,
+pub struct Bind<
+    V: View,
+    Props: Send + Sync + Clone,
+    F: Fn(Cx<Props>) -> V + Send + Sync + Copy + 'static,
+> {
+    presenter: F,
     props: Props,
 }
 
-impl<V: View, Props: Send + Sync + Clone> Bind<V, Props> {
-    pub fn new(presenter: fn(cx: Cx<Props>) -> V, props: Props) -> Self {
+impl<V: View, Props: Send + Sync + Clone, F: Fn(Cx<Props>) -> V + Send + Sync + Copy + 'static>
+    Bind<V, Props, F>
+{
+    pub fn new(presenter: F, props: Props) -> Self {
         Self { presenter, props }
     }
 }
 
-impl<V: View + 'static, Props: Send + Sync + 'static + Clone> View for Bind<V, Props> {
+impl<
+        V: View + 'static,
+        Props: Send + Sync + 'static + Clone,
+        F: Fn(Cx<Props>) -> V + Send + Sync + Copy + 'static,
+    > View for Bind<V, Props, F>
+{
     type State = Option<Entity>;
 
     fn build(

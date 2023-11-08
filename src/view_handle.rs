@@ -13,8 +13,12 @@ pub struct ViewHandle {
 
 impl ViewHandle {
     /// Construct a new ViewRoot from a presenter and props.
-    pub fn new<V: View + 'static, Props: Send + Sync + 'static + Clone>(
-        presenter: fn(cx: Cx<Props>) -> V,
+    pub fn new<
+        V: View + 'static,
+        Props: Send + Sync + 'static + Clone,
+        F: Fn(Cx<Props>) -> V + Send + Sync + 'static,
+    >(
+        presenter: F,
         props: Props,
     ) -> Self {
         Self {
@@ -26,21 +30,15 @@ impl ViewHandle {
     pub fn count(&self) -> usize {
         self.inner.as_ref().unwrap().count()
     }
-
-    // /// Rebuild the UiNodes.
-    // pub fn build(&mut self, world: &mut World, entity: Entity) {
-    //     let mut ec = ElementContext { world, entity };
-    //     self.inner.as_mut().unwrap().build(&mut ec, entity);
-    // }
 }
 
 /// `ViewState` contains all of the data needed to re-render a presenter: The presenter function,
 /// its properties, its state, and the cached output nodes.
 ///
 /// This type is generic on the props and state for the presenter.
-pub struct ViewState<V: View, Props: Send + Sync> {
+pub struct ViewState<V: View, Props: Send + Sync, F: Fn(Cx<Props>) -> V> {
     /// Reference to presenter function
-    presenter: fn(cx: Cx<Props>) -> V,
+    presenter: F,
 
     /// Props passed to the presenter
     props: Props,
@@ -55,8 +53,8 @@ pub struct ViewState<V: View, Props: Send + Sync> {
     nodes: NodeSpan,
 }
 
-impl<V: View, Props: Send + Sync> ViewState<V, Props> {
-    pub fn new(presenter: fn(cx: Cx<Props>) -> V, props: Props) -> Self {
+impl<V: View, Props: Send + Sync, F: Fn(Cx<Props>) -> V> ViewState<V, Props, F> {
+    pub fn new(presenter: F, props: Props) -> Self {
         Self {
             presenter,
             nodes: NodeSpan::Empty,
@@ -83,7 +81,9 @@ pub trait AnyViewState: Send + Sync {
     fn raze(&mut self, cx: &mut ElementContext, entity: Entity);
 }
 
-impl<V: View, Props: Send + Sync + Clone> AnyViewState for ViewState<V, Props> {
+impl<V: View, Props: Send + Sync + Clone, F: Fn(Cx<Props>) -> V + Send + Sync> AnyViewState
+    for ViewState<V, Props, F>
+{
     fn count(&self) -> usize {
         self.nodes.count()
     }

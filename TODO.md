@@ -1,6 +1,5 @@
 # TODO:
 
-* Prototype `For` iteration.
 * Leaf nodes render when dependencies change.
 * Option for ViewHandle to parent to an explicit UiNode.
 * Detect changes to presenter props.
