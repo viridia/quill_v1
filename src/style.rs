@@ -70,7 +70,7 @@ pub enum StyleProp {
     JustifyItems(StyleExpr<ui::JustifyItems>),
     JustifySelf(StyleExpr<ui::JustifySelf>),
     JustifyContent(StyleExpr<ui::JustifyContent>),
-    // // TODO:
+    // TODO:
     // GridAutoFlow(bevy::ui::GridAutoFlow),
     // // pub grid_template_rows: Option<Vec<RepeatedGridTrack>>,
     // // pub grid_template_columns: Option<Vec<RepeatedGridTrack>>,
@@ -468,7 +468,10 @@ impl StyleSetBuilder {
         Self { props: Vec::new() }
     }
 
-    // BackgroundImage(Option<Handle<Image>>),
+    pub fn background_image(&mut self, img: Option<Handle<Image>>) -> &mut Self {
+        self.props.push(StyleProp::BackgroundImage(img));
+        self
+    }
 
     pub fn background_color(&mut self, color: Option<Color>) -> &mut Self {
         self.props
@@ -500,11 +503,35 @@ impl StyleSetBuilder {
         self
     }
 
-    // Position(StyleExpr<ui::PositionType>),
-    // Overflow(StyleExpr<ui::OverflowAxis>),
-    // OverflowX(StyleExpr<ui::OverflowAxis>),
-    // OverflowY(StyleExpr<ui::OverflowAxis>),
-    // Direction(StyleExpr<ui::Direction>),
+    pub fn position(&mut self, pos: ui::PositionType) -> &mut Self {
+        self.props
+            .push(StyleProp::Position(StyleExpr::Constant(pos)));
+        self
+    }
+
+    pub fn overflow(&mut self, ov: ui::OverflowAxis) -> &mut Self {
+        self.props
+            .push(StyleProp::Overflow(StyleExpr::Constant(ov)));
+        self
+    }
+
+    pub fn overflow_x(&mut self, ov: ui::OverflowAxis) -> &mut Self {
+        self.props
+            .push(StyleProp::OverflowX(StyleExpr::Constant(ov)));
+        self
+    }
+
+    pub fn overflow_y(&mut self, ov: ui::OverflowAxis) -> &mut Self {
+        self.props
+            .push(StyleProp::OverflowY(StyleExpr::Constant(ov)));
+        self
+    }
+
+    pub fn direction(&mut self, dir: ui::Direction) -> &mut Self {
+        self.props
+            .push(StyleProp::Direction(StyleExpr::Constant(dir)));
+        self
+    }
 
     pub fn left(&mut self, length: impl LengthParam) -> &mut Self {
         self.props
@@ -663,11 +690,29 @@ impl StyleSetBuilder {
         self
     }
 
-    // FlexDirection(StyleExpr<ui::FlexDirection>),
-    // FlexWrap(StyleExpr<ui::FlexWrap>),
-    // // Flex(ExprList),
-    // FlexGrow(StyleExpr<f32>),
-    // FlexShrink(StyleExpr<f32>),
+    pub fn flex_direction(&mut self, dir: ui::FlexDirection) -> &mut Self {
+        self.props
+            .push(StyleProp::FlexDirection(StyleExpr::Constant(dir)));
+        self
+    }
+
+    pub fn flex_wrap(&mut self, w: ui::FlexWrap) -> &mut Self {
+        self.props.push(StyleProp::FlexWrap(StyleExpr::Constant(w)));
+        self
+    }
+
+    // Flex(ExprList),
+
+    pub fn flex_grow(&mut self, n: f32) -> &mut Self {
+        self.props.push(StyleProp::FlexGrow(StyleExpr::Constant(n)));
+        self
+    }
+
+    pub fn flex_shrink(&mut self, n: f32) -> &mut Self {
+        self.props
+            .push(StyleProp::FlexShrink(StyleExpr::Constant(n)));
+        self
+    }
 
     pub fn flex_basis(&mut self, length: impl LengthParam) -> &mut Self {
         self.props
@@ -693,12 +738,42 @@ impl StyleSetBuilder {
         self
     }
 
-    // AlignItems(StyleExpr<ui::AlignItems>),
-    // AlignSelf(StyleExpr<ui::AlignSelf>),
-    // AlignContent(StyleExpr<ui::AlignContent>),
-    // JustifyItems(StyleExpr<ui::JustifyItems>),
-    // JustifySelf(StyleExpr<ui::JustifySelf>),
-    // JustifyContent(StyleExpr<ui::JustifyContent>),
+    pub fn align_items(&mut self, align: ui::AlignItems) -> &mut Self {
+        self.props
+            .push(StyleProp::AlignItems(StyleExpr::Constant(align)));
+        self
+    }
+
+    pub fn align_self(&mut self, align: ui::AlignSelf) -> &mut Self {
+        self.props
+            .push(StyleProp::AlignSelf(StyleExpr::Constant(align)));
+        self
+    }
+
+    pub fn align_content(&mut self, align: ui::AlignContent) -> &mut Self {
+        self.props
+            .push(StyleProp::AlignContent(StyleExpr::Constant(align)));
+        self
+    }
+
+    pub fn justify_items(&mut self, justify: ui::JustifyItems) -> &mut Self {
+        self.props
+            .push(StyleProp::JustifyItems(StyleExpr::Constant(justify)));
+        self
+    }
+
+    pub fn justify_self(&mut self, justify: ui::JustifySelf) -> &mut Self {
+        self.props
+            .push(StyleProp::JustifySelf(StyleExpr::Constant(justify)));
+        self
+    }
+
+    pub fn justify_content(&mut self, justify: ui::JustifyContent) -> &mut Self {
+        self.props
+            .push(StyleProp::JustifyContent(StyleExpr::Constant(justify)));
+        self
+    }
+
     // // TODO:
     // GridAutoFlow(bevy::ui::GridAutoFlow),
     // // pub grid_template_rows: Option<Vec<RepeatedGridTrack>>,

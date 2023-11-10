@@ -1,13 +1,13 @@
 # TODO:
 
-* Leaf nodes render when dependencies change.
-* Option for ViewHandle to parent to an explicit UiNode.
+* Figure out how to say `function.bind(args)` instead of `Bind::new(function, args)`.
+* Figure out how to say `function` instead of `Bind::new(function, ())`.
+* Some kind of sugar for stylesets that avoids all the Arc::new() and .clone() calls.
+* Leaf nodes render when dependencies change (currently render unconditionally).
+* Option for ViewHandle to parent to an explicit (manually constructed) UiNode.
 * Detect changes to presenter props.
-* `use` hooks for components, events, etc.
 * Local state for presenters (`use_state`).
-* Styling.
-  * Port StyleAttrs, StyleExprs from panoply.
-  * Define API for styling Views.
+* `use` hooks for components, events, etc.
 * Misc cleanup and reorganization.
 * Input handling / callbacks / message dispatch.
 * Basic widgets: Button, Slider, Text Input.

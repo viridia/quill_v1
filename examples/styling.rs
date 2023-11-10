@@ -17,10 +17,31 @@ fn main() {
 }
 
 lazy_static! {
-    static ref STYLE_BLOCK: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
-        .background_color(Some(Color::BLUE))
-        .border(2.)
+    static ref STYLE_MAIN: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .position(ui::PositionType::Absolute)
+        .left(10.)
+        .top(10.)
+        .bottom(20.)
+        .right(10.)
+        .border(1)
+        .border_color(Some(Color::hex("#888").unwrap()))
         .display(ui::Display::Flex)));
+    static ref STYLE_ASIDE: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .background_color(Some(Color::hex("#222").unwrap()))
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .width(200)));
+    static ref STYLE_VSPLITTER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .background_color(Some(Color::hex("#181818").unwrap()))
+        .align_items(ui::AlignItems::Center)
+        .justify_content(ui::JustifyContent::Center)
+        .display(ui::Display::Flex)
+        .width(7)));
+    static ref STYLE_VSPLITTER_INNER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .background_color(Some(Color::hex("#282828").unwrap()))
+        .display(ui::Display::Flex)
+        .width(3)
+        .height(ui::Val::Percent(30.))));
     static ref STYLE_EVEN: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
         .background_color(Some(Color::RED))
         .padding(UiRect::all(Val::Px(2.)))));
@@ -34,24 +55,26 @@ lazy_static! {
 struct Shape;
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn((
-        TrackedResources::default(),
-        ViewHandle::new(root_presenter, ()),
-    ));
+    commands.spawn((TrackedResources::default(), ViewHandle::new(ui_main, ())));
 }
 
-fn root_presenter(mut _cx: Cx) -> impl View {
-    Element::new(("Styling: ", Bind::new(nested, ())))
-}
-
-fn nested(mut cx: Cx) -> impl View {
+fn ui_main(mut cx: Cx) -> impl View {
     let counter = cx.use_resource::<Counter>();
-    Element::new((If::new(
-        counter.count & 1 == 0,
-        Bind::new(even, ()),
-        Bind::new(odd, ()),
-    ),))
-    .styled(STYLE_BLOCK.clone())
+    Element::new((
+        Element::new(()).styled(STYLE_ASIDE.clone()),
+        Bind::new(v_splitter, ()),
+        If::new(
+            counter.count & 1 == 0,
+            Bind::new(even, ()),
+            Bind::new(odd, ()),
+        ),
+    ))
+    .styled(STYLE_MAIN.clone())
+}
+
+fn v_splitter(mut _cx: Cx) -> impl View {
+    Element::new(Element::new(()).styled(STYLE_VSPLITTER_INNER.clone()))
+        .styled(STYLE_VSPLITTER.clone())
 }
 
 fn even(mut _cx: Cx) -> impl View {

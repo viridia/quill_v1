@@ -6,7 +6,7 @@ use crate::{ElementContext, View};
 
 use super::node_span::NodeSpan;
 
-/// A Presenter type which renders a NodeBundle that can have multiple children.
+/// A View which renders a NodeBundle that can have multiple children.
 pub struct Element<A: ViewTuple> {
     items: A,
 }
