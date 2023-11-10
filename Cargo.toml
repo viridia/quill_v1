@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.12.0"
+lazy_static = "1.4.0"
 
 # Enable max optimizations for dependencies, but not for our code:
 [profile.dev.package."*"]

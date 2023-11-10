@@ -5,7 +5,10 @@ use bevy::{
     text::{Text, TextStyle},
 };
 
-use crate::ViewHandle;
+use crate::{
+    view_styled::{StyleTuple, StyledView},
+    ViewHandle,
+};
 
 use super::node_span::NodeSpan;
 
@@ -75,7 +78,10 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     }
 }
 
-pub trait View: Send + Sync {
+pub trait View: Send + Sync
+where
+    Self: Sized,
+{
     type State: Send + Sync + Default;
 
     /// Construct and patch the tree of UiNodes produced by this view.
@@ -86,6 +92,11 @@ pub trait View: Send + Sync {
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
     /// This calls `.raze()` for any nested views within the current view state.
     fn raze(&self, _ecx: &mut ElementContext, _state: &mut Self::State, prev: &NodeSpan);
+
+    /// Apply styles to this view.
+    fn styled<S: StyleTuple>(self, styles: S) -> StyledView<Self> {
+        StyledView::new(self, styles)
+    }
 }
 
 /// View which renders nothing

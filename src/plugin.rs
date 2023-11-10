@@ -1,12 +1,17 @@
 use bevy::prelude::*;
 
-use crate::{view::TrackedResources, ElementContext, ViewHandle};
+use crate::{
+    computed::{ComputedStyle, UpdateComputedStyle},
+    view::TrackedResources,
+    view_styled::ElementStyles,
+    ElementContext, ViewHandle,
+};
 
 pub struct QuillPlugin;
 
 impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, render_views);
+        app.add_systems(Update, (render_views, update_styles).chain());
     }
 }
 
@@ -52,5 +57,18 @@ fn render_views(world: &mut World) {
             // Now that we are done with the handle we can put it back in the world
             view_root.inner = Some(handle);
         }
+    }
+}
+
+fn update_styles(
+    mut commands: Commands,
+    query: Query<(Entity, &ElementStyles), Changed<ElementStyles>>,
+) {
+    for (entity, element_style) in query.iter() {
+        let mut computed = ComputedStyle::new();
+        for ss in element_style.styles.iter() {
+            ss.apply_to(&mut computed);
+        }
+        commands.add(UpdateComputedStyle { entity, computed });
     }
 }

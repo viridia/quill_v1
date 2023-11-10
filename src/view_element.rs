@@ -6,17 +6,18 @@ use crate::{ElementContext, View};
 
 use super::node_span::NodeSpan;
 
-pub struct Sequence<A: ViewTuple> {
+/// A Presenter type which renders a NodeBundle that can have multiple children.
+pub struct Element<A: ViewTuple> {
     items: A,
 }
 
-impl<A: ViewTuple> Sequence<A> {
+impl<A: ViewTuple> Element<A> {
     pub fn new(items: A) -> Self {
         Self { items }
     }
 }
 
-impl<A: ViewTuple> View for Sequence<A> {
+impl<A: ViewTuple> View for Element<A> {
     type State = (A::State, Vec<NodeSpan>);
 
     fn build(

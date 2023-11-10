@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use quill::{Cx, If, QuillPlugin, Sequence, TrackedResources, View, ViewHandle};
+use quill::{Cx, Element, If, QuillPlugin, TrackedResources, View, ViewHandle};
 
 fn main() {
     App::new()
@@ -33,7 +33,7 @@ fn setup_view_root(mut commands: Commands) {
 
 fn root_presenter(mut cx: Cx<u8>) -> impl View {
     let counter = cx.use_resource::<Counter>();
-    Sequence::new((
+    Element::new((
         "Root Presenter: ",
         format!("{}", counter.count),
         If::new(counter.count & 1 == 0, " [even]", " [odd]"),

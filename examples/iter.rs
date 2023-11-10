@@ -1,7 +1,7 @@
 //! Example of a For view.
 
 use bevy::prelude::*;
-use quill::{Cx, For, QuillPlugin, Sequence, TrackedResources, View, ViewHandle};
+use quill::{Cx, Element, For, QuillPlugin, TrackedResources, View, ViewHandle};
 
 fn main() {
     App::new()
@@ -29,7 +29,7 @@ const SUITS: &[&str] = &["hearts", "spades", "clubs", "diamonds"];
 
 fn root_presenter(mut cx: Cx) -> impl View {
     let items = cx.use_resource::<List>();
-    Sequence::new((
+    Element::new((
         "Suits: ",
         For::each(&items.items, |item| format!("[{}]", item)),
     ))
