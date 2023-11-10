@@ -255,14 +255,17 @@ impl<A: View> View for fn(cx: Cx<()>) -> A {
 pub struct Bind<
     V: View,
     Props: Send + Sync + Clone,
-    F: Fn(Cx<Props>) -> V + Send + Sync + Copy + 'static,
+    F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
 > {
     presenter: F,
     props: Props,
 }
 
-impl<V: View, Props: Send + Sync + Clone, F: Fn(Cx<Props>) -> V + Send + Sync + Copy + 'static>
-    Bind<V, Props, F>
+impl<
+        V: View,
+        Props: Send + Sync + Clone,
+        F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
+    > Bind<V, Props, F>
 {
     pub fn new(presenter: F, props: Props) -> Self {
         Self { presenter, props }
@@ -272,7 +275,7 @@ impl<V: View, Props: Send + Sync + Clone, F: Fn(Cx<Props>) -> V + Send + Sync + 
 impl<
         V: View + 'static,
         Props: Send + Sync + 'static + Clone,
-        F: Fn(Cx<Props>) -> V + Send + Sync + Copy + 'static,
+        F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
     > View for Bind<V, Props, F>
 {
     type State = Option<Entity>;

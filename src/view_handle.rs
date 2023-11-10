@@ -16,7 +16,7 @@ impl ViewHandle {
     pub fn new<
         V: View + 'static,
         Props: Send + Sync + 'static + Clone,
-        F: Fn(Cx<Props>) -> V + Send + Sync + 'static,
+        F: FnMut(Cx<Props>) -> V + Send + Sync + 'static,
     >(
         presenter: F,
         props: Props,
@@ -36,7 +36,7 @@ impl ViewHandle {
 /// its properties, its state, and the cached output nodes.
 ///
 /// This type is generic on the props and state for the presenter.
-pub struct ViewState<V: View, Props: Send + Sync, F: Fn(Cx<Props>) -> V> {
+pub struct ViewState<V: View, Props: Send + Sync, F: FnMut(Cx<Props>) -> V> {
     /// Reference to presenter function
     presenter: F,
 
@@ -53,7 +53,7 @@ pub struct ViewState<V: View, Props: Send + Sync, F: Fn(Cx<Props>) -> V> {
     nodes: NodeSpan,
 }
 
-impl<V: View, Props: Send + Sync, F: Fn(Cx<Props>) -> V> ViewState<V, Props, F> {
+impl<V: View, Props: Send + Sync, F: FnMut(Cx<Props>) -> V> ViewState<V, Props, F> {
     pub fn new(presenter: F, props: Props) -> Self {
         Self {
             presenter,
@@ -81,7 +81,7 @@ pub trait AnyViewState: Send + Sync {
     fn raze(&mut self, cx: &mut ElementContext, entity: Entity);
 }
 
-impl<V: View, Props: Send + Sync + Clone, F: Fn(Cx<Props>) -> V + Send + Sync> AnyViewState
+impl<V: View, Props: Send + Sync + Clone, F: FnMut(Cx<Props>) -> V + Send + Sync> AnyViewState
     for ViewState<V, Props, F>
 {
     fn count(&self) -> usize {
