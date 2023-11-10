@@ -20,6 +20,7 @@ pub use style::StyleSet;
 pub use style_expr::StyleExpr;
 pub use view::Bind;
 pub use view::Cx;
+pub use view::PresenterFn;
 pub use view::TrackedResources;
 pub use view::View;
 pub use view_element::Element;

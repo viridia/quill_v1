@@ -212,8 +212,7 @@ impl View for &'static str {
 }
 
 /// View which renders a bare presenter with no arguments
-// TODO: This doesn't work
-impl<A: View> View for fn(cx: Cx<()>) -> A {
+impl<A: View, F: Fn(Cx<()>) -> A + Send + Sync> View for F {
     type State = Option<Entity>;
 
     fn build(
@@ -246,8 +245,18 @@ impl<A: View> View for fn(cx: Cx<()>) -> A {
         self(cx).build(parent_ecx, &mut child_state, prev)
     }
 
-    fn raze(&self, _ecx: &mut ElementContext, _state: &mut Self::State, _prev: &NodeSpan) {
-        todo!();
+    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, _prev: &NodeSpan) {
+        if let Some(entity) = state.take() {
+            let mut entt = ecx.world.entity_mut(entity);
+            let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
+                return;
+            };
+            let mut inner = handle
+                .inner
+                .take()
+                .expect("ViewState::handle should be present at this point");
+            inner.raze(ecx, entity)
+        }
     }
 }
 
@@ -343,5 +352,25 @@ impl<
                 .expect("ViewState::handle should be present at this point");
             inner.raze(ecx, entity)
         }
+    }
+}
+
+pub trait PresenterFn<
+    V: View,
+    Props: Send + Sync + Clone,
+    F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
+>
+{
+    fn bind(self, props: Props) -> Bind<V, Props, F>;
+}
+
+impl<
+        V: View,
+        Props: Send + Sync + Clone,
+        F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
+    > PresenterFn<V, Props, F> for F
+{
+    fn bind(self, props: Props) -> Bind<V, Props, Self> {
+        Bind::new(self, props)
     }
 }

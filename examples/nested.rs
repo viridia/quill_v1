@@ -1,7 +1,7 @@
 //! Example of nested presenter functions.
 
 use bevy::prelude::*;
-use quill::{Bind, Cx, Element, If, QuillPlugin, TrackedResources, View, ViewHandle};
+use quill::{Cx, Element, If, PresenterFn, QuillPlugin, TrackedResources, View, ViewHandle};
 
 fn main() {
     App::new()
@@ -25,7 +25,7 @@ fn setup_view_root(mut commands: Commands) {
 }
 
 fn root_presenter(mut _cx: Cx) -> impl View {
-    Element::new(("Root Presenter: ", Bind::new(nested, "Fred")))
+    Element::new(("Root Presenter: ", nested.bind("Fred")))
 }
 
 fn nested(mut cx: Cx<&str>) -> impl View {
@@ -34,11 +34,7 @@ fn nested(mut cx: Cx<&str>) -> impl View {
     Element::new((
         "Nested Presenter: ",
         format!("{}: {}", name, counter.count),
-        If::new(
-            counter.count & 1 == 0,
-            Bind::new(even, ()),
-            Bind::new(odd, ()),
-        ),
+        If::new(counter.count & 1 == 0, even, odd),
     ))
 }
 

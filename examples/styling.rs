@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use bevy::{prelude::*, ui};
 use lazy_static::lazy_static;
-use quill::{Bind, Cx, Element, If, QuillPlugin, StyleSet, TrackedResources, View, ViewHandle};
+use quill::{Cx, Element, If, QuillPlugin, StyleSet, TrackedResources, View, ViewHandle};
 
 fn main() {
     App::new()
@@ -62,12 +62,8 @@ fn ui_main(mut cx: Cx) -> impl View {
     let counter = cx.use_resource::<Counter>();
     Element::new((
         Element::new(()).styled(STYLE_ASIDE.clone()),
-        Bind::new(v_splitter, ()),
-        If::new(
-            counter.count & 1 == 0,
-            Bind::new(even, ()),
-            Bind::new(odd, ()),
-        ),
+        v_splitter,
+        If::new(counter.count & 1 == 0, even, odd),
     ))
     .styled(STYLE_MAIN.clone())
 }

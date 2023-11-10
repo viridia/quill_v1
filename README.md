@@ -64,7 +64,7 @@ fn ui_main(mut cx: Cx) -> impl View {
     // Render an element with children
     Element::new((
         Element::new(()).styled(STYLE_ASIDE.clone()),
-        Bind::new(v_splitter, ()),
+        v_splitter,
         // A conditional element
         If::new(
             counter.count & 1 == 0,
@@ -83,6 +83,28 @@ fn v_splitter(mut _cx: Cx) -> impl View {
 }
 
 ```
+
+# Styling
+
+Quill supports CSS-like styling in the form of `StyleSet`s. A `StyleSet` is a sharable object
+that contains a number of style properties like `background_color`, `flex_direction` and so on.
+`StyleSet`s can be composed - that is, multiple `StyleSets`s can be applied to the same element,
+and the resulting style is computed by merging all the style properties together. There is no
+"cascade" as in CSS, styles are applied in the order they are declared.
+
+Styles must be wrapped in an `Arc` because they are designed to be shared. Most styles are global
+constants, but nothing prevents you from creating a style dynamically in your presenter function.
+
+Styles are applied to an element using the `.styled()` method, which accepts either a single style,
+or a tuple of styles.
+
+`StyleSet`s are typically creating using the `.build()` method, which accepts a closure that takes
+a builder object. The builder methods are flexible in the type of arguments they accept: for
+example, methods such as `.margin_right()` and `.row_gap()` accept an `impl Length`, which can be
+an integer (i32), a float (f32), or a Bevy `ui::Val` object. In the case where no unit is specified,
+pixels is the default unit, so for example `.border(2)` specifies a border width of 2 pixels.
+
+**Coming Soon**: Dynamic selectors, classes, and CSS variables.
 
 # Design Notes
 
