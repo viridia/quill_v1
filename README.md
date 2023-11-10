@@ -32,6 +32,58 @@ When the window opens, hit the spacebar to update the counter.
   from both React and Solid to handle incremental modifications of the UI node graph.
 * Supports CSS-like styling and dynamic visuals.
 
+# Example
+
+```rust
+/// Define some styles
+lazy_static! {
+    static ref STYLE_MAIN: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .position(ui::PositionType::Absolute)
+        .left(10.)
+        .top(10.)
+        .bottom(20.)
+        .right(10.)
+        .border(1)
+        .border_color(Some(Color::hex("#888").unwrap()))
+        .display(ui::Display::Flex)));
+    static ref STYLE_ASIDE: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .background_color(Some(Color::hex("#222").unwrap()))
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .width(200)));
+}
+
+/// Function to set up the view root
+fn setup_view_root(mut commands: Commands) {
+    commands.spawn((TrackedResources::default(), ViewHandle::new(ui_main, ())));
+}
+
+/// Top-level presenter
+fn ui_main(mut cx: Cx) -> impl View {
+    let counter = cx.use_resource::<Counter>();
+    // Render an element with children
+    Element::new((
+        Element::new(()).styled(STYLE_ASIDE.clone()),
+        Bind::new(v_splitter, ()),
+        // A conditional element
+        If::new(
+            counter.count & 1 == 0,
+            // Strings and string slices also implement `View`.
+            "even",
+            "odd",
+        ),
+    ))
+    .styled(STYLE_MAIN.clone())
+}
+
+/// A presenter function
+fn v_splitter(mut _cx: Cx) -> impl View {
+    Element::new(Element::new(()).styled(STYLE_VSPLITTER_INNER.clone()))
+        .styled(STYLE_VSPLITTER.clone())
+}
+
+```
+
 # Design Notes
 
 Quill is an experimental library which borrows ideas from a number of popular UI frameworks,

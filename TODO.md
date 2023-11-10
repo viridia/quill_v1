@@ -3,6 +3,7 @@
 * Figure out how to say `function.bind(args)` instead of `Bind::new(function, args)`.
 * Figure out how to say `function` instead of `Bind::new(function, ())`.
 * Some kind of sugar for stylesets that avoids all the Arc::new() and .clone() calls.
+* Change TrackedResources to automatically create when needed.
 * Leaf nodes render when dependencies change (currently render unconditionally).
 * Option for ViewHandle to parent to an explicit (manually constructed) UiNode.
 * Detect changes to presenter props.
