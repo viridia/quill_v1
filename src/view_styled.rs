@@ -12,12 +12,12 @@ pub struct ElementStyles {
     pub styles: Vec<Arc<StyleSet>>,
 }
 
-pub struct StyledView<V: View> {
+pub struct ViewStyled<V: View> {
     inner: V,
     styles: Vec<Arc<StyleSet>>,
 }
 
-impl<V: View> StyledView<V> {
+impl<V: View> ViewStyled<V> {
     pub fn new<S: StyleTuple>(inner: V, items: S) -> Self {
         Self {
             inner,
@@ -26,7 +26,7 @@ impl<V: View> StyledView<V> {
     }
 }
 
-impl<V: View> View for StyledView<V> {
+impl<V: View> View for ViewStyled<V> {
     type State = V::State;
 
     fn build(

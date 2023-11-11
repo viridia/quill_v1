@@ -11,6 +11,7 @@ mod view_for_index;
 mod view_for_keyed;
 mod view_handle;
 mod view_if;
+mod view_insert;
 mod view_styled;
 
 pub use node_span::NodeSpan;

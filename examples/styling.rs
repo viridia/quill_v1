@@ -50,10 +50,6 @@ lazy_static! {
         .padding(UiRect::all(Val::Px(2.)))));
 }
 
-/// A marker component for our shapes so we can query them separately from the ground plane
-#[derive(Component)]
-struct Shape;
-
 fn setup_view_root(mut commands: Commands) {
     commands.spawn((TrackedResources::default(), ViewHandle::new(ui_main, ())));
 }

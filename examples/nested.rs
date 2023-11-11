@@ -13,10 +13,6 @@ fn main() {
         .run();
 }
 
-/// A marker component for our shapes so we can query them separately from the ground plane
-#[derive(Component)]
-struct Shape;
-
 fn setup_view_root(mut commands: Commands) {
     commands.spawn((
         TrackedResources::default(),
