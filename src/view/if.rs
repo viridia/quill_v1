@@ -1,7 +1,7 @@
 use crate::ElementContext;
 use crate::View;
 
-use super::node_span::NodeSpan;
+use crate::node_span::NodeSpan;
 
 // If
 

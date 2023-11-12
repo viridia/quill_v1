@@ -2,7 +2,7 @@ use std::{marker::PhantomData, ops::Range};
 
 use crate::{lcs::lcs, ElementContext, View};
 
-use super::node_span::NodeSpan;
+use crate::node_span::NodeSpan;
 
 pub struct KeyedListItem<Key: Sync + Send + PartialEq, V: View + 'static> {
     view: Option<V>,

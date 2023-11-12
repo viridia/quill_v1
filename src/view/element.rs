@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{ElementContext, View};
 
-use super::node_span::NodeSpan;
+use crate::node_span::NodeSpan;
 
 /// A View which renders a NodeBundle that can have multiple children.
 pub struct Element<A: ViewTuple> {

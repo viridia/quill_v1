@@ -4,14 +4,15 @@ use bevy::prelude::*;
 
 use crate::{ElementContext, StyleSet, View};
 
-use super::node_span::NodeSpan;
+use crate::node_span::NodeSpan;
 
-/// Tracks resources used by each ViewState
+/// List of style objects which are attached to a given UiNode.
 #[derive(Component, Default)]
 pub struct ElementStyles {
     pub styles: Vec<Arc<StyleSet>>,
 }
 
+// A wrapper view which applies styles to the output of an inner view.
 pub struct ViewStyled<V: View> {
     inner: V,
     styles: Vec<Arc<StyleSet>>,
@@ -63,12 +64,13 @@ impl<V: View> View for ViewStyled<V> {
     }
 
     // Apply styles to this view.
+    // TODO: Possible optimization by replacing the style object rather than wrapping it.
     // fn styled<S: StyleTuple<'a>>(&self, styles: S) -> StyledView<'a, Self> {
     //     StyledView::<'a, Self>::new(&self, styles)
     // }
 }
 
-// StyleTuple
+// StyleTuple - a variable-length tuple of styles.
 
 // TODO: Turn this into a macro once it's stable.
 pub trait StyleTuple: Send + Sync {

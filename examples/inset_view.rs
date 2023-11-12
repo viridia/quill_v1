@@ -12,6 +12,7 @@ use bevy::{
     },
     ui,
 };
+use bevy_mod_picking::DefaultPickingPlugins;
 use lazy_static::lazy_static;
 use quill::{Cx, Element, QuillPlugin, StyleSet, TrackedResources, View, ViewHandle};
 
@@ -21,6 +22,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (setup, setup_view_root))
+        .add_plugins(DefaultPickingPlugins)
         .add_systems(
             Update,
             (
@@ -85,7 +87,7 @@ pub struct ViewportInset {
 /// A marker component for that identifies which element contains the 3d view. The
 /// `update_viewport_inset` system measures the on-screen position of the UiNode that this
 /// component is attached to, and updates the screen position of the 3D view to match it.
-#[derive(Component, Default)]
+#[derive(Component, Clone)]
 pub struct ViewportInsetElement;
 
 fn setup_view_root(mut commands: Commands) {
@@ -98,7 +100,7 @@ fn ui_main(_cx: Cx) -> impl View {
         v_splitter,
         Element::new(())
             .styled(STYLE_VIEWPORT.clone())
-            .insert::<ViewportInsetElement>(),
+            .insert(ViewportInsetElement {}),
     ))
     .styled(STYLE_MAIN.clone())
 }

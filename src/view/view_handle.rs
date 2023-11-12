@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 
+use crate::NodeSpan;
+
 use super::{
     view::{Cx, ElementContext},
-    NodeSpan, View,
+    View,
 };
 
 /// A ViewHandle holds a type-erased reference to a presenter function and its props and state.

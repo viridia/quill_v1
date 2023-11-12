@@ -2,8 +2,8 @@ use bevy::prelude::*;
 
 use crate::{
     computed::{ComputedStyle, UpdateComputedStyle},
+    view::ElementStyles,
     view::TrackedResources,
-    view_styled::ElementStyles,
     ElementContext, ViewHandle,
 };
 

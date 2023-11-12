@@ -1,6 +1,6 @@
 use crate::{ElementContext, View};
 
-use super::node_span::NodeSpan;
+use crate::node_span::NodeSpan;
 
 pub struct IndexedListItem<V: View + 'static> {
     view: Option<V>,
