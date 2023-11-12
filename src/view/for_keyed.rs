@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, ops::Range};
 
-use crate::{lcs::lcs, ElementContext, View};
+use crate::{view::lcs::lcs, ElementContext, View};
 
 use crate::node_span::NodeSpan;
 

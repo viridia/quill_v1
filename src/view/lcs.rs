@@ -26,7 +26,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::lcs::lcs;
+    use super::lcs;
 
     #[test]
     fn test_empty() {

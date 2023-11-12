@@ -3,6 +3,7 @@ mod r#for;
 mod for_index;
 mod for_keyed;
 mod r#if;
+mod lcs;
 mod view;
 mod view_handle;
 mod view_insert;

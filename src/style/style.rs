@@ -4,7 +4,7 @@ use bevy::{
     ui,
 };
 
-use crate::{computed::ComputedStyle, style_expr::StyleExpr};
+use super::{computed::ComputedStyle, style_expr::StyleExpr};
 
 #[derive(Debug, Clone)]
 pub enum StyleProp {
