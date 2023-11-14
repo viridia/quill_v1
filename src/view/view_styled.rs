@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use bevy::prelude::*;
+use bevy::utils::HashSet;
 
 use crate::{ElementContext, StyleSet, View};
 
@@ -10,6 +11,22 @@ use crate::node_span::NodeSpan;
 #[derive(Component, Default)]
 pub struct ElementStyles {
     pub styles: Vec<Arc<StyleSet>>,
+    pub(crate) ancestor_depth: usize,
+    // TODO: Inherited
+}
+
+/// List of style objects which are attached to a given UiNode.
+#[derive(Component, Default)]
+pub struct ElementClasses(pub HashSet<String>);
+
+impl ElementClasses {
+    pub fn add_class(&mut self, cls: &str) {
+        self.0.insert(cls.to_string());
+    }
+
+    pub fn remove_class(&mut self, cls: &str) {
+        self.0.remove(cls);
+    }
 }
 
 // A wrapper view which applies styles to the output of an inner view.
@@ -41,14 +58,25 @@ impl<V: View> View for ViewStyled<V> {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
                 let em = &mut ecx.world.entity_mut(entity);
+                let depth = self
+                    .styles
+                    .iter()
+                    .map(|s| s.as_ref().depth())
+                    .max()
+                    .unwrap_or(0);
                 match em.get_mut::<ElementStyles>() {
                     Some(mut sc) => {
                         sc.styles.clone_from(&self.styles);
+                        sc.ancestor_depth = depth;
                     }
                     None => {
-                        em.insert(ElementStyles {
-                            styles: self.styles.clone(),
-                        });
+                        em.insert((
+                            ElementStyles {
+                                ancestor_depth: depth,
+                                styles: self.styles.clone(),
+                            },
+                            ElementClasses(HashSet::new()),
+                        ));
                     }
                 }
             }

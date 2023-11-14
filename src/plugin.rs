@@ -1,10 +1,10 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashSet};
 
 use crate::{
     style::{ComputedStyle, UpdateComputedStyle},
     view::ElementStyles,
     view::TrackedResources,
-    ElementContext, ViewHandle,
+    ElementClasses, ElementContext, ViewHandle,
 };
 
 pub struct QuillPlugin;
@@ -62,13 +62,63 @@ fn render_views(world: &mut World) {
 
 fn update_styles(
     mut commands: Commands,
-    query: Query<(Entity, &ElementStyles), Changed<ElementStyles>>,
+    query: Query<(
+        Entity,
+        Ref<ElementStyles>,
+        Ref<ElementClasses>,
+        Option<&Parent>,
+    )>,
 ) {
-    for (entity, element_style) in query.iter() {
-        let mut computed = ComputedStyle::new();
-        for ss in element_style.styles.iter() {
-            ss.apply_to(&mut computed);
+    for (entity, styles, _, _) in query.iter() {
+        let mut changed = styles.is_changed();
+        if !changed && styles.ancestor_depth > 0 {
+            // Search ancestors to see if any have changed.
+            let mut e = entity;
+            for _ in 0..styles.ancestor_depth {
+                match query.get(e) {
+                    Ok((_, _, a_classes, a_parent)) => {
+                        if a_classes.is_changed() {
+                            changed = true;
+                            break;
+                        } else if a_parent.is_none() {
+                            break;
+                        } else {
+                            e = a_parent.unwrap().get();
+                        }
+                    }
+                    Err(_) => {
+                        break;
+                    }
+                }
+            }
         }
-        commands.add(UpdateComputedStyle { entity, computed });
+        if changed {
+            // Compute computed style.
+
+            // Build list of class components
+            let mut classes: Vec<HashSet<String>> = Vec::with_capacity(styles.ancestor_depth);
+            let mut e = entity;
+            for _ in 0..styles.ancestor_depth {
+                match query.get(e) {
+                    Ok((_, _, a_classes, a_parent)) => {
+                        classes.push(a_classes.0.to_owned());
+                        if a_parent.is_none() {
+                            break;
+                        } else {
+                            e = a_parent.unwrap().get();
+                        }
+                    }
+                    Err(_) => {
+                        break;
+                    }
+                }
+            }
+
+            let mut computed = ComputedStyle::new();
+            for ss in styles.styles.iter() {
+                ss.apply_to(&mut computed, classes.as_slice());
+            }
+            commands.add(UpdateComputedStyle { entity, computed });
+        }
     }
 }

@@ -12,17 +12,23 @@ use bevy::{
     },
     ui,
 };
-use bevy_mod_picking::DefaultPickingPlugins;
+use bevy_mod_picking::{
+    events::PointerCancel,
+    picking_core::{CorePlugin, InteractionPlugin},
+    prelude::*,
+};
 use lazy_static::lazy_static;
-use quill::{Cx, Element, QuillPlugin, StyleSet, TrackedResources, View, ViewHandle};
+use quill::{
+    Cx, Element, ElementClasses, QuillPlugin, StyleSet, TrackedResources, View, ViewHandle,
+};
 
 fn main() {
     App::new()
         .init_resource::<ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (setup, setup_view_root))
-        .add_plugins(DefaultPickingPlugins)
         .add_systems(
             Update,
             (
@@ -55,17 +61,27 @@ lazy_static! {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
-        .width(7)));
+        .width(7)
+        .selector(".hover", |ss| ss
+            .background_color(Some(Color::hex("#282828").unwrap())))
+        .selector(".drag", |ss| ss
+            .background_color(Some(Color::hex("#383838").unwrap())))));
     static ref STYLE_VSPLITTER_INNER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
         .background_color(Some(Color::hex("#282828").unwrap()))
         .display(ui::Display::Flex)
         .width(3)
-        .height(ui::Val::Percent(30.))));
+        .height(ui::Val::Percent(30.))
+        .selector(".hover > &", |ss| ss
+            .background_color(Some(Color::hex("#383838").unwrap())))
+        .selector(".drag > &", |ss| ss
+            .background_color(Some(Color::hex("#484848").unwrap())))));
     static ref STYLE_VIEWPORT: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss.flex_grow(1.)));
 }
 
 const DEFAULT_FOV: f32 = 0.69; // 40 degrees
 const X_EXTENT: f32 = 14.5;
+const CLS_HOVER: &str = "hover";
+const CLS_DRAG: &str = "drag";
 
 /// A marker component for our shapes so we can query them separately from the ground plane
 #[derive(Component)]
@@ -107,6 +123,32 @@ fn ui_main(_cx: Cx) -> impl View {
 
 fn v_splitter(mut _cx: Cx) -> impl View {
     Element::new(Element::new(()).styled(STYLE_VSPLITTER_INNER.clone()))
+        .with(|entity, world| {
+            let mut e = world.entity_mut(entity);
+            e.insert((
+                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    println!("Over");
+                    styles.add_class(CLS_HOVER)
+                }),
+                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    println!("Out");
+                    styles.remove_class(CLS_HOVER)
+                }),
+                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    styles.add_class(CLS_DRAG)
+                }),
+                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    styles.remove_class(CLS_DRAG)
+                }),
+                On::<Pointer<Drag>>::run(|| println!("drag")),
+                On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
+                    |_, styles| {
+                        styles.remove_class(CLS_HOVER);
+                        styles.remove_class(CLS_DRAG)
+                    },
+                ),
+            ));
+        })
         .styled(STYLE_VSPLITTER.clone())
 }
 

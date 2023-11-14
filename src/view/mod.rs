@@ -8,6 +8,7 @@ mod view;
 mod view_handle;
 mod view_insert;
 mod view_styled;
+mod view_with;
 
 pub use element::Element;
 pub use element::ViewTuple;
@@ -22,4 +23,5 @@ pub use view::TrackedResources;
 pub use view::View;
 pub use view::*;
 pub use view_handle::ViewHandle;
+pub use view_styled::ElementClasses;
 pub use view_styled::ElementStyles;

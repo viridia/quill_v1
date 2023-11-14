@@ -12,6 +12,7 @@ use crate::node_span::NodeSpan;
 use super::{
     view_insert::ViewInsert,
     view_styled::{StyleTuple, ViewStyled},
+    view_with::ViewWith,
 };
 
 pub struct ElementContext<'w> {
@@ -106,6 +107,26 @@ where
         ViewInsert {
             inner: self,
             component,
+        }
+    }
+
+    /// Sets up a callback which is called for each output UiNode. Typically used to manipulate
+    /// components on the entity. This is called each time the view is rebuilt.
+    fn with<F: Fn(Entity, &mut World) -> () + Send + Sync>(self, callback: F) -> ViewWith<Self, F> {
+        ViewWith {
+            inner: self,
+            callback,
+            once: false,
+        }
+    }
+
+    /// Sets up a callback which is called for each output UiNode, but only when the node is first
+    /// created.
+    fn once<F: Fn(Entity, &mut World) -> () + Send + Sync>(self, callback: F) -> ViewWith<Self, F> {
+        ViewWith {
+            inner: self,
+            callback,
+            once: true,
         }
     }
 }

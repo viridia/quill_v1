@@ -1,10 +1,11 @@
 use bevy::{
+    log::error,
     prelude::{Color, Handle, Image},
-    reflect::Reflect,
     ui,
+    utils::HashSet,
 };
 
-use super::{computed::ComputedStyle, style_expr::StyleExpr};
+use super::{computed::ComputedStyle, selector::Selector, style_expr::StyleExpr};
 
 #[derive(Debug, Clone)]
 pub enum StyleProp {
@@ -88,23 +89,24 @@ pub enum StyleProp {
     // LineBreak(BreakLineOn),
 }
 
+type SelectorList = Vec<(Box<Selector>, Vec<StyleProp>)>;
+
 /// A collection of style attributes which can be merged to create a `ComputedStyle`.
-#[derive(Debug, Default, Clone, Reflect)]
-#[type_path = "quill::StyleSet"]
+#[derive(Debug, Default, Clone)]
 pub struct StyleSet {
     /// List of style attributes.
     /// Rather than storing the attributes in a struct full of optional fields, we store a flat
     /// vector of enums, each of which stores a single style attribute. This "sparse" representation
     /// allows for fast merging of styles, particularly for styles which have few or no attributes.
-    #[reflect(ignore)]
     props: Vec<StyleProp>,
     // /// List of style variables to define when this style is invoked.
     // #[reflect(ignore)]
     // vars: VarsMap,
+    /// List of conditional styles
+    pub(crate) selectors: SelectorList,
 
-    // /// List of conditional styles
-    // #[reflect(ignore)]
-    // selectors: SelectorsMap,
+    /// How many entity ancestor levels need to be checked when styles change.
+    ancestor_depth: usize,
 }
 
 impl StyleSet {
@@ -112,24 +114,8 @@ impl StyleSet {
         Self {
             props: Vec::new(),
             // vars: VarsMap::new(),
-            // selectors: SelectorsMap::new(),
-        }
-    }
-
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            props: Vec::with_capacity(capacity),
-            // vars: VarsMap::new(),
-            // selectors: SelectorsMap::new(),
-        }
-    }
-
-    /// Construct a new `StyleMap` from an array of `StyleProp`s.
-    pub fn from_props(props: &[StyleProp]) -> Self {
-        Self {
-            props: Vec::from(props),
-            // vars: VarsMap::new(),
-            // selectors: SelectorsMap::new(),
+            selectors: Vec::new(),
+            ancestor_depth: 0,
         }
     }
 
@@ -137,15 +123,35 @@ impl StyleSet {
     pub fn build(builder_fn: impl FnOnce(&mut StyleSetBuilder) -> &mut StyleSetBuilder) -> Self {
         let mut builder = StyleSetBuilder::new();
         builder_fn(&mut builder);
+        let depth = builder
+            .selectors
+            .iter()
+            .map(|s| s.0.depth())
+            .max()
+            .unwrap_or(0);
         Self {
             props: builder.props,
+            selectors: builder.selectors,
+            ancestor_depth: depth,
         }
     }
 
+    /// Return the number of UiNode levels reference by selectors.
+    pub fn depth(&self) -> usize {
+        self.ancestor_depth
+    }
+
     /// Merge the style properties into a computed `Style` object.
-    pub fn apply_to(&self, computed: &mut ComputedStyle) {
+    pub fn apply_to(&self, computed: &mut ComputedStyle, classes: &[HashSet<String>]) {
+        // Apply unconditional styles
         self.apply_attrs_to(&self.props, computed);
-        // TODO: Check selectors
+
+        // Apply conditional styles
+        for (selector, props) in self.selectors.iter() {
+            if selector.match_classes(classes) {
+                self.apply_attrs_to(&props, computed);
+            }
+        }
     }
 
     fn apply_attrs_to(&self, attrs: &Vec<StyleProp>, computed: &mut ComputedStyle) {
@@ -461,11 +467,15 @@ impl UiRectParam for i32 {
 
 pub struct StyleSetBuilder {
     props: Vec<StyleProp>,
+    selectors: SelectorList,
 }
 
 impl StyleSetBuilder {
     fn new() -> Self {
-        Self { props: Vec::new() }
+        Self {
+            props: Vec::new(),
+            selectors: Vec::new(),
+        }
     }
 
     pub fn background_image(&mut self, img: Option<Handle<Image>>) -> &mut Self {
@@ -790,4 +800,23 @@ impl StyleSetBuilder {
     // GridColumnEnd(i16),
 
     // LineBreak(BreakLineOn),
+
+    /// Add a selector expression to this style declaration.
+    pub fn selector(
+        &mut self,
+        mut expr: &str,
+        builder_fn: impl FnOnce(&mut StyleSetBuilder) -> &mut StyleSetBuilder,
+    ) -> &mut Self {
+        let mut builder = StyleSetBuilder::new();
+        builder_fn(&mut builder);
+        match Selector::parser(&mut expr) {
+            Ok(selector) => {
+                self.selectors.push((selector, builder.props));
+            }
+            Err(err) => {
+                error!("{}: {}", err, expr)
+            }
+        }
+        self
+    }
 }
