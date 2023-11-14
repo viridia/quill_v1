@@ -19,8 +19,8 @@ use bevy_mod_picking::{
 };
 use lazy_static::lazy_static;
 use quill::{
-    Cx, Element, ElementClasses, PointerEvents, QuillPlugin, StyleSet, TrackedResources, View,
-    ViewHandle,
+    Cx, Element, ElementClasses, PointerEvents, PresenterFn, QuillPlugin, StyleSet,
+    TrackedResources, View, ViewHandle, ViewTuple,
 };
 
 fn main() {
@@ -56,6 +56,8 @@ lazy_static! {
     static ref STYLE_ASIDE: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
         .background_color(Some(Color::hex("#222").unwrap()))
         .display(ui::Display::Flex)
+        .padding(8)
+        .gap(8)
         .flex_direction(ui::FlexDirection::Column)
         .width(200)));
     static ref STYLE_VSPLITTER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
@@ -64,17 +66,34 @@ lazy_static! {
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
         .pointer_events(PointerEvents::SelfOnly)
-        .width(17)
+        .width(9)
         .selector(".drag", |ss| ss
             .background_color(Some(Color::hex("#080808").unwrap())))));
     static ref STYLE_VSPLITTER_INNER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
         .background_color(Some(Color::hex("#282828").unwrap()))
         .display(ui::Display::Flex)
-        .width(13)
+        .width(5)
         .height(ui::Val::Percent(30.))
         .selector(".hover > &", |ss| ss
             .background_color(Some(Color::hex("#383838").unwrap())))
         .selector(".drag > &", |ss| ss
+            .background_color(Some(Color::hex("#484848").unwrap())))));
+    static ref STYLE_BUTTON: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .background_color(Some(Color::hex("#282828").unwrap()))
+        .border_color(Some(Color::hex("#383838").unwrap()))
+        .border(1)
+        .display(ui::Display::Flex)
+        .justify_content(JustifyContent::Center)
+        .align_items(AlignItems::Center)
+        .min_height(32)
+        .padding_left(8)
+        .padding_right(8)
+        .selector(".pressed", |ss| ss
+            .background_color(Some(Color::hex("#404040").unwrap())))
+        .selector(".hover", |ss| ss
+            .border_color(Some(Color::hex("#444").unwrap()))
+            .background_color(Some(Color::hex("#2F2F2F").unwrap())))
+        .selector(".hover.pressed", |ss| ss
             .background_color(Some(Color::hex("#484848").unwrap())))));
     static ref STYLE_VIEWPORT: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss.flex_grow(1.)));
 }
@@ -83,6 +102,7 @@ const DEFAULT_FOV: f32 = 0.69; // 40 degrees
 const X_EXTENT: f32 = 14.5;
 const CLS_HOVER: &str = "hover";
 const CLS_DRAG: &str = "drag";
+const CLS_PRESSED: &str = "pressed";
 
 /// A marker component for our shapes so we can query them separately from the ground plane
 #[derive(Component)]
@@ -107,8 +127,14 @@ pub struct ViewportInset {
 #[derive(Component, Clone)]
 pub struct ViewportInsetElement;
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct PanelWidth(pub i32);
+
+impl Default for PanelWidth {
+    fn default() -> Self {
+        Self(160)
+    }
+}
 
 fn setup_view_root(mut commands: Commands) {
     commands.spawn((TrackedResources::default(), ViewHandle::new(ui_main, ())));
@@ -117,7 +143,12 @@ fn setup_view_root(mut commands: Commands) {
 fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
     Element::new((
-        Element::new(()).styled((
+        Element::new((
+            button.bind(ButtonProps { children: "Save" }),
+            button.bind(ButtonProps { children: "Load" }),
+            button.bind(ButtonProps { children: "Quit" }),
+        ))
+        .styled((
             STYLE_ASIDE.clone(),
             Arc::new(StyleSet::build(|b| b.width(width.0))),
         )),
@@ -166,6 +197,40 @@ fn v_splitter(_cx: Cx) -> impl View {
             ));
         })
         .styled(STYLE_VSPLITTER.clone())
+}
+
+#[derive(Clone)]
+struct ButtonProps<VT: ViewTuple> {
+    children: VT,
+}
+
+fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
+    Element::new(cx.props.children.clone())
+        .once(|entity, world| {
+            let mut e = world.entity_mut(entity);
+            e.insert((
+                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    styles.add_class(CLS_HOVER)
+                }),
+                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    styles.remove_class(CLS_HOVER)
+                }),
+                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    styles.add_class(CLS_PRESSED)
+                }),
+                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    styles.remove_class(CLS_PRESSED)
+                }),
+                On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
+                    |_, styles| {
+                        println!("Cancel");
+                        styles.remove_class(CLS_HOVER);
+                        styles.remove_class(CLS_PRESSED)
+                    },
+                ),
+            ));
+        })
+        .styled(STYLE_BUTTON.clone())
 }
 
 fn setup(

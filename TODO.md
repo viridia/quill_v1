@@ -11,3 +11,4 @@
 * Basic widgets: Button, Slider, Text Input.
 * ElementContext shouldn't need to be mutable except for world - use a refcell?
 * Copying of class name vectors during style computation is not very efficient.
+* No-argument presenters don't store state in a ViewHandle.
