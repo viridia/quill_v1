@@ -19,12 +19,14 @@ use bevy_mod_picking::{
 };
 use lazy_static::lazy_static;
 use quill::{
-    Cx, Element, ElementClasses, QuillPlugin, StyleSet, TrackedResources, View, ViewHandle,
+    Cx, Element, ElementClasses, PointerEvents, QuillPlugin, StyleSet, TrackedResources, View,
+    ViewHandle,
 };
 
 fn main() {
     App::new()
         .init_resource::<ViewportInset>()
+        .init_resource::<PanelWidth>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(QuillPlugin)
@@ -61,15 +63,14 @@ lazy_static! {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
-        .width(7)
-        .selector(".hover", |ss| ss
-            .background_color(Some(Color::hex("#282828").unwrap())))
+        .pointer_events(PointerEvents::SelfOnly)
+        .width(17)
         .selector(".drag", |ss| ss
-            .background_color(Some(Color::hex("#383838").unwrap())))));
+            .background_color(Some(Color::hex("#080808").unwrap())))));
     static ref STYLE_VSPLITTER_INNER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
         .background_color(Some(Color::hex("#282828").unwrap()))
         .display(ui::Display::Flex)
-        .width(3)
+        .width(13)
         .height(ui::Val::Percent(30.))
         .selector(".hover > &", |ss| ss
             .background_color(Some(Color::hex("#383838").unwrap())))
@@ -106,13 +107,20 @@ pub struct ViewportInset {
 #[derive(Component, Clone)]
 pub struct ViewportInsetElement;
 
+#[derive(Resource, Default)]
+pub struct PanelWidth(pub i32);
+
 fn setup_view_root(mut commands: Commands) {
     commands.spawn((TrackedResources::default(), ViewHandle::new(ui_main, ())));
 }
 
-fn ui_main(_cx: Cx) -> impl View {
+fn ui_main(mut cx: Cx) -> impl View {
+    let width = cx.use_resource::<PanelWidth>();
     Element::new((
-        Element::new(()).styled(STYLE_ASIDE.clone()),
+        Element::new(()).styled((
+            STYLE_ASIDE.clone(),
+            Arc::new(StyleSet::build(|b| b.width(width.0))),
+        )),
         v_splitter,
         Element::new(())
             .styled(STYLE_VIEWPORT.clone())
@@ -121,9 +129,9 @@ fn ui_main(_cx: Cx) -> impl View {
     .styled(STYLE_MAIN.clone())
 }
 
-fn v_splitter(mut _cx: Cx) -> impl View {
+fn v_splitter(_cx: Cx) -> impl View {
     Element::new(Element::new(()).styled(STYLE_VSPLITTER_INNER.clone()))
-        .with(|entity, world| {
+        .once(|entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
                 On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, styles| {
@@ -135,14 +143,22 @@ fn v_splitter(mut _cx: Cx) -> impl View {
                     styles.remove_class(CLS_HOVER)
                 }),
                 On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    println!("Drag start");
                     styles.add_class(CLS_DRAG)
                 }),
                 On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                    println!("Drag end");
                     styles.remove_class(CLS_DRAG)
                 }),
-                On::<Pointer<Drag>>::run(|| println!("drag")),
+                On::<Pointer<Drag>>::run(
+                    |ev: Listener<Pointer<Drag>>, mut res: ResMut<PanelWidth>| {
+                        println!("Drag");
+                        res.0 += ev.delta.x as i32;
+                    },
+                ),
                 On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
                     |_, styles| {
+                        println!("Cancel");
                         styles.remove_class(CLS_HOVER);
                         styles.remove_class(CLS_DRAG)
                     },

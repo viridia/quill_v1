@@ -129,14 +129,8 @@ impl StyleTuple for (Arc<StyleSet>,) {
     }
 }
 
-// impl StyleTuple for (StyleSet, StyleSet) {
-//     fn to_vec(&self) -> Vec<Arc<StyleSet>> {
-//         vec![self.0, self.1]
-//     }
-// }
-
-// impl StyleTuple for (StyleSet, StyleSet, StyleSet) {
-//     fn to_vec(&self) -> Vec<Arc<StyleSet>> {
-//         vec![self.0, self.1, self.2]
-//     }
-// }
+impl StyleTuple for (Arc<StyleSet>, Arc<StyleSet>) {
+    fn to_vec(&self) -> Vec<Arc<StyleSet>> {
+        vec![self.0.clone(), self.1.clone()]
+    }
+}

@@ -7,6 +7,19 @@ use bevy::{
 
 use super::{computed::ComputedStyle, selector::Selector, style_expr::StyleExpr};
 
+/// Controls behavior of bevy_mod_picking
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum PointerEvents {
+    /// No pointer events for this element, or its children
+    None,
+    /// Pointer events from children only
+    Children,
+    /// Pointer events from attached element but not child elements
+    SelfOnly,
+    /// Pointer events from both self and children
+    All,
+}
+
 #[derive(Debug, Clone)]
 pub enum StyleProp {
     BackgroundImage(Option<Handle<Image>>),
@@ -87,6 +100,7 @@ pub enum StyleProp {
     // GridColumnEnd(i16),
 
     // LineBreak(BreakLineOn),
+    PointerEvents(StyleExpr<PointerEvents>),
 }
 
 type SelectorList = Vec<(Box<Selector>, Vec<StyleProp>)>;
@@ -406,6 +420,12 @@ impl StyleSet {
                 StyleProp::JustifyContent(expr) => {
                     if let Ok(justify) = expr.eval() {
                         computed.style.justify_content = justify;
+                    }
+                }
+
+                StyleProp::PointerEvents(expr) => {
+                    if let Ok(pickable) = expr.eval() {
+                        computed.pickable = Some(pickable);
                     }
                 }
             }
@@ -800,6 +820,12 @@ impl StyleSetBuilder {
     // GridColumnEnd(i16),
 
     // LineBreak(BreakLineOn),
+
+    pub fn pointer_events(&mut self, pe: PointerEvents) -> &mut Self {
+        self.props
+            .push(StyleProp::PointerEvents(StyleExpr::Constant(pe)));
+        self
+    }
 
     /// Add a selector expression to this style declaration.
     pub fn selector(

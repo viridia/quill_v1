@@ -3,6 +3,9 @@ use bevy::prelude::*;
 use bevy::text::BreakLineOn;
 use bevy::ui::widget::UiImageSize;
 use bevy::ui::ContentSize;
+use bevy_mod_picking::prelude::Pickable;
+
+use super::style::PointerEvents;
 
 /// A computed style represents the composition of one or more `ElementStyle`s.
 #[derive(Default, Clone, PartialEq, Debug)]
@@ -25,6 +28,9 @@ pub struct ComputedStyle {
     pub image: Option<Handle<Image>>,
     pub flip_x: bool,
     pub flip_y: bool,
+
+    // Picking properties
+    pub pickable: Option<PointerEvents>,
 }
 
 impl ComputedStyle {
@@ -171,6 +177,27 @@ impl Command for UpdateComputedStyle {
                         ));
                     }
                 }
+            }
+
+            match (self.computed.pickable, e.get_mut::<Pickable>()) {
+                (Some(pe), Some(mut pickable)) => {
+                    pickable.should_block_lower =
+                        pe == PointerEvents::None || pe == PointerEvents::SelfOnly;
+                    pickable.should_emit_events =
+                        pe == PointerEvents::All || pe == PointerEvents::SelfOnly;
+                }
+                (None, Some(_)) => {
+                    e.remove::<Pickable>();
+                }
+                (Some(pe), None) => {
+                    e.insert(Pickable {
+                        should_block_lower: pe == PointerEvents::None
+                            || pe == PointerEvents::SelfOnly,
+                        should_emit_events: pe == PointerEvents::All
+                            || pe == PointerEvents::SelfOnly,
+                    });
+                }
+                (None, None) => {}
             }
         }
     }
