@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Output of a rendered node, which may be a single node or a fragment (multiple nodes).
 /// This gets flattened before attaching to the parent UiNode.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub enum NodeSpan {
     // Means that nothing was rendered. This can represent either an initial state
     // before the first render, or a conditional render operation.
@@ -40,6 +40,19 @@ impl NodeSpan {
             Self::Empty => {}
             Self::Node(entity) => world.entity_mut(*entity).despawn_recursive(),
             Self::Fragment(nodes) => nodes.iter().for_each(|node| node.despawn_recursive(world)),
+        }
+    }
+}
+
+impl PartialEq for NodeSpan {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Empty, Self::Empty) => true,
+            (Self::Node(l0), Self::Node(r0)) => l0 == r0,
+            (Self::Fragment(l0), Self::Fragment(r0)) => {
+                l0.len() == r0.len() && l0.iter().zip(r0.as_ref()).all(|(a, b)| a == b)
+            }
+            _ => false,
         }
     }
 }

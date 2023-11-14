@@ -8,6 +8,6 @@
 * Local state for presenters (`use_state`).
 * `use` hooks for components, events, etc.
 * Misc cleanup and reorganization.
-* Input handling / callbacks / message dispatch.
 * Basic widgets: Button, Slider, Text Input.
 * ElementContext shouldn't need to be mutable except for world - use a refcell?
+* Copying of class name vectors during style computation is not very efficient.

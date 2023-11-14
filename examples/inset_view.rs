@@ -135,24 +135,24 @@ fn v_splitter(_cx: Cx) -> impl View {
             let mut e = world.entity_mut(entity);
             e.insert((
                 On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, styles| {
-                    println!("Over");
+                    // println!("Over");
                     styles.add_class(CLS_HOVER)
                 }),
                 On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, styles| {
-                    println!("Out");
+                    // println!("Out");
                     styles.remove_class(CLS_HOVER)
                 }),
                 On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, styles| {
-                    println!("Drag start");
+                    // println!("Drag start");
                     styles.add_class(CLS_DRAG)
                 }),
                 On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, styles| {
-                    println!("Drag end");
+                    // println!("Drag end");
                     styles.remove_class(CLS_DRAG)
                 }),
                 On::<Pointer<Drag>>::run(
                     |ev: Listener<Pointer<Drag>>, mut res: ResMut<PanelWidth>| {
-                        println!("Drag");
+                        // println!("Drag");
                         res.0 += ev.delta.x as i32;
                     },
                 ),

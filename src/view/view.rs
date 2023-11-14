@@ -244,8 +244,10 @@ impl View for &'static str {
 }
 
 /// View which renders a bare presenter with no arguments
-impl<A: View, F: Fn(Cx<()>) -> A + Send + Sync> View for F {
-    type State = Option<Entity>;
+impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + 'static> View for F {
+    // TODO: This is not really what we want. We want V::State to be stored in a component,
+    // so that State doesn't expand the caller's state too much.
+    type State = (Option<Entity>, V::State);
 
     fn build(
         &self,
@@ -253,16 +255,15 @@ impl<A: View, F: Fn(Cx<()>) -> A + Send + Sync> View for F {
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
-        let mut child_state: A::State = Default::default();
-        let entity: Entity = match state {
-            Some(entity) => *entity,
+        let entity: Entity = match state.0 {
+            Some(entity) => entity,
             None => {
                 let entity = parent_ecx
                     .world
                     .spawn(TrackedResources::default())
                     .set_parent(parent_ecx.entity)
                     .id();
-                *state = Some(entity);
+                state.0 = Some(entity);
                 entity
             }
         };
@@ -274,11 +275,11 @@ impl<A: View, F: Fn(Cx<()>) -> A + Send + Sync> View for F {
             sys: &mut child_context,
             props: &(),
         };
-        self(cx).build(parent_ecx, &mut child_state, prev)
+        self(cx).build(parent_ecx, &mut state.1, prev)
     }
 
     fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, _prev: &NodeSpan) {
-        if let Some(entity) = state.take() {
+        if let Some(entity) = state.0.take() {
             let mut entt = ecx.world.entity_mut(entity);
             let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
                 return;

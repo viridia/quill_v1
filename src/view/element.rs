@@ -1,5 +1,3 @@
-use std::mem::swap;
-
 use bevy::prelude::*;
 
 use crate::{ElementContext, View};
@@ -26,25 +24,24 @@ impl<A: ViewTuple> View for Element<A> {
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
-        let count_spans = self.items.len();
-        let mut child_spans = state.1.clone();
-        child_spans.resize(count_spans, NodeSpan::Empty);
+        let mut next_state = state.1.clone();
+        next_state.resize(self.items.len(), NodeSpan::Empty);
 
         // Rebuild span array, replacing ones that changed.
-        self.items.build_spans(ecx, &mut state.0, &mut child_spans);
+        self.items.build_spans(ecx, &mut state.0, &mut next_state);
         let mut count_children: usize = 0;
-        for node in child_spans.iter() {
+        for node in next_state.iter() {
             count_children += node.count()
         }
         let mut flat: Vec<Entity> = Vec::with_capacity(count_children);
-        for node in child_spans.iter() {
+        for node in next_state.iter() {
             node.flatten(&mut flat);
         }
 
         if let NodeSpan::Node(entity) = prev {
             let mut em = ecx.world.entity_mut(*entity);
-            if state.1 != child_spans {
-                swap(&mut state.1, &mut child_spans);
+            if state.1 != next_state {
+                state.1 = next_state;
                 em.replace_children(&flat);
             }
             return NodeSpan::Node(*entity);
@@ -63,7 +60,7 @@ impl<A: ViewTuple> View for Element<A> {
             .push_children(&flat)
             .id();
 
-        state.1 = child_spans;
+        state.1 = next_state;
         NodeSpan::Node(new_entity)
     }
 

@@ -10,11 +10,11 @@ use super::{computed::ComputedStyle, selector::Selector, style_expr::StyleExpr};
 /// Controls behavior of bevy_mod_picking
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PointerEvents {
-    /// No pointer events for this element, or its children
+    /// No pointer events for this entity, or its children
     None,
     /// Pointer events from children only
     Children,
-    /// Pointer events from attached element but not child elements
+    /// Pointer events from attached entity but not child elements
     SelfOnly,
     /// Pointer events from both self and children
     All,
