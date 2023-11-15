@@ -1,53 +1,23 @@
-use std::marker::PhantomData;
-
 use bevy::{
     prelude::*,
     text::{Text, TextStyle},
 };
 
-use crate::ViewHandle;
+use crate::{TrackedResources, ViewHandle};
 
 use crate::node_span::NodeSpan;
 
 use super::{
+    resource::AnyRes,
     view_insert::ViewInsert,
     view_styled::{StyleTuple, ViewStyled},
     view_with::ViewWith,
 };
 
+/// Passed to `build` and `raze` methods to give access to the world and the view entity.
 pub struct ElementContext<'w> {
     pub(crate) world: &'w mut World,
     pub(crate) entity: Entity,
-}
-
-pub trait AnyResource: Send + Sync {
-    fn is_changed(&self, world: &World) -> bool;
-}
-
-#[derive(PartialEq, Eq)]
-pub struct AnyRes<T> {
-    pub pdata: PhantomData<T>,
-}
-
-impl<T> AnyRes<T> {
-    fn new() -> Self {
-        Self { pdata: PhantomData }
-    }
-}
-
-impl<T> AnyResource for AnyRes<T>
-where
-    T: Resource,
-{
-    fn is_changed(&self, world: &World) -> bool {
-        world.is_resource_changed::<T>()
-    }
-}
-
-/// Tracks resources used by each ViewState
-#[derive(Component, Default)]
-pub struct TrackedResources {
-    pub data: Vec<Box<dyn AnyResource>>,
 }
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's

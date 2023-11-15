@@ -152,3 +152,25 @@ impl<A0: View, A1: View, A2: View> ViewTuple for (A0, A1, A2) {
         self.2.raze(ecx, &mut state.2, &out[2]);
     }
 }
+
+impl<A0: View, A1: View, A2: View, A3: View> ViewTuple for (A0, A1, A2, A3) {
+    type State = (A0::State, A1::State, A2::State, A3::State);
+
+    fn len(&self) -> usize {
+        4
+    }
+
+    fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]) {
+        out[0] = self.0.build(cx, &mut state.0, &out[0]);
+        out[1] = self.1.build(cx, &mut state.1, &out[1]);
+        out[2] = self.2.build(cx, &mut state.2, &out[2]);
+        out[3] = self.3.build(cx, &mut state.3, &out[3]);
+    }
+
+    fn raze_spans(&self, ecx: &mut ElementContext, state: &mut Self::State, out: &[NodeSpan]) {
+        self.0.raze(ecx, &mut state.0, &out[0]);
+        self.1.raze(ecx, &mut state.1, &out[1]);
+        self.2.raze(ecx, &mut state.2, &out[2]);
+        self.3.raze(ecx, &mut state.3, &out[3]);
+    }
+}
