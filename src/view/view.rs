@@ -64,7 +64,7 @@ where
 
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
     /// This calls `.raze()` for any nested views within the current view state.
-    fn raze(&self, _ecx: &mut ElementContext, _state: &mut Self::State, prev: &NodeSpan);
+    fn raze(&self, _ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan);
 
     /// Apply styles to this view.
     fn styled<S: StyleTuple>(self, styles: S) -> ViewStyled<Self> {

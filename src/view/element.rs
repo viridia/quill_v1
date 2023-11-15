@@ -13,6 +13,10 @@ impl<A: ViewTuple> Element<A> {
     pub fn new(items: A) -> Self {
         Self { items }
     }
+
+    // pub fn children<VT: ViewTuple>(self, items: VT) -> Element<VT> {
+    //     Element::<VT> { items }
+    // }
 }
 
 impl<A: ViewTuple> View for Element<A> {
@@ -24,43 +28,30 @@ impl<A: ViewTuple> View for Element<A> {
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
-        let mut next_state = state.1.clone();
-        next_state.resize(self.items.len(), NodeSpan::Empty);
-
-        // Rebuild span array, replacing ones that changed.
-        self.items.build_spans(ecx, &mut state.0, &mut next_state);
-        let mut count_children: usize = 0;
-        for node in next_state.iter() {
-            count_children += node.count()
-        }
-        let mut flat: Vec<Entity> = Vec::with_capacity(count_children);
-        for node in next_state.iter() {
-            node.flatten(&mut flat);
-        }
-
+        let (flat, changed) = self
+            .items
+            .build_child_views(ecx, &mut state.0, &mut state.1);
         if let NodeSpan::Node(entity) = prev {
             let mut em = ecx.world.entity_mut(*entity);
-            if state.1 != next_state {
-                state.1 = next_state;
+            if changed {
                 em.replace_children(&flat);
             }
             return NodeSpan::Node(*entity);
         }
 
-        // Remove previous entity
-        prev.despawn_recursive(ecx.world);
-
         let new_entity = ecx
             .world
             .spawn((NodeBundle {
-                // focus_policy: FocusPolicy::Pass,
                 visibility: Visibility::Visible,
                 ..default()
             },))
-            .push_children(&flat)
+            .replace_children(&flat)
             .id();
 
-        state.1 = next_state;
+        // Remove previous entity and any remaining children
+        prev.despawn_recursive(ecx.world);
+
+        // state.1 = next_state;
         NodeSpan::Node(new_entity)
     }
 
@@ -81,6 +72,32 @@ pub trait ViewTuple: Send + Sync {
     fn build_spans(&self, cx: &mut ElementContext, state: &mut Self::State, out: &mut [NodeSpan]);
 
     fn raze_spans(&self, ecx: &mut ElementContext, state: &mut Self::State, out: &[NodeSpan]);
+
+    // Helper function to build child views for a view.
+    fn build_child_views(
+        &self,
+        ecx: &mut ElementContext,
+        state_child_views: &mut Self::State,
+        state_child_nodes: &mut Vec<NodeSpan>,
+    ) -> (Vec<Entity>, bool) {
+        let mut next_state = state_child_nodes.clone();
+        next_state.resize(self.len(), NodeSpan::Empty);
+
+        // Rebuild span array, replacing ones that changed.
+        self.build_spans(ecx, state_child_views, &mut next_state);
+        let mut count_children: usize = 0;
+        for node in next_state.iter() {
+            count_children += node.count()
+        }
+        let mut flat: Vec<Entity> = Vec::with_capacity(count_children);
+        for node in next_state.iter() {
+            node.flatten(&mut flat);
+        }
+
+        let changed = state_child_nodes.as_ref() != next_state;
+        *state_child_nodes = next_state;
+        (flat, changed)
+    }
 }
 
 impl<A: View> ViewTuple for A {
