@@ -20,7 +20,7 @@ use bevy_mod_picking::{
 use lazy_static::lazy_static;
 use quill::{
     Cx, Element, ElementClasses, PointerEvents, PresenterFn, QuillPlugin, StyleSet,
-    TrackedResources, View, ViewHandle, ViewTuple,
+    TrackedResources, View, ViewHandle,
 };
 
 fn main() {
@@ -165,21 +165,21 @@ fn v_splitter(_cx: Cx) -> impl View {
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
-                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     // println!("Over");
-                    styles.add_class(CLS_HOVER)
+                    classes.add_class(CLS_HOVER)
                 }),
-                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     // println!("Out");
-                    styles.remove_class(CLS_HOVER)
+                    classes.remove_class(CLS_HOVER)
                 }),
-                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     // println!("Drag start");
-                    styles.add_class(CLS_DRAG)
+                    classes.add_class(CLS_DRAG)
                 }),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, styles| {
+                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     // println!("Drag end");
-                    styles.remove_class(CLS_DRAG)
+                    classes.remove_class(CLS_DRAG)
                 }),
                 On::<Pointer<Drag>>::run(
                     |ev: Listener<Pointer<Drag>>, mut res: ResMut<PanelWidth>| {
@@ -188,10 +188,10 @@ fn v_splitter(_cx: Cx) -> impl View {
                     },
                 ),
                 On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
-                    |_, styles| {
+                    |_, classes| {
                         println!("Cancel");
-                        styles.remove_class(CLS_HOVER);
-                        styles.remove_class(CLS_DRAG)
+                        classes.remove_class(CLS_HOVER);
+                        classes.remove_class(CLS_DRAG)
                     },
                 ),
             ));
@@ -200,8 +200,8 @@ fn v_splitter(_cx: Cx) -> impl View {
 }
 
 #[derive(Clone)]
-struct ButtonProps<VT: ViewTuple> {
-    children: VT,
+struct ButtonProps<V: View> {
+    children: V,
 }
 
 fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
@@ -209,23 +209,23 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
-                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, styles| {
-                    styles.add_class(CLS_HOVER)
+                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                    classes.add_class(CLS_HOVER)
                 }),
-                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, styles| {
-                    styles.remove_class(CLS_HOVER)
+                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                    classes.remove_class(CLS_HOVER)
                 }),
-                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, styles| {
-                    styles.add_class(CLS_PRESSED)
+                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                    classes.add_class(CLS_PRESSED)
                 }),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, styles| {
-                    styles.remove_class(CLS_PRESSED)
+                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                    classes.remove_class(CLS_PRESSED)
                 }),
                 On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
-                    |_, styles| {
+                    |_, classes| {
                         println!("Cancel");
-                        styles.remove_class(CLS_HOVER);
-                        styles.remove_class(CLS_PRESSED)
+                        classes.remove_class(CLS_HOVER);
+                        classes.remove_class(CLS_PRESSED)
                     },
                 ),
             ));
