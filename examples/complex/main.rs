@@ -38,6 +38,7 @@ fn main() {
                 shapes::rotate,
                 shapes::update_viewport_inset,
                 shapes::update_camera_viewport,
+                show_events,
             ),
         )
         .run();
@@ -187,4 +188,13 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
             ));
         })
         .styled(STYLE_BUTTON.clone())
+}
+
+fn show_events(mut clicked: EventReader<Clicked>, mut dragged: EventReader<SplitterDragged>) {
+    for ev in clicked.read() {
+        println!("Reading global clicked: {}", ev.id);
+    }
+    for ev in dragged.read() {
+        println!("Reading global dragged: {}", ev.id);
+    }
 }
