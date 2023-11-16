@@ -119,14 +119,14 @@ fn ui_main(mut cx: Cx) -> impl View {
         ))
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
-            e.insert((On::<SplitterDragged>::run(
-                |ev: Res<ListenerInput<SplitterDragged>>| {
+            e.insert((
+                On::<SplitterDragged>::run(|ev: Res<ListenerInput<SplitterDragged>>| {
                     println!("Dragged {}", ev.id);
-                },
-            ),));
-            e.insert((On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
-                println!("Clicked button {}", ev.id);
-            }),));
+                }),
+                On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
+                    println!("Clicked button {}", ev.id);
+                }),
+            ));
         }),
         v_splitter.bind(SplitterProps { id: "" }),
         Element::new(())
@@ -157,10 +157,10 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
             let mut e = world.entity_mut(entity);
             e.insert((
                 On::<Pointer<Click>>::run(
-                    move |events: Res<ListenerInput<Pointer<Click>>>,
-                          mut ev: EventWriter<Clicked>| {
-                        ev.send(Clicked {
-                            target: events.target,
+                    move |ev: Res<ListenerInput<Pointer<Click>>>,
+                          mut writer: EventWriter<Clicked>| {
+                        writer.send(Clicked {
+                            target: ev.target,
                             id,
                         });
                     },

@@ -69,12 +69,12 @@ pub fn v_splitter(cx: Cx<SplitterProps>) -> impl View {
                     classes.remove_class(CLS_DRAG)
                 }),
                 On::<Pointer<Drag>>::run(
-                    move |events: Res<ListenerInput<Pointer<Drag>>>,
-                          mut ev: EventWriter<SplitterDragged>| {
-                        ev.send(SplitterDragged {
-                            target: events.target,
+                    move |ev: Res<ListenerInput<Pointer<Drag>>>,
+                          mut writer: EventWriter<SplitterDragged>| {
+                        writer.send(SplitterDragged {
+                            target: ev.target,
                             id,
-                            delta: events.delta.x,
+                            delta: ev.delta.x,
                         });
                     },
                 ),
