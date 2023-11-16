@@ -29,8 +29,10 @@ fn main() {
         .init_resource::<PanelWidth>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
+        .add_plugins(EventListenerPlugin::<Clicked>::default())
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (setup, setup_view_root))
+        .add_event::<Clicked>()
         .add_systems(
             Update,
             (
@@ -144,14 +146,29 @@ fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
     Element::new((
         Element::new((
-            button.bind(ButtonProps { children: "Save" }),
-            button.bind(ButtonProps { children: "Load" }),
-            button.bind(ButtonProps { children: "Quit" }),
+            button.bind(ButtonProps {
+                id: "save",
+                children: "Save",
+            }),
+            button.bind(ButtonProps {
+                id: "load",
+                children: "Load",
+            }),
+            button.bind(ButtonProps {
+                id: "quit",
+                children: "Quit",
+            }),
         ))
         .styled((
             STYLE_ASIDE.clone(),
             Arc::new(StyleSet::build(|b| b.width(width.0))),
-        )),
+        ))
+        .once(|entity, world| {
+            let mut e = world.entity_mut(entity);
+            e.insert((On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
+                println!("Clicked {}", ev.id);
+            }),));
+        }),
         v_splitter,
         Element::new(())
             .styled(STYLE_VIEWPORT.clone())
@@ -174,16 +191,13 @@ fn v_splitter(_cx: Cx) -> impl View {
                     classes.remove_class(CLS_HOVER)
                 }),
                 On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    // println!("Drag start");
                     classes.add_class(CLS_DRAG)
                 }),
                 On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    // println!("Drag end");
                     classes.remove_class(CLS_DRAG)
                 }),
                 On::<Pointer<Drag>>::run(
                     |ev: Listener<Pointer<Drag>>, mut res: ResMut<PanelWidth>| {
-                        // println!("Drag");
                         res.0 += ev.delta.x as i32;
                     },
                 ),
@@ -201,14 +215,33 @@ fn v_splitter(_cx: Cx) -> impl View {
 
 #[derive(Clone)]
 struct ButtonProps<V: View> {
+    id: &'static str,
     children: V,
 }
 
+#[derive(Clone, Event, EntityEvent)]
+struct Clicked {
+    #[target] // Marks the field of the event that specifies the target entity
+    target: Entity,
+    id: &'static str,
+}
+
 fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
+    // Needs to be a local variable so that it can be captured in the event handler.
+    let id = cx.props.id;
     Element::new(cx.props.children.clone())
-        .once(|entity, world| {
+        .once(move |entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
+                On::<Pointer<Click>>::run(
+                    move |events: Res<ListenerInput<Pointer<Click>>>,
+                          mut ev: EventWriter<Clicked>| {
+                        ev.send(Clicked {
+                            target: events.target,
+                            id,
+                        });
+                    },
+                ),
                 On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     classes.add_class(CLS_HOVER)
                 }),
