@@ -181,20 +181,16 @@ impl Command for UpdateComputedStyle {
 
             match (self.computed.pickable, e.get_mut::<Pickable>()) {
                 (Some(pe), Some(mut pickable)) => {
-                    pickable.should_block_lower =
-                        pe == PointerEvents::None || pe == PointerEvents::SelfOnly;
-                    pickable.should_emit_events =
-                        pe == PointerEvents::All || pe == PointerEvents::SelfOnly;
+                    pickable.should_block_lower = pe == PointerEvents::All;
+                    pickable.should_emit_events = pe == PointerEvents::All;
                 }
                 (None, Some(_)) => {
                     e.remove::<Pickable>();
                 }
                 (Some(pe), None) => {
                     e.insert(Pickable {
-                        should_block_lower: pe == PointerEvents::None
-                            || pe == PointerEvents::SelfOnly,
-                        should_emit_events: pe == PointerEvents::All
-                            || pe == PointerEvents::SelfOnly,
+                        should_block_lower: pe == PointerEvents::All,
+                        should_emit_events: pe == PointerEvents::All,
                     });
                 }
                 (None, None) => {}

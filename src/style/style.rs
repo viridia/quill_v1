@@ -15,10 +15,6 @@ use super::{
 pub enum PointerEvents {
     /// No pointer events for this entity, or its children
     None,
-    /// Pointer events from children only
-    Children,
-    /// Pointer events from attached entity but not child elements
-    SelfOnly,
     /// Pointer events from both self and children
     All,
 }

@@ -16,7 +16,7 @@ use quill::{
     Cx, Element, ElementClasses, PresenterFn, QuillPlugin, StyleSet, TrackedResources, View,
     ViewHandle,
 };
-use splitter::{v_splitter, SplitterDragged, SplitterProps};
+use splitter::{v_splitter, SplitterDragStart, SplitterDragged, SplitterProps};
 use viewport::{ViewportInset, ViewportInsetElement};
 
 fn main() {
@@ -25,11 +25,13 @@ fn main() {
         .init_resource::<PanelWidth>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
+        .add_plugins(EventListenerPlugin::<SplitterDragStart>::default())
         .add_plugins(EventListenerPlugin::<SplitterDragged>::default())
         .add_plugins(EventListenerPlugin::<Clicked>::default())
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (shapes::setup, setup_view_root))
         .add_event::<Clicked>()
+        .add_event::<SplitterDragStart>()
         .add_event::<SplitterDragged>()
         .add_systems(
             Update,
@@ -84,11 +86,17 @@ lazy_static! {
 const CLS_PRESSED: &str = "pressed";
 
 #[derive(Resource)]
-pub struct PanelWidth(pub i32);
+pub struct PanelWidth {
+    value: f32,
+    drag_origin: f32,
+}
 
 impl Default for PanelWidth {
     fn default() -> Self {
-        Self(160)
+        Self {
+            value: 160.,
+            drag_origin: 0.,
+        }
     }
 }
 
@@ -115,19 +123,17 @@ fn ui_main(mut cx: Cx) -> impl View {
         ))
         .styled((
             STYLE_ASIDE.clone(),
-            Arc::new(StyleSet::build(|b| b.width(width.0))),
+            Arc::new(StyleSet::build(|b| b.width(width.value.floor()))),
         ))
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
             println!("Adding event handlers");
-            e.insert((
-                On::<SplitterDragged>::run(|ev: Res<ListenerInput<SplitterDragged>>| {
-                    println!("Received Dragged id='{}'", ev.id);
-                }),
-                On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
-                    println!("Received Clicked Button  id='{}'", ev.id);
-                }),
-            ));
+            e.insert(On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
+                println!(
+                    "Received Clicked Button id='{}' target={:?}",
+                    ev.id, ev.target
+                );
+            }));
         }),
         v_splitter.bind(SplitterProps { id: "" }),
         Element::new(())
@@ -135,6 +141,31 @@ fn ui_main(mut cx: Cx) -> impl View {
             .insert(ViewportInsetElement {}),
     ))
     .styled(STYLE_MAIN.clone())
+    .once(|entity, world| {
+        let mut e = world.entity_mut(entity);
+        e.insert((
+            On::<SplitterDragStart>::run(
+                move |_ev: Res<ListenerInput<SplitterDragStart>>, mut width: ResMut<PanelWidth>| {
+                    width.drag_origin = width.value;
+                },
+            ),
+            On::<SplitterDragged>::run(
+                move |ev: Res<ListenerInput<SplitterDragged>>,
+                      mut width: ResMut<PanelWidth>,
+                      query: Query<(&Node, &GlobalTransform)>| {
+                    match query.get(entity) {
+                        Ok((node, transform)) => {
+                            // Measure node width and clamp split position.
+                            let node_width = node.logical_rect(transform).width();
+                            width.value =
+                                (width.drag_origin + ev.distance).clamp(100., node_width - 100.);
+                        }
+                        _ => return,
+                    }
+                },
+            ),
+        ));
+    })
 }
 
 #[derive(Clone)]
@@ -160,7 +191,7 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
                 On::<Pointer<Click>>::run(
                     move |ev: Res<ListenerInput<Pointer<Click>>>,
                           mut writer: EventWriter<Clicked>| {
-                        println!("Sending Clicked id='{}'", id);
+                        println!("Sending Clicked id='{}' target={:?}", id, ev.target);
                         writer.send(Clicked {
                             target: ev.target,
                             id,
@@ -184,11 +215,11 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
         .styled(STYLE_BUTTON.clone())
 }
 
-fn show_events(mut clicked: EventReader<Clicked>, mut dragged: EventReader<SplitterDragged>) {
+fn show_events(mut clicked: EventReader<Clicked>) {
     for ev in clicked.read() {
-        println!("Reading global clicked: id='{}'", ev.id);
-    }
-    for ev in dragged.read() {
-        println!("Reading global dragged: id='{}'", ev.id);
+        println!(
+            "Reading global clicked: id='{}' target={:?}",
+            ev.id, ev.target
+        );
     }
 }

@@ -4,7 +4,8 @@ use crate::{ElementContext, View};
 
 use crate::node_span::NodeSpan;
 
-/// A View which renders a NodeBundle that can have multiple children.
+/// A View which renders a NodeBundle that can have multiple children, with no inherent style
+/// or behavior. Basically the equivalent of an HTML 'div'.
 pub struct Element<A: ViewTuple> {
     items: A,
 }

@@ -67,7 +67,6 @@ lazy_static! {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
-        .pointer_events(PointerEvents::SelfOnly)
         .width(9)
         .selector(".drag", |ss| ss
             .background_color(Some(Color::hex("#080808").unwrap())))));
@@ -76,6 +75,7 @@ lazy_static! {
         .display(ui::Display::Flex)
         .width(5)
         .height(ui::Val::Percent(30.))
+        .pointer_events(PointerEvents::None)
         .selector(":hover > &", |ss| ss
             .background_color(Some(Color::hex("#383838").unwrap())))
         .selector(".drag > &", |ss| ss
