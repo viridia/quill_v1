@@ -11,7 +11,12 @@ use crate::node_span::NodeSpan;
 #[derive(Component, Default)]
 pub struct ElementStyles {
     pub styles: Vec<Arc<StyleSet>>,
-    pub(crate) ancestor_depth: usize,
+
+    // How far up the hierarchy the selectors need to search
+    pub(crate) selector_depth: usize,
+
+    // Whether any selectors use the :hover pseudo-class
+    pub(crate) uses_hover: bool,
     // TODO: Inherited
 }
 
@@ -58,22 +63,31 @@ impl<V: View> View for ViewStyled<V> {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
                 let em = &mut ecx.world.entity_mut(entity);
-                let depth = self
+                let selector_depth = self
                     .styles
                     .iter()
                     .map(|s| s.as_ref().depth())
                     .max()
                     .unwrap_or(0);
+                let uses_hover = self
+                    .styles
+                    .iter()
+                    .map(|s| s.as_ref().uses_hover())
+                    .max()
+                    .unwrap_or(false);
+
                 match em.get_mut::<ElementStyles>() {
                     Some(mut sc) => {
                         sc.styles.clone_from(&self.styles);
-                        sc.ancestor_depth = depth;
+                        sc.selector_depth = selector_depth;
+                        sc.uses_hover = uses_hover;
                     }
                     None => {
                         em.insert((
                             ElementStyles {
-                                ancestor_depth: depth,
                                 styles: self.styles.clone(),
+                                selector_depth,
+                                uses_hover,
                             },
                             ElementClasses(HashSet::new()),
                         ));

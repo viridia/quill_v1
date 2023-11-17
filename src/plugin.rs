@@ -1,10 +1,9 @@
-use bevy::{prelude::*, utils::HashSet};
+use bevy::prelude::*;
+use bevy_mod_picking::focus::{HoverMap, PreviousHoverMap};
 
 use crate::{
     style::{ComputedStyle, UpdateComputedStyle},
-    view::ElementStyles,
-    view::TrackedResources,
-    ElementClasses, ElementContext, ViewHandle,
+    ElementClasses, ElementContext, ElementStyles, SelectorMatcher, TrackedResources, ViewHandle,
 };
 
 pub struct QuillPlugin;
@@ -64,19 +63,29 @@ fn update_styles(
     mut commands: Commands,
     query: Query<(
         Entity,
-        Ref<ElementStyles>,
-        Ref<ElementClasses>,
-        Option<&Parent>,
+        Ref<'static, ElementStyles>,
+        Ref<'static, ElementClasses>,
+        Option<&'static Parent>,
     )>,
+    hover_map: Res<HoverMap>,
+    hover_map_prev: Res<PreviousHoverMap>,
 ) {
+    let matcher = SelectorMatcher::new(&query, &hover_map.0);
+    let matcher_prev = SelectorMatcher::new(&query, &hover_map_prev.0);
     for (entity, styles, _, _) in query.iter() {
         let mut changed = styles.is_changed();
-        if !changed && styles.ancestor_depth > 0 {
+        if !changed && styles.selector_depth > 0 {
             // Search ancestors to see if any have changed.
+            // We want to know if either the class list or the hover state has changed.
             let mut e = entity;
-            for _ in 0..styles.ancestor_depth {
+            for _ in 0..styles.selector_depth {
                 match query.get(e) {
                     Ok((_, _, a_classes, a_parent)) => {
+                        if styles.uses_hover
+                            && matcher.is_hovering(&e) != matcher_prev.is_hovering(&e)
+                        {
+                            changed = true;
+                        }
                         if a_classes.is_changed() {
                             changed = true;
                             break;
@@ -94,29 +103,9 @@ fn update_styles(
         }
         if changed {
             // Compute computed style.
-
-            // Build list of class components
-            let mut classes: Vec<HashSet<String>> = Vec::with_capacity(styles.ancestor_depth);
-            let mut e = entity;
-            for _ in 0..styles.ancestor_depth {
-                match query.get(e) {
-                    Ok((_, _, a_classes, a_parent)) => {
-                        classes.push(a_classes.0.to_owned());
-                        if a_parent.is_none() {
-                            break;
-                        } else {
-                            e = a_parent.unwrap().get();
-                        }
-                    }
-                    Err(_) => {
-                        break;
-                    }
-                }
-            }
-
             let mut computed = ComputedStyle::new();
             for ss in styles.styles.iter() {
-                ss.apply_to(&mut computed, classes.as_slice());
+                ss.apply_to(&mut computed, &matcher, &entity);
             }
             commands.add(UpdateComputedStyle { entity, computed });
         }

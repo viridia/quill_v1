@@ -23,13 +23,12 @@ lazy_static! {
         .display(ui::Display::Flex)
         .width(5)
         .height(ui::Val::Percent(30.))
-        .selector(".hover > &", |ss| ss
+        .selector(":hover > &", |ss| ss
             .background_color(Some(Color::hex("#383838").unwrap())))
         .selector(".drag > &", |ss| ss
             .background_color(Some(Color::hex("#484848").unwrap())))));
 }
 
-const CLS_HOVER: &str = "hover";
 const CLS_DRAG: &str = "drag";
 
 #[derive(Clone)]
@@ -53,14 +52,6 @@ pub fn v_splitter(cx: Cx<SplitterProps>) -> impl View {
         .once(move |entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
-                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    // println!("Over");
-                    classes.add_class(CLS_HOVER)
-                }),
-                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    // println!("Out");
-                    classes.remove_class(CLS_HOVER)
-                }),
                 On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     // Add 'drag' class while dragging.
                     classes.add_class(CLS_DRAG)
@@ -86,7 +77,6 @@ pub fn v_splitter(cx: Cx<SplitterProps>) -> impl View {
                 On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
                     |_, classes| {
                         println!("Cancel");
-                        classes.remove_class(CLS_HOVER);
                         classes.remove_class(CLS_DRAG)
                     },
                 ),

@@ -73,15 +73,14 @@ lazy_static! {
         .padding_right(8)
         .selector(".pressed", |ss| ss
             .background_color(Some(Color::hex("#404040").unwrap())))
-        .selector(".hover", |ss| ss
+        .selector(":hover", |ss| ss
             .border_color(Some(Color::hex("#444").unwrap()))
             .background_color(Some(Color::hex("#2F2F2F").unwrap())))
-        .selector(".hover.pressed", |ss| ss
+        .selector(":hover.pressed", |ss| ss
             .background_color(Some(Color::hex("#484848").unwrap())))));
     static ref STYLE_VIEWPORT: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss.flex_grow(1.)));
 }
 
-const CLS_HOVER: &str = "hover";
 const CLS_PRESSED: &str = "pressed";
 
 #[derive(Resource)]
@@ -166,12 +165,6 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
                         });
                     },
                 ),
-                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.add_class(CLS_HOVER)
-                }),
-                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.remove_class(CLS_HOVER)
-                }),
                 On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     classes.add_class(CLS_PRESSED)
                 }),
@@ -181,7 +174,6 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
                 On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
                     |_, classes| {
                         println!("Cancel");
-                        classes.remove_class(CLS_HOVER);
                         classes.remove_class(CLS_PRESSED)
                     },
                 ),

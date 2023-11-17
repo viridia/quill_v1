@@ -1,11 +1,14 @@
 use bevy::{
+    ecs::entity::Entity,
     log::error,
     prelude::{Color, Handle, Image},
     ui,
-    utils::HashSet,
 };
 
-use super::{computed::ComputedStyle, selector::Selector, style_expr::StyleExpr};
+use super::{
+    computed::ComputedStyle, selector::Selector, selector_matcher::SelectorMatcher,
+    style_expr::StyleExpr,
+};
 
 /// Controls behavior of bevy_mod_picking
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -118,9 +121,6 @@ pub struct StyleSet {
     // vars: VarsMap,
     /// List of conditional styles
     pub(crate) selectors: SelectorList,
-
-    /// How many entity ancestor levels need to be checked when styles change.
-    ancestor_depth: usize,
 }
 
 impl StyleSet {
@@ -129,7 +129,6 @@ impl StyleSet {
             props: Vec::new(),
             // vars: VarsMap::new(),
             selectors: Vec::new(),
-            ancestor_depth: 0,
         }
     }
 
@@ -137,32 +136,43 @@ impl StyleSet {
     pub fn build(builder_fn: impl FnOnce(&mut StyleSetBuilder) -> &mut StyleSetBuilder) -> Self {
         let mut builder = StyleSetBuilder::new();
         builder_fn(&mut builder);
-        let depth = builder
-            .selectors
-            .iter()
-            .map(|s| s.0.depth())
-            .max()
-            .unwrap_or(0);
         Self {
             props: builder.props,
             selectors: builder.selectors,
-            ancestor_depth: depth,
         }
     }
 
-    /// Return the number of UiNode levels reference by selectors.
+    /// Return the number of UiNode levels referenced by selectors.
     pub fn depth(&self) -> usize {
-        self.ancestor_depth
+        self.selectors
+            .iter()
+            .map(|s| s.0.depth())
+            .max()
+            .unwrap_or(0)
+    }
+
+    /// Return whether any of the selectors use the ':hover' pseudo-class.
+    pub fn uses_hover(&self) -> bool {
+        self.selectors
+            .iter()
+            .map(|s| s.0.uses_hover())
+            .max()
+            .unwrap_or(false)
     }
 
     /// Merge the style properties into a computed `Style` object.
-    pub fn apply_to(&self, computed: &mut ComputedStyle, classes: &[HashSet<String>]) {
+    pub fn apply_to<'a>(
+        &self,
+        computed: &mut ComputedStyle,
+        matcher: &SelectorMatcher,
+        entity: &Entity,
+    ) {
         // Apply unconditional styles
         self.apply_attrs_to(&self.props, computed);
 
         // Apply conditional styles
         for (selector, props) in self.selectors.iter() {
-            if selector.match_classes(classes) {
+            if matcher.selector_match(selector, entity) {
                 self.apply_attrs_to(&props, computed);
             }
         }

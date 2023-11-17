@@ -76,7 +76,7 @@ lazy_static! {
         .display(ui::Display::Flex)
         .width(5)
         .height(ui::Val::Percent(30.))
-        .selector(".hover > &", |ss| ss
+        .selector(":hover > &", |ss| ss
             .background_color(Some(Color::hex("#383838").unwrap())))
         .selector(".drag > &", |ss| ss
             .background_color(Some(Color::hex("#484848").unwrap())))));
@@ -92,17 +92,16 @@ lazy_static! {
         .padding_right(8)
         .selector(".pressed", |ss| ss
             .background_color(Some(Color::hex("#404040").unwrap())))
-        .selector(".hover", |ss| ss
+        .selector(":hover", |ss| ss
             .border_color(Some(Color::hex("#444").unwrap()))
             .background_color(Some(Color::hex("#2F2F2F").unwrap())))
-        .selector(".hover.pressed", |ss| ss
+        .selector(":hover.pressed", |ss| ss
             .background_color(Some(Color::hex("#484848").unwrap())))));
     static ref STYLE_VIEWPORT: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss.flex_grow(1.)));
 }
 
 const DEFAULT_FOV: f32 = 0.69; // 40 degrees
 const X_EXTENT: f32 = 14.5;
-const CLS_HOVER: &str = "hover";
 const CLS_DRAG: &str = "drag";
 const CLS_PRESSED: &str = "pressed";
 
@@ -182,14 +181,6 @@ fn v_splitter(_cx: Cx) -> impl View {
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
-                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    // println!("Over");
-                    classes.add_class(CLS_HOVER)
-                }),
-                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    // println!("Out");
-                    classes.remove_class(CLS_HOVER)
-                }),
                 On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     classes.add_class(CLS_DRAG)
                 }),
@@ -204,7 +195,6 @@ fn v_splitter(_cx: Cx) -> impl View {
                 On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
                     |_, classes| {
                         println!("Cancel");
-                        classes.remove_class(CLS_HOVER);
                         classes.remove_class(CLS_DRAG)
                     },
                 ),
@@ -242,12 +232,6 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
                         });
                     },
                 ),
-                On::<Pointer<Over>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.add_class(CLS_HOVER)
-                }),
-                On::<Pointer<Out>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.remove_class(CLS_HOVER)
-                }),
                 On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     classes.add_class(CLS_PRESSED)
                 }),
@@ -257,7 +241,6 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
                 On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
                     |_, classes| {
                         println!("Cancel");
-                        classes.remove_class(CLS_HOVER);
                         classes.remove_class(CLS_PRESSED)
                     },
                 ),

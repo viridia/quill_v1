@@ -1,6 +1,5 @@
 use std::fmt;
 
-use bevy::utils::HashSet;
 use winnow::{
     ascii::space0,
     combinator::{alt, opt, preceded, repeat, separated},
@@ -37,6 +36,9 @@ pub enum Selector {
     /// Match an element with a specific class name.
     Class(String, Box<Selector>),
 
+    /// Element that is being hovered.
+    Hover(Box<Selector>),
+
     /// Reference to the current element.
     Current(Box<Selector>),
 
@@ -47,11 +49,16 @@ pub enum Selector {
     Either(Vec<Box<Selector>>),
 }
 
+enum SelectorToken<'s> {
+    Class(&'s str),
+    Hover,
+}
+
 fn parent<'s>(input: &mut &'s str) -> PResult<()> {
     (space0, '>', space0).void().parse_next(input)
 }
 
-fn class_name<'s>(input: &mut &'s str) -> PResult<&'s str> {
+fn class_name<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
     preceded(
         '.',
         (
@@ -60,18 +67,33 @@ fn class_name<'s>(input: &mut &'s str) -> PResult<&'s str> {
         ),
     )
     .recognize()
+    .map(|cls: &str| SelectorToken::Class(&cls[1..]))
     .parse_next(input)
 }
 
-fn simple_selector<'s>(input: &mut &'s str) -> PResult<(Option<char>, Vec<&'s str>)> {
-    (opt(alt(('*', '&'))), repeat(0.., class_name)).parse_next(input)
+fn hover<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
+    ":hover"
+        .recognize()
+        .map(|_| SelectorToken::Hover)
+        .parse_next(input)
+}
+
+fn simple_selector<'s>(input: &mut &'s str) -> PResult<(Option<char>, Vec<SelectorToken<'s>>)> {
+    (opt(alt(('*', '&'))), repeat(0.., alt((class_name, hover)))).parse_next(input)
 }
 
 fn combo_selector<'s, 'a>(input: &mut &'s str) -> PResult<Box<Selector>> {
     let mut sel = Box::new(Selector::Accept);
     let (prefix, classes) = simple_selector.parse_next(input)?;
-    for cls in classes {
-        sel = Box::new(Selector::Class(cls[1..].into(), sel));
+    for tok in classes {
+        match tok {
+            SelectorToken::Class(cls) => {
+                sel = Box::new(Selector::Class(cls.into(), sel));
+            }
+            SelectorToken::Hover => {
+                sel = Box::new(Selector::Hover(sel));
+            }
+        }
     }
     if let Some(ch) = prefix {
         if ch == '&' {
@@ -103,8 +125,15 @@ impl<'a> Selector {
         while parent.parse_next(input).is_ok() {
             sel = Box::new(Selector::Parent(sel));
             let (prefix, classes) = simple_selector.parse_next(input)?;
-            for cls in classes {
-                sel = Box::new(Selector::Class(cls[1..].into(), sel));
+            for tok in classes {
+                match tok {
+                    SelectorToken::Class(cls) => {
+                        sel = Box::new(Selector::Class(cls.into(), sel));
+                    }
+                    SelectorToken::Hover => {
+                        sel = Box::new(Selector::Hover(sel));
+                    }
+                }
             }
             if let Some(ch) = prefix {
                 if ch == '&' {
@@ -122,24 +151,26 @@ impl<'a> Selector {
         match self {
             Selector::Accept => 1,
             Selector::Class(_, next) => next.depth(),
+            Selector::Hover(next) => next.depth(),
             Selector::Current(next) => next.depth(),
             Selector::Parent(next) => next.depth() + 1,
             Selector::Either(opts) => opts.iter().map(|next| next.depth()).max().unwrap_or(0),
         }
     }
 
-    /// Given an array of ElementClasses components representing the ancestor chain, match the
-    /// selector expression with the classes.
-    pub(crate) fn match_classes(&self, classes: &[HashSet<String>]) -> bool {
+    /// Returns whether this selector uses the hover pseudo-class.
+    pub(crate) fn uses_hover(&self) -> bool {
         match self {
-            Selector::Accept => true,
-            Selector::Class(cls, next) => {
-                classes.first().map(|f| f.contains(cls)).unwrap_or(false)
-                    && next.match_classes(classes)
-            }
-            Selector::Current(next) => next.match_classes(classes),
-            Selector::Parent(next) => next.match_classes(&classes[1..]),
-            Selector::Either(opts) => opts.iter().any(|next| next.match_classes(classes)),
+            Selector::Accept => false,
+            Selector::Class(_, next) => next.uses_hover(),
+            Selector::Hover(_) => true,
+            Selector::Current(next) => next.uses_hover(),
+            Selector::Parent(next) => next.uses_hover(),
+            Selector::Either(opts) => opts
+                .iter()
+                .map(|next| next.uses_hover())
+                .max()
+                .unwrap_or(false),
         }
     }
 }
@@ -173,6 +204,7 @@ impl fmt::Display for Selector {
             }
 
             Selector::Class(name, prev) => write!(f, "{}.{}", prev, name),
+            Selector::Hover(prev) => write!(f, "{}:hover", prev),
             Selector::Parent(prev) => match prev.as_ref() {
                 Selector::Parent(_) => write!(f, "{}* > ", prev),
                 _ => write!(f, "{} > ", prev),
@@ -257,6 +289,21 @@ mod tests {
         assert_eq!(
             ".foo".parse::<Selector>().unwrap(),
             Selector::Class("foo".into(), Box::new(Selector::Accept))
+        );
+    }
+
+    #[test]
+    fn test_parse_hover() {
+        assert_eq!(
+            ":hover".parse::<Selector>().unwrap(),
+            Selector::Hover(Box::new(Selector::Accept))
+        );
+        assert_eq!(
+            ".foo:hover".parse::<Selector>().unwrap(),
+            Selector::Hover(Box::new(Selector::Class(
+                "foo".into(),
+                Box::new(Selector::Accept)
+            )))
         );
     }
 
