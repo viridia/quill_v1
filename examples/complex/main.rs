@@ -119,12 +119,13 @@ fn ui_main(mut cx: Cx) -> impl View {
         ))
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
+            println!("Adding event handlers");
             e.insert((
                 On::<SplitterDragged>::run(|ev: Res<ListenerInput<SplitterDragged>>| {
-                    println!("Dragged {}", ev.id);
+                    println!("Received Dragged id='{}'", ev.id);
                 }),
                 On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
-                    println!("Clicked button {}", ev.id);
+                    println!("Received Clicked Button  id='{}'", ev.id);
                 }),
             ));
         }),
@@ -159,6 +160,7 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
                 On::<Pointer<Click>>::run(
                     move |ev: Res<ListenerInput<Pointer<Click>>>,
                           mut writer: EventWriter<Clicked>| {
+                        println!("Sending Clicked id='{}'", id);
                         writer.send(Clicked {
                             target: ev.target,
                             id,
@@ -184,9 +186,9 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
 
 fn show_events(mut clicked: EventReader<Clicked>, mut dragged: EventReader<SplitterDragged>) {
     for ev in clicked.read() {
-        println!("Reading global clicked: {}", ev.id);
+        println!("Reading global clicked: id='{}'", ev.id);
     }
     for ev in dragged.read() {
-        println!("Reading global dragged: {}", ev.id);
+        println!("Reading global dragged: id='{}'", ev.id);
     }
 }
