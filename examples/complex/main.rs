@@ -16,7 +16,7 @@ use quill::{
     Cx, Element, ElementClasses, PresenterFn, QuillPlugin, StyleSet, TrackedResources, View,
     ViewHandle,
 };
-use splitter::{v_splitter, SplitterDragStart, SplitterDragged, SplitterProps};
+use splitter::{v_splitter, SplitterDragStart, SplitterDragged, SplitterPlugin, SplitterProps};
 use viewport::{ViewportInset, ViewportInsetElement};
 
 fn main() {
@@ -25,14 +25,11 @@ fn main() {
         .init_resource::<PanelWidth>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
-        .add_plugins(EventListenerPlugin::<SplitterDragStart>::default())
-        .add_plugins(EventListenerPlugin::<SplitterDragged>::default())
         .add_plugins(EventListenerPlugin::<Clicked>::default())
         .add_plugins(QuillPlugin)
+        .add_plugins(SplitterPlugin)
         .add_systems(Startup, (shapes::setup, setup_view_root))
         .add_event::<Clicked>()
-        .add_event::<SplitterDragStart>()
-        .add_event::<SplitterDragged>()
         .add_systems(
             Update,
             (

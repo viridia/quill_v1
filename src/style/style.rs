@@ -1,9 +1,13 @@
 use bevy::{
+    asset::AssetPath,
     ecs::entity::Entity,
     log::error,
+    math::IVec2,
     prelude::{Color, Handle, Image},
     ui,
 };
+
+use crate::Cursor;
 
 use super::{
     computed::ComputedStyle, selector::Selector, selector_matcher::SelectorMatcher,
@@ -100,6 +104,11 @@ pub enum StyleProp {
 
     // LineBreak(BreakLineOn),
     PointerEvents(StyleExpr<PointerEvents>),
+
+    // TODO: Future planned features
+    Cursor(StyleExpr<Cursor>),
+    CursorImage(StyleExpr<AssetPath<'static>>),
+    CursorOffset(StyleExpr<IVec2>),
 }
 
 type SelectorList = Vec<(Box<Selector>, Vec<StyleProp>)>;
@@ -434,6 +443,10 @@ impl StyleSet {
                         computed.pickable = Some(pickable);
                     }
                 }
+
+                StyleProp::Cursor(_) => todo!(),
+                StyleProp::CursorImage(_) => todo!(),
+                StyleProp::CursorOffset(_) => todo!(),
             }
         }
     }

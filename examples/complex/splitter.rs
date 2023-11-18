@@ -5,6 +5,17 @@ use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use lazy_static::lazy_static;
 use quill::{Cx, Element, ElementClasses, PointerEvents, StyleSet, View};
 
+pub struct SplitterPlugin;
+
+impl Plugin for SplitterPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(EventListenerPlugin::<SplitterDragStart>::default())
+            .add_plugins(EventListenerPlugin::<SplitterDragged>::default())
+            .add_event::<SplitterDragStart>()
+            .add_event::<SplitterDragged>();
+    }
+}
+
 // Style definitions for the splitter widget.
 lazy_static! {
     // The splitter widget
@@ -60,24 +71,24 @@ pub fn v_splitter(cx: Cx<SplitterProps>) -> impl View {
         .once(move |entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
-                // On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                //     // Add 'drag' class while dragging.
-                //     classes.add_class(CLS_DRAG)
-                // }),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.remove_class(CLS_DRAG)
-                }),
                 On::<Pointer<DragStart>>::run(
                     // TODO: Instead of sending a start event, what we need is to simply remember
                     // the current split value at drag start and add it to the output.
                     move |ev: Res<ListenerInput<Pointer<DragStart>>>,
-                          mut writer: EventWriter<SplitterDragStart>| {
+                          mut writer: EventWriter<SplitterDragStart>,
+                          mut query: Query<&mut ElementClasses>| {
+                        if let Ok(mut classes) = query.get_mut(ev.target) {
+                            classes.add_class(CLS_DRAG)
+                        }
                         writer.send(SplitterDragStart {
                             target: ev.target,
                             id,
                         });
                     },
                 ),
+                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                    classes.remove_class(CLS_DRAG)
+                }),
                 On::<Pointer<Drag>>::run(
                     move |ev: Res<ListenerInput<Pointer<Drag>>>,
                           mut writer: EventWriter<SplitterDragged>| {
