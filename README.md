@@ -4,7 +4,7 @@
 constructing reactive user interfaces, similar to frameworks like React and Solid, but built on a
 foundation of Bevy ECS state management.
 
-Currently in "proof of concept" phase.
+Currently in "proof of concept" phase. This means that nothing is set in stone yet.
 
 ## Getting started
 
@@ -19,8 +19,7 @@ When the window opens, hit the spacebar to update the counter.
 
 ## Aspirations / guiding principles:
 
-* Allows easy composition and re-use of hierarchical components (called "presenters" to avoid
-  confusion with Bevy ECS "components").
+* Allows easy composition and re-use of hierarchical widgets.
 * No special syntax required, it's just Rust.
 * Allows reactive hooks such as `use_resource()` that hook into Bevy's change detection framework.
 * Built on top of existing Bevy UI components - presenters construct a graph and modify it in
@@ -32,7 +31,104 @@ When the window opens, hit the spacebar to update the counter.
   from both React and Solid to handle incremental modifications of the UI node graph.
 * Supports CSS-like styling and dynamic visuals.
 
-# Example
+## Architecture and Rendering Lifecycle
+
+### Display Trees and View Trees
+
+Quill maintains several different hierarchical structures:
+
+The **display tree** is the tree of Bevy Ui Node entities which actually render. These are the
+nodes which actually produce rendering commands which are sent to the GPU. In Quill, the display
+tree is analogous to the HTML DOM: it's the output of a template or generator.
+
+The **view tree** is the tree of nodes that generate the display tree. It's made up of `View` trait
+objects. The most important method of a view is the `.build()` method, which is what actually
+generates the nodes of the display tree. Views are able to differentially 'patch' the display
+tree, modifying it in place instead of replacing it.
+
+The display tree and view tree have similar hierarchical structure, but they are not the same.
+Most view nodes generate a single display node, and most view nodes with children will generate
+a display node with the same number of children. However, there are exeptions: A `For` node
+will generate multiple children depending on the length of the array used as input, and conditional
+nodes will generate a single child out of multiple possible options.
+
+**Presenters** are Rust functions which generate a view tree; the return type of a presenter is
+`impl View`. (If you have used React, Solid, or other similar frameworks, these are called
+"component functions", however the name "component" means something different in Bevy.)
+
+> [!NOTE]
+> Note: The name "presenter" has nothing to do with the "Model/View/Presenter" design pattern. (Well,
+> almost nothing.)
+
+A presenter is typically responsible for a small subset of the total view tree for the whole UI.
+The `View` nodes output by a presenter fall into one of several types:
+
+* "Built-in" view types, such as `Element`, `For`, `If` and so on. These are Rust objects which
+  directly implement the `View` trait.
+* Primitive types which implement `View`, such as `String` and `&str`.
+* View nodes which invoke another presenter function.
+
+For those who are familiar with React, the built-in views correspond to "intrinsic" types such as
+`<div>` or `<button>`, where the presenter nodes correspond to components such as `<MyComponent>`.
+However, the convention of using upper-case/lower-case is reversed here: Built-in views generally
+start with an upper-case letter (because they are Rust structs), whereas presenters start with
+a lower-case letter (because they are Rust functions).
+
+`View` trees are stateless and immutable: each rendering cycle, a new `View` tree is constructed.
+However, this is actually very cheap, because the output of a single presenter is not a tree of
+allocated/boxed nodes in memory, but a set of nested tuples - in other words, it's a single
+object stored in continguous memory. The only exception is when a presenter invokes another
+presenter - in this case, the output of the nested presenter is boxed and stored in an ECS
+component called a `ViewHandle`, which contains a type-erased reference to the output of the
+presenter.
+
+### Managing State
+
+Because `View`s are stateless, their state must be managed externally. Each `View` has an associated
+type, `View::State` which defines the type of the view's state. For most views, the `State` not only
+includes the state for itself, but the state for all child views as well. This means that the state
+object, like the view object, is a set of nested tuples stored in a single contiguous memory region.
+View states, like `View`s, are also stored in the `ViewHandle`, however unlike the view tree the
+state is mutable. The `.build()` method is responsible for updating the state at the same time
+as it generates the display tree nodes.
+
+A bit more about `ViewHandle`s: The handle contains everything needed to re-render a presenter,
+including a reference to the presenter itself, it's arguments, the previous view tree (from the
+last time the presenter was called) and the view state. This means that it's possible to regenerate
+just a subset of the display tree without having to regenerate the whole thing, so long as you
+have a reference to the `ViewHandle`.
+
+`ViewHandles` are ECS components which are attached to the entities that make up the view tree.
+Even though the output of a single presenter is a single `View` object, there are multiple
+presenters (and in some cases a presenter may be invoked more than once), and each presenter
+invocation is represented by an entity with a `ViewHandle`. Other ECS components are
+also attached to this entity. The most important of these are components that handle reactivity.
+
+To create a Quill UI, all you need to do is insert a `ViewHandle` into the ECS world. There can
+be multiple `ViewHandles` for multiple independent UIs.
+
+### Reactivity
+
+"Reactive programming" is a development paradigm in which echews explicit subscribing and
+unsubscribing from event sources. Instead the mere act of accessing data creates a dependency on it.
+This dependency causes the using code to be re-run when the data changes. An easy analogy to
+understanding this concept is a spreadsheet cell: when a formula has a reference to cells A1
+and B2, the spreadsheet's internal engine knows when that cell needs to be updated (whenever A1
+or B2 changes), there's no need to explicitly subscribe to them.
+
+During rendering, presenters can invoke "reactive" functions such as `use_resource()`. These
+functions do two things: First, they return the data that was requested, such as a resource.
+Secondly, they add a "tracking" component to the view handle entity that indicates that the
+`ViewHandle` and it's presenter has a dependency on that data, so that when that data changes,
+the `ViewHandle` is re-rendered.
+
+Quill contains an ECS system which queries these tracking components and re-renders the views which
+are out of date. Note that tracking components are always cleared before calling the presenter,
+because the presenter is expected to re-subscribe to its dependencies as a side-effect of execution.
+This is how reactive frameworks like React and Solid work, and it's how we can get away with
+not having to explicitly unsubscribe from our dependencies.
+
+## Example
 
 ```rust
 /// Define some styles
@@ -83,7 +179,6 @@ fn v_splitter(mut _cx: Cx) -> impl View {
 }
 
 ```
-
 # Styling
 
 Quill supports CSS-like styling in the form of `StyleSet`s. A `StyleSet` is a sharable object
