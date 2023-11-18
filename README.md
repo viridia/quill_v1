@@ -4,7 +4,11 @@
 constructing reactive user interfaces, similar to frameworks like React and Solid, but built on a
 foundation of Bevy ECS state management.
 
-Currently in "proof of concept" phase. This means that nothing is set in stone yet.
+Quill is an experimental library which borrows ideas from a number of popular UI frameworks,
+including React.js, Solid.js, and Xilem. However, the way these ideas are implemented is quite
+different, owing to the need to build on the foundations of Bevy ECS.
+
+This project is in "proof of concept" phase. This means that nothing is set in stone yet.
 
 ## Getting started
 
@@ -211,29 +215,12 @@ example, methods such as `.margin_right()` and `.row_gap()` accept an `impl Leng
 an integer (i32), a float (f32), or a Bevy `ui::Val` object. In the case where no unit is specified,
 pixels is the default unit, so for example `.border(2)` specifies a border width of 2 pixels.
 
-**Coming Soon**: Dynamic selectors, classes, and CSS variables.
+**Coming Soon**: CSS variables.
 
 # Design Notes
 
-Quill is an experimental library which borrows ideas from a number of popular UI frameworks,
-including React.js, Solid.js, and Xilem. However, the way these ideas are implemented is quite
-different, owing to the need to build on the foundations of Bevy ECS.
-
 A Quill user inteface consists of a "view root", which represents the topmost element of the UI.
 View roots are Bevy components, and multiple view roots are permitted.
-
-The view root maintains two trees: the first is a "display" tree made up of Bevy UI elements
-(UiNodes). This tree is used to produce the actual rendering commands that are issued to the GPU.
-
-The second tree is the "view state" tree, which acts more like a template or a generator. The view
-state builds the display tree, and patches it when reacting to changes in application state.
-The view state tree also contains conditional logic such as If and For nodes.
-
-The view state tree is produced by "presenters", which are callable functions that generate a
-view state. The output of presenter is an object that implements the `View` trait.
-
-(Note: the word "presenter" has nothing to do with the "Model / View / Presenter" design pattern.
-Well, almost nothing.)
 
 The `View` trait has several methods, but the most important one is `.build()`. This is the
 method that actually builds the display graph. When called the first time, it will create the
@@ -244,18 +231,6 @@ view state.
 Any object can implement `View`. For example, there are implementations of `View` for both
 `String` and `&str`, which means that ordinary strings can be used as child nodes without the
 need to wrap them in a special "text" element.
-
-The view state graph is not necessarily long-lived: each time the presenter function is called, a
-new view state graph is created, replacing the previous one. Fortunately, the view state graph is
-all "inlined", meaning that the tree structure is made out of nested tuples rather than separately
-allocated nodes. As a result, the view state graph for a presenter is a single stack-allocated
-object, and re-constructing it is a fairly cheap operation.
-
-Because the view state graph is constantly being recreated, it needs a way to preserve its state
-across re-renders. This is handled by an associated type, `View::State`, which is state that
-is external to the view state graph. Like the view state graph, it also consists of nested tuples,
-but these are stored in an ECS component rather than on the stack, allowing them to persist between
-render cycles.
 
 Even though the view state graph is frequently reconstructed, it's "shape" is relatively stable,
 unlike the display graph. For example, a `For` element may generate varying numbers of children
