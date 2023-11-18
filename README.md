@@ -60,6 +60,18 @@ nodes will generate a single child out of multiple possible options.
 > Note: The name "presenter" has nothing to do with the "Model/View/Presenter" design pattern. (Well,
 > almost nothing.)
 
+Here's an example of a basic presenter which creates an element with two children:
+
+```rust
+fn hello_world(mut cx: Cx) -> impl View {
+    // `Element` is a generic UI node, kind of like an HTML "div".
+    Element::new((
+        "Hello, ", // Yes, raw string slices implement `View` too!
+        Element::new("World!"),
+    ))
+}
+```
+
 A presenter is typically responsible for a small subset of the total view tree for the whole UI.
 The `View` nodes output by a presenter fall into one of several types:
 
