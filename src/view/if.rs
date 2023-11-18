@@ -46,7 +46,7 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
                     // Despawn old state and construct new state
                     self.raze(ecx, state, prev);
                     let mut true_state: Pos::State = Default::default();
-                    let nodes = self.pos.build(ecx, &mut true_state, prev);
+                    let nodes = self.pos.build(ecx, &mut true_state, &NodeSpan::Empty);
                     *state = Self::State::True(true_state);
                     nodes
                 }
@@ -62,7 +62,7 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
                     // Despawn old state and construct new state
                     self.raze(ecx, state, prev);
                     let mut false_state: Neg::State = Default::default();
-                    let nodes = self.neg.build(ecx, &mut false_state, prev);
+                    let nodes = self.neg.build(ecx, &mut false_state, &NodeSpan::Empty);
                     *state = Self::State::False(false_state);
                     nodes
                 }

@@ -30,23 +30,23 @@ pub struct Cx<'w, 'p, Props = ()> {
 }
 
 impl<'w, 'p, Props> Cx<'w, 'p, Props> {
+    fn add_tracked<T: Resource>(&mut self) {
+        if let Some(mut tracked) = self.sys.world.get_mut::<TrackedResources>(self.sys.entity) {
+            tracked.data.push(Box::new(AnyRes::<T>::new()));
+        } else {
+            let mut tracked = TrackedResources::default();
+            tracked.data.push(Box::new(AnyRes::<T>::new()));
+            self.sys.world.entity_mut(self.sys.entity).insert(tracked);
+        }
+    }
+
     pub fn use_resource<T: Resource>(&mut self) -> &T {
-        let mut tracked = self
-            .sys
-            .world
-            .get_mut::<TrackedResources>(self.sys.entity)
-            .expect("TrackedResources not found for this entity");
-        tracked.data.push(Box::new(AnyRes::<T>::new()));
+        self.add_tracked::<T>();
         self.sys.world.resource::<T>()
     }
 
     pub fn use_resource_mut<T: Resource>(&mut self) -> Mut<T> {
-        let mut tracked = self
-            .sys
-            .world
-            .get_mut::<TrackedResources>(self.sys.entity)
-            .expect("TrackedResources not found for this entity");
-        tracked.data.push(Box::new(AnyRes::<T>::new()));
+        self.add_tracked::<T>();
         self.sys.world.resource_mut::<T>()
     }
 }
@@ -175,6 +175,7 @@ impl View for &'static str {
         _state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
+        println!("Prev: {:?}", prev);
         if let NodeSpan::Node(text_entity) = prev {
             if let Some(mut old_text) = ecx.world.entity_mut(*text_entity).get_mut::<Text>() {
                 // TODO: compare text for equality.
@@ -303,10 +304,7 @@ impl<
             None => {
                 let entity = parent_ecx
                     .world
-                    .spawn((
-                        TrackedResources::default(),
-                        ViewHandle::new(self.presenter, self.props.clone()),
-                    ))
+                    .spawn(ViewHandle::new(self.presenter, self.props.clone()))
                     .set_parent(parent_ecx.entity)
                     .id();
                 *state = Some(entity);

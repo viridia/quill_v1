@@ -1,12 +1,18 @@
 //! Example of nested presenter functions.
 
 use bevy::prelude::*;
-use quill::{Cx, Element, If, PresenterFn, QuillPlugin, TrackedResources, View, ViewHandle};
+use bevy_mod_picking::{
+    backends::bevy_ui::BevyUiBackend,
+    input::InputPlugin,
+    picking_core::{CorePlugin, InteractionPlugin},
+};
+use quill::{Cx, Element, If, PresenterFn, QuillPlugin, View, ViewHandle};
 
 fn main() {
     App::new()
         .init_resource::<Counter>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (bevy::window::close_on_esc, update_counter))
@@ -14,10 +20,7 @@ fn main() {
 }
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn((
-        TrackedResources::default(),
-        ViewHandle::new(root_presenter, ()),
-    ));
+    commands.spawn(ViewHandle::new(root_presenter, ()));
 }
 
 fn root_presenter(mut _cx: Cx) -> impl View {

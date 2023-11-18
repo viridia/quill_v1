@@ -6,12 +6,18 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use quill::{Cx, Element, If, QuillPlugin, TrackedResources, View, ViewHandle};
+use bevy_mod_picking::{
+    backends::bevy_ui::BevyUiBackend,
+    input::InputPlugin,
+    picking_core::{CorePlugin, InteractionPlugin},
+};
+use quill::{Cx, Element, If, QuillPlugin, View, ViewHandle};
 
 fn main() {
     App::new()
         .init_resource::<Counter>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (bevy::window::close_on_esc, rotate, update_counter))
@@ -25,10 +31,7 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn((
-        TrackedResources::default(),
-        ViewHandle::new(root_presenter, 1),
-    ));
+    commands.spawn(ViewHandle::new(root_presenter, 1));
 }
 
 fn root_presenter(mut cx: Cx<u8>) -> impl View {

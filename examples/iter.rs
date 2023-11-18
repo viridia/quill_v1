@@ -1,7 +1,7 @@
 //! Example of a For view.
 
 use bevy::prelude::*;
-use quill::{Cx, Element, For, QuillPlugin, TrackedResources, View, ViewHandle};
+use quill::{Cx, Element, For, QuillPlugin, View, ViewHandle};
 
 fn main() {
     App::new()
@@ -15,10 +15,7 @@ fn main() {
 }
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn((
-        TrackedResources::default(),
-        ViewHandle::new(root_presenter, ()),
-    ));
+    commands.spawn(ViewHandle::new(root_presenter, ()));
 }
 
 const SUITS: &[&str] = &["hearts", "spades", "clubs", "diamonds"];

@@ -167,7 +167,7 @@ lazy_static! {
 
 /// Function to set up the view root
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn((TrackedResources::default(), ViewHandle::new(ui_main, ())));
+    commands.spawn(ViewHandle::new(ui_main, ()));
 }
 
 /// Top-level presenter

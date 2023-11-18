@@ -12,10 +12,7 @@ use bevy_mod_picking::{
     prelude::*,
 };
 use lazy_static::lazy_static;
-use quill::{
-    Cx, Element, ElementClasses, PresenterFn, QuillPlugin, StyleSet, TrackedResources, View,
-    ViewHandle,
-};
+use quill::{Cx, Element, ElementClasses, PresenterFn, QuillPlugin, StyleSet, View, ViewHandle};
 use splitter::{v_splitter, SplitterDragStart, SplitterDragged, SplitterPlugin, SplitterProps};
 use viewport::{ViewportInset, ViewportInsetElement};
 
@@ -98,7 +95,7 @@ impl Default for PanelWidth {
 }
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn((TrackedResources::default(), ViewHandle::new(ui_main, ())));
+    commands.spawn(ViewHandle::new(ui_main, ()));
 }
 
 fn ui_main(mut cx: Cx) -> impl View {

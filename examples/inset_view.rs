@@ -19,8 +19,8 @@ use bevy_mod_picking::{
 };
 use lazy_static::lazy_static;
 use quill::{
-    Cx, Element, ElementClasses, PointerEvents, PresenterFn, QuillPlugin, StyleSet,
-    TrackedResources, View, ViewHandle,
+    Cx, Element, ElementClasses, PointerEvents, PresenterFn, QuillPlugin, StyleSet, View,
+    ViewHandle,
 };
 
 fn main() {
@@ -138,7 +138,7 @@ impl Default for PanelWidth {
 }
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn((TrackedResources::default(), ViewHandle::new(ui_main, ())));
+    commands.spawn(ViewHandle::new(ui_main, ()));
 }
 
 fn ui_main(mut cx: Cx) -> impl View {

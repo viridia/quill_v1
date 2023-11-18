@@ -3,13 +3,19 @@
 use std::sync::Arc;
 
 use bevy::{prelude::*, ui};
+use bevy_mod_picking::{
+    backends::bevy_ui::BevyUiBackend,
+    input::InputPlugin,
+    picking_core::{CorePlugin, InteractionPlugin},
+};
 use lazy_static::lazy_static;
-use quill::{Cx, Element, If, QuillPlugin, StyleSet, TrackedResources, View, ViewHandle};
+use quill::{Cx, Element, If, QuillPlugin, StyleSet, View, ViewHandle};
 
 fn main() {
     App::new()
         .init_resource::<Counter>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (bevy::window::close_on_esc, update_counter))
@@ -51,7 +57,7 @@ lazy_static! {
 }
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn((TrackedResources::default(), ViewHandle::new(ui_main, ())));
+    commands.spawn(ViewHandle::new(ui_main, ()));
 }
 
 fn ui_main(mut cx: Cx) -> impl View {
