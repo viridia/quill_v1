@@ -2,7 +2,6 @@
 
 * Some kind of sugar for stylesets that avoids all the Arc::new() and .clone() calls.
 * Change style builder methods to accept `impl StyleValue`. Then define `Var("varname")`
-* Change TrackedResources to automatically create the component when needed.
 * Leaf nodes render when dependencies change (currently render unconditionally).
 * Option for ViewHandle to parent to an explicit (manually constructed) UiNode.
 * Experiment with dependency injection instead of hooks.

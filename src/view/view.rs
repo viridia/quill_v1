@@ -175,7 +175,6 @@ impl View for &'static str {
         _state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
-        println!("Prev: {:?}", prev);
         if let NodeSpan::Node(text_entity) = prev {
             if let Some(mut old_text) = ecx.world.entity_mut(*text_entity).get_mut::<Text>() {
                 // TODO: compare text for equality.
