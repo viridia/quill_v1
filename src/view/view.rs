@@ -3,74 +3,16 @@ use bevy::{
     text::{Text, TextStyle},
 };
 
-use crate::{TrackedResources, ViewHandle};
+use crate::{Cx, TrackedResources, ViewHandle};
 
 use crate::node_span::NodeSpan;
 
 use super::{
-    local::{LocalData, TrackedLocals},
-    resource::AnyRes,
+    cx::ElementContext,
     view_insert::ViewInsert,
     view_styled::{StyleTuple, ViewStyled},
     view_with::ViewWith,
 };
-
-/// Passed to `build` and `raze` methods to give access to the world and the view entity.
-pub struct ElementContext<'w> {
-    pub(crate) world: &'w mut World,
-    pub(crate) entity: Entity,
-}
-
-/// Cx is a context parameter that is passed to presenters. It contains the presenter's
-/// properties (passed from the parent presenter), plus other context information needed
-/// in building the view state graph.
-// TODO: Move this to it's own file once it's stable.
-pub struct Cx<'w, 'p, Props = ()> {
-    pub props: &'p Props,
-    pub sys: &'p mut ElementContext<'w>,
-    pub(crate) local_index: usize,
-}
-
-impl<'w, 'p, Props> Cx<'w, 'p, Props> {
-    fn add_tracked_resource<T: Resource>(&mut self) {
-        if let Some(mut tracked) = self.sys.world.get_mut::<TrackedResources>(self.sys.entity) {
-            tracked.data.push(Box::new(AnyRes::<T>::new()));
-        } else {
-            let mut tracked = TrackedResources::default();
-            tracked.data.push(Box::new(AnyRes::<T>::new()));
-            self.sys.world.entity_mut(self.sys.entity).insert(tracked);
-        }
-    }
-
-    pub fn use_resource<T: Resource>(&mut self) -> &T {
-        self.add_tracked_resource::<T>();
-        self.sys.world.resource::<T>()
-    }
-
-    pub fn use_resource_mut<T: Resource>(&mut self) -> Mut<T> {
-        self.add_tracked_resource::<T>();
-        self.sys.world.resource_mut::<T>()
-    }
-
-    pub fn use_local<T: Send + Sync + Clone>(&mut self, init: impl FnOnce() -> T) -> LocalData<T> {
-        let index = self.local_index;
-        self.local_index += 1;
-        if let Some(mut tracked) = self.sys.world.get_mut::<TrackedLocals>(self.sys.entity) {
-            tracked.get::<T>(index, init)
-        } else {
-            self.sys
-                .world
-                .entity_mut(self.sys.entity)
-                .insert(TrackedLocals::default());
-            let mut tracked = self
-                .sys
-                .world
-                .get_mut::<TrackedLocals>(self.sys.entity)
-                .unwrap();
-            tracked.get::<T>(index, init)
-        }
-    }
-}
 
 pub trait View: Send + Sync
 where
@@ -181,8 +123,8 @@ impl View for String {
     }
 
     fn raze(&self, ecx: &mut ElementContext, _state: &mut Self::State, prev: &NodeSpan) {
+        println!("Raze: String {}", self);
         prev.despawn_recursive(ecx.world);
-        // ecx.world.entity_mut(ecx.entity).despawn_recursive();
     }
 }
 
@@ -229,8 +171,8 @@ impl View for &'static str {
     }
 
     fn raze(&self, ecx: &mut ElementContext, _state: &mut Self::State, prev: &NodeSpan) {
+        println!("Raze: &str {}", self);
         prev.despawn_recursive(ecx.world);
-        // ecx.world.entity_mut(ecx.entity).despawn_recursive();
     }
 }
 

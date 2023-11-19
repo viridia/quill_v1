@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::NodeSpan;
 
 use super::{
-    view::{Cx, ElementContext},
+    cx::{Cx, ElementContext},
     View,
 };
 

@@ -1,3 +1,4 @@
+mod cx;
 mod element;
 mod r#for;
 mod for_index;
@@ -12,6 +13,8 @@ mod view_insert;
 mod view_styled;
 mod view_with;
 
+pub use cx::Cx;
+pub use cx::ElementContext;
 pub use element::Element;
 pub use element::ViewTuple;
 pub use for_index::ForIndex;
@@ -22,7 +25,6 @@ pub use r#for::For;
 pub use r#if::If;
 pub use resource::TrackedResources;
 pub use view::Bind;
-pub use view::Cx;
 pub use view::PresenterFn;
 pub use view::View;
 pub use view::*;
