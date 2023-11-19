@@ -120,8 +120,11 @@ presenters (and in some cases a presenter may be invoked more than once), and ea
 invocation is represented by an entity with a `ViewHandle`. Other ECS components are
 also attached to this entity. The most important of these are components that handle reactivity.
 
-To create a Quill UI, all you need to do is insert a `ViewHandle` into the ECS world. There can
-be multiple `ViewHandles` for multiple independent UIs.
+To instantiate a Quill UI, all you need to do is insert a `ViewHandle` into the ECS world:
+
+```rust
+commands.spawn(ViewHandle::new(ui_main, ()));
+```
 
 ### Reactivity
 
@@ -249,3 +252,7 @@ of three elements, where the second element is a "For" element. This means that 
 of entities based on the data passed to the `For`. For a list of n items passed to `For`, the total
 number of entities for the presenter will be n + 2. As the for loop reacts to changes in the length
 of the array, it will always know where in the flat list of entities those changes will go.
+
+# Bibliography
+
+* [Xilem: an architecture for UI in Rust](https://raphlinus.github.io/rust/gui/2022/05/07/ui-architecture.html)

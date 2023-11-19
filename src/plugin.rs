@@ -1,9 +1,10 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashSet};
 use bevy_mod_picking::focus::{HoverMap, PreviousHoverMap};
 
 use crate::{
     style::{ComputedStyle, UpdateComputedStyle},
-    ElementClasses, ElementContext, ElementStyles, SelectorMatcher, TrackedResources, ViewHandle,
+    ElementClasses, ElementContext, ElementStyles, SelectorMatcher, TrackedLocals,
+    TrackedResources, ViewHandle,
 };
 
 pub struct QuillPlugin;
@@ -21,18 +22,26 @@ impl Plugin for QuillPlugin {
 //          Since the handle isn't part of the World we can freely pass a mutable reference to the World.
 fn render_views(world: &mut World) {
     // phase 1
+    let mut v = HashSet::new();
     let mut q = world.query::<(Entity, &TrackedResources)>();
-    let mut v = vec![];
-    for (e, tracked) in q.iter(world) {
-        if tracked.data.iter().any(|x| x.is_changed(world)) {
-            v.push(e);
+    for (e, tracked_resources) in q.iter(world) {
+        if tracked_resources.data.iter().any(|x| x.is_changed(world)) {
+            v.insert(e);
+        }
+    }
+
+    let mut q = world.query::<(Entity, &mut TrackedLocals)>();
+    for (e, mut tracked_locals) in q.iter_mut(world) {
+        if TrackedLocals::is_changed(&tracked_locals) {
+            v.insert(e);
+            tracked_locals.reset_changed();
         }
     }
 
     // force build every view that just got spawned
     let mut qf = world.query_filtered::<Entity, Added<ViewHandle>>();
     for e in qf.iter(world) {
-        v.push(e);
+        v.insert(e);
     }
 
     // phase 2

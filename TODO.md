@@ -14,3 +14,6 @@
 * Support for `cursor` style property.
 * No-argument presenters don't store state in a ViewHandle. This is because of lifetime issues
   with No-argument presenters.
+* Change QuillPlugin to add bevy_mod_picking plugins if needed:
+
+        .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))

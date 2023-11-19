@@ -98,6 +98,7 @@ impl<V: View, Props: Send + Sync + Clone, F: FnMut(Cx<Props>) -> V + Send + Sync
         let cx = Cx::<Props> {
             sys: &mut child_context,
             props: &self.props,
+            local_index: 0,
         };
         self.view = Some((self.presenter)(cx));
         self.nodes =

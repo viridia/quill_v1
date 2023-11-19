@@ -3,8 +3,10 @@
 use bevy::prelude::*;
 use bevy_mod_picking::{
     backends::bevy_ui::BevyUiBackend,
+    events::Click,
     input::InputPlugin,
     picking_core::{CorePlugin, InteractionPlugin},
+    prelude::*,
 };
 use quill::{Cx, Element, If, PresenterFn, QuillPlugin, View, ViewHandle};
 
@@ -29,12 +31,21 @@ fn root_presenter(mut _cx: Cx) -> impl View {
 
 fn nested(mut cx: Cx<&str>) -> impl View {
     let name = *cx.props;
-    let counter = cx.use_resource::<Counter>();
+    let counter = cx.use_local::<i32>(|| 0);
     Element::new((
         "Nested Presenter: ",
-        format!("{}: {}", name, counter.count),
-        If::new(counter.count & 1 == 0, even, odd),
+        format!("{}: {}", name, counter.get()),
+        If::new(counter.get() & 1 == 0, even, odd),
     ))
+    .once(move |entity, world| {
+        let mut e = world.entity_mut(entity);
+        let mut counter = counter.clone();
+        e.insert(On::<Pointer<Click>>::run(
+            move |_ev: Res<ListenerInput<Pointer<Click>>>| {
+                counter.set(counter.get() + 1);
+            },
+        ));
+    })
 }
 
 fn even(mut _cx: Cx) -> impl View {

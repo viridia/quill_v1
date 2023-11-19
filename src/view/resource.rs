@@ -26,7 +26,7 @@ where
     }
 }
 
-/// Tracks resources used by each ViewState
+/// Tracks resources used by each View tree entity
 #[derive(Component, Default)]
 pub struct TrackedResources {
     pub data: Vec<Box<dyn AnyResource>>,
