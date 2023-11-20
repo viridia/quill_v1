@@ -123,7 +123,6 @@ impl View for String {
     }
 
     fn raze(&self, ecx: &mut ElementContext, _state: &mut Self::State, prev: &NodeSpan) {
-        println!("Raze: String {}", self);
         prev.despawn_recursive(ecx.world);
     }
 }
@@ -171,7 +170,6 @@ impl View for &'static str {
     }
 
     fn raze(&self, ecx: &mut ElementContext, _state: &mut Self::State, prev: &NodeSpan) {
-        println!("Raze: &str {}", self);
         prev.despawn_recursive(ecx.world);
     }
 }
@@ -209,13 +207,8 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
             .take()
             .expect("ViewState::handle should be present at this point");
 
-        let mut child_context = ElementContext {
-            world: parent_ecx.world,
-            entity,
-        };
-
         // build the view
-        inner.build(&mut child_context, entity);
+        inner.build(parent_ecx, entity);
         let nodes = inner.nodes(prev);
 
         // put back the handle
@@ -301,13 +294,8 @@ impl<
             .take()
             .expect("ViewState::handle should be present at this point");
 
-        let mut child_context = ElementContext {
-            world: parent_ecx.world,
-            entity,
-        };
-
         // build the view
-        inner.build(&mut child_context, entity);
+        inner.build(parent_ecx, entity);
         let nodes = inner.nodes(prev);
 
         // put back the handle
