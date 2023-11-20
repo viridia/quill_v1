@@ -23,6 +23,8 @@ impl Plugin for QuillPlugin {
 fn render_views(world: &mut World) {
     // phase 1
     let mut v = HashSet::new();
+
+    // Scan changed resources
     let mut q = world.query::<(Entity, &TrackedResources)>();
     for (e, tracked_resources) in q.iter(world) {
         if tracked_resources.data.iter().any(|x| x.is_changed(world)) {
@@ -30,11 +32,11 @@ fn render_views(world: &mut World) {
         }
     }
 
+    // Scan changed locals
     let mut q = world.query::<(Entity, &mut TrackedLocals)>();
-    for (e, mut tracked_locals) in q.iter_mut(world) {
-        if TrackedLocals::is_changed(&tracked_locals) {
+    for (e, tracked_locals) in q.iter_mut(world) {
+        if TrackedLocals::cas(&tracked_locals) {
             v.insert(e);
-            tracked_locals.reset_changed();
         }
     }
 

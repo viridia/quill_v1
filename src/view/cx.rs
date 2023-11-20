@@ -34,16 +34,22 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         }
     }
 
+    /// Return a reference to the resource of the given type. Calling this function
+    /// adds the resource as a dependency of the current presenter invocation.
     pub fn use_resource<T: Resource>(&mut self) -> &T {
         self.add_tracked_resource::<T>();
         self.sys.world.resource::<T>()
     }
 
+    /// Return a mutable reference to the resource of the given type. Calling this function
+    /// adds the resource as a dependency of the current presenter invocation.
     pub fn use_resource_mut<T: Resource>(&mut self) -> Mut<T> {
         self.add_tracked_resource::<T>();
         self.sys.world.resource_mut::<T>()
     }
 
+    /// Return a local state variable. Calling this function also adds the state variable as
+    /// a dependency of the current presenter invocation.
     pub fn use_local<T: Send + Sync + Clone>(&mut self, init: impl FnOnce() -> T) -> LocalData<T> {
         let index = self.local_index;
         self.local_index += 1;

@@ -20,6 +20,7 @@ use winnow::{
 /// ```css
 ///   &
 ///   &.name
+///   :hover
 ///   .state > &
 ///   .state > * > &.name
 /// ```

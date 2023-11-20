@@ -89,6 +89,11 @@ impl TrackedLocals {
         }
     }
 
+    /// Return whether this resource has been changed, and also atomically set it to unchanged.
+    pub(crate) fn cas(&self) -> bool {
+        self.changed.swap(false, Ordering::Relaxed)
+    }
+
     /// Return whether this resource has been changed.
     pub fn is_changed(&self) -> bool {
         self.changed.load(Ordering::Relaxed)

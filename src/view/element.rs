@@ -14,10 +14,6 @@ impl<A: ViewTuple> Element<A> {
     pub fn new(items: A) -> Self {
         Self { items }
     }
-
-    // pub fn children<VT: ViewTuple>(self, items: VT) -> Element<VT> {
-    //     Element::<VT> { items }
-    // }
 }
 
 impl<A: ViewTuple> View for Element<A> {
