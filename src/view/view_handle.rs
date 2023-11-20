@@ -17,7 +17,7 @@ impl ViewHandle {
     /// Construct a new ViewRoot from a presenter and props.
     pub fn new<
         V: View + 'static,
-        Props: Send + Sync + 'static + Clone,
+        Props: Send + Sync + Clone + 'static,
         F: FnMut(Cx<Props>) -> V + Send + Sync + 'static,
     >(
         presenter: F,

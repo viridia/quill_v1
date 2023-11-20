@@ -3,7 +3,7 @@ use bevy::{
     text::{Text, TextStyle},
 };
 
-use crate::{Cx, TrackedResources, ViewHandle};
+use crate::{Cx, ViewHandle};
 
 use crate::node_span::NodeSpan;
 
@@ -177,10 +177,8 @@ impl View for &'static str {
 }
 
 /// View which renders a bare presenter with no arguments
-impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + 'static> View for F {
-    // TODO: This is not really what we want. We want V::State to be stored in a component,
-    // so that State doesn't expand the caller's state too much.
-    type State = (Option<Entity>, V::State);
+impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View for F {
+    type State = Option<Entity>;
 
     fn build(
         &self,
@@ -188,32 +186,50 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + 'static> View for F {
         state: &mut Self::State,
         prev: &NodeSpan,
     ) -> NodeSpan {
-        let entity: Entity = match state.0 {
-            Some(entity) => entity,
+        let entity: Entity = match state {
+            Some(entity) => *entity,
             None => {
                 let entity = parent_ecx
                     .world
-                    .spawn(TrackedResources::default())
+                    .spawn(ViewHandle::new(*self, ()))
                     .set_parent(parent_ecx.entity)
                     .id();
-                state.0 = Some(entity);
+                *state = Some(entity);
                 entity
             }
         };
+
+        // get the handle from the current view state
+        let mut entt = parent_ecx.world.entity_mut(entity);
+        let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
+            return NodeSpan::Empty;
+        };
+        let mut inner = handle
+            .inner
+            .take()
+            .expect("ViewState::handle should be present at this point");
+
         let mut child_context = ElementContext {
             world: parent_ecx.world,
             entity,
         };
-        let cx = Cx {
-            sys: &mut child_context,
-            props: &(),
-            local_index: 0,
+
+        // build the view
+        inner.build(&mut child_context, entity);
+        let nodes = inner.nodes(prev);
+
+        // put back the handle
+        let mut entt = parent_ecx.world.entity_mut(entity);
+        let Some(mut view_state) = entt.get_mut::<ViewHandle>() else {
+            return NodeSpan::Empty;
         };
-        self(cx).build(parent_ecx, &mut state.1, prev)
+        view_state.inner = Some(inner);
+
+        nodes
     }
 
     fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, _prev: &NodeSpan) {
-        if let Some(entity) = state.0.take() {
+        if let Some(entity) = state.take() {
             let mut entt = ecx.world.entity_mut(entity);
             let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
                 return;
