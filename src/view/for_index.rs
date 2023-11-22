@@ -99,4 +99,14 @@ where
             i += 1;
         }
     }
+
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        let mut child_spans: Vec<NodeSpan> = state.iter().map(|item| item.node.clone()).collect();
+        NodeSpan::Fragment(child_spans.into_boxed_slice())
+    }
 }

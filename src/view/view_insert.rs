@@ -52,4 +52,13 @@ impl<V: View, C: Component + Clone> View for ViewInsert<V, C> {
     fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan) {
         self.inner.raze(ecx, state, prev);
     }
+
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        self.inner.collect(ecx, state, nodes)
+    }
 }

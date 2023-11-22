@@ -13,7 +13,7 @@ use bevy_mod_picking::{
 };
 use lazy_static::lazy_static;
 use quill::{Cx, Element, ElementClasses, PresenterFn, QuillPlugin, StyleSet, View, ViewHandle};
-use splitter::{v_splitter, SplitterDragStart, SplitterDragged, SplitterPlugin, SplitterProps};
+use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use viewport::{ViewportInset, ViewportInsetElement};
 
 fn main() {
@@ -82,15 +82,11 @@ const CLS_PRESSED: &str = "pressed";
 #[derive(Resource)]
 pub struct PanelWidth {
     value: f32,
-    drag_origin: f32,
 }
 
 impl Default for PanelWidth {
     fn default() -> Self {
-        Self {
-            value: 160.,
-            drag_origin: 0.,
-        }
+        Self { value: 160. }
     }
 }
 
@@ -129,7 +125,10 @@ fn ui_main(mut cx: Cx) -> impl View {
                 );
             }));
         }),
-        v_splitter.bind(SplitterProps { id: "" }),
+        v_splitter.bind(SplitterProps {
+            id: "",
+            value: width.value,
+        }),
         Element::new(())
             .styled(STYLE_VIEWPORT.clone())
             .insert(ViewportInsetElement {}),
@@ -138,11 +137,11 @@ fn ui_main(mut cx: Cx) -> impl View {
     .once(|entity, world| {
         let mut e = world.entity_mut(entity);
         e.insert((
-            On::<SplitterDragStart>::run(
-                move |_ev: Res<ListenerInput<SplitterDragStart>>, mut width: ResMut<PanelWidth>| {
-                    width.drag_origin = width.value;
-                },
-            ),
+            // On::<SplitterDragStart>::run(
+            //     move |_ev: Res<ListenerInput<SplitterDragStart>>, mut width: ResMut<PanelWidth>| {
+            //         width.drag_origin = width.value;
+            //     },
+            // ),
             On::<SplitterDragged>::run(
                 move |ev: Res<ListenerInput<SplitterDragged>>,
                       mut width: ResMut<PanelWidth>,
@@ -151,8 +150,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                         Ok((node, transform)) => {
                             // Measure node width and clamp split position.
                             let node_width = node.logical_rect(transform).width();
-                            width.value =
-                                (width.drag_origin + ev.distance).clamp(100., node_width - 100.);
+                            width.value = ev.value.clamp(100., node_width - 100.);
                         }
                         _ => return,
                     }

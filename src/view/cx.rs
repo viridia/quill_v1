@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::TrackedResources;
+use crate::{PresenterGraphChanged, TrackedResources};
 
 use super::{
     local::{LocalData, TrackedLocals},
@@ -11,6 +11,16 @@ use super::{
 pub struct ElementContext<'w> {
     pub(crate) world: &'w mut World,
     pub(crate) entity: Entity,
+}
+
+impl<'w> ElementContext<'w> {
+    /// Add a marker component to indicate that the structure of the display graph needs to
+    /// be rebuilt.
+    pub fn set_nodes_changed(&mut self) {
+        self.world
+            .entity_mut(self.entity)
+            .insert(PresenterGraphChanged);
+    }
 }
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's

@@ -29,9 +29,10 @@ impl<A: ViewTuple> View for Element<A> {
             .items
             .build_child_views(ecx, &mut state.0, &mut state.1);
         if let NodeSpan::Node(entity) = prev {
-            let mut em = ecx.world.entity_mut(*entity);
+            // let mut em = ecx.world.entity_mut(*entity);
             if changed {
-                em.replace_children(&flat);
+                // em.replace_children(&flat);
+                ecx.set_nodes_changed();
             }
             return NodeSpan::Node(*entity);
         }
@@ -42,8 +43,9 @@ impl<A: ViewTuple> View for Element<A> {
                 visibility: Visibility::Visible,
                 ..default()
             },))
-            .replace_children(&flat)
+            // .replace_children(&flat)
             .id();
+        ecx.set_nodes_changed();
 
         // Remove previous entity and any remaining children
         prev.despawn_recursive(ecx.world);
@@ -55,6 +57,33 @@ impl<A: ViewTuple> View for Element<A> {
     fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan) {
         self.items.raze_spans(ecx, &mut state.0, &state.1);
         prev.despawn_recursive(ecx.world);
+    }
+
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        // Rebuild span array, replacing ones that changed.
+        let mut count_children: usize = 0;
+        for node in state.1.iter() {
+            count_children += node.count()
+        }
+        let mut flat: Vec<Entity> = Vec::with_capacity(count_children);
+        for node in state.1.iter() {
+            node.flatten(&mut flat);
+        }
+
+        if let NodeSpan::Node(entity) = nodes {
+            let mut em = ecx.world.entity_mut(*entity);
+            // if changed {
+            em.replace_children(&flat);
+            // }
+            return NodeSpan::Node(*entity);
+        }
+
+        NodeSpan::Empty
     }
 }
 

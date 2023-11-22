@@ -28,6 +28,7 @@ pub use view::Bind;
 pub use view::PresenterFn;
 pub use view::View;
 pub use view::*;
+pub use view_handle::PresenterGraphChanged;
 pub use view_handle::ViewHandle;
 pub use view_styled::ElementClasses;
 pub use view_styled::ElementStyles;

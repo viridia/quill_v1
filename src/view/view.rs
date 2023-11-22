@@ -27,7 +27,15 @@ where
 
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
     /// This calls `.raze()` for any nested views within the current view state.
-    fn raze(&self, _ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan);
+    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan);
+
+    /// Returns the collection of display nodes for this View.
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan;
 
     /// Apply styles to this view.
     fn styled<S: StyleTuple>(self, styles: S) -> ViewStyled<Self> {
@@ -78,6 +86,16 @@ impl View for () {
     }
 
     fn raze(&self, _ecx: &mut ElementContext, _state: &mut Self::State, _nodes: &NodeSpan) {}
+
+    /// Returns the collection of display nodes for this View.
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        NodeSpan::Empty
+    }
 }
 
 /// View which renders a String
@@ -124,6 +142,15 @@ impl View for String {
 
     fn raze(&self, ecx: &mut ElementContext, _state: &mut Self::State, prev: &NodeSpan) {
         prev.despawn_recursive(ecx.world);
+    }
+
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        nodes.clone()
     }
 }
 
@@ -172,10 +199,20 @@ impl View for &'static str {
     fn raze(&self, ecx: &mut ElementContext, _state: &mut Self::State, prev: &NodeSpan) {
         prev.despawn_recursive(ecx.world);
     }
+
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        nodes.clone()
+    }
 }
 
 /// View which renders a bare presenter with no arguments
 impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View for F {
+    // State holds the PresenterState entity.
     type State = Option<Entity>;
 
     fn build(
@@ -202,22 +239,14 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
-        let mut inner = handle
+        let inner = handle
             .inner
-            .take()
+            .as_mut()
             .expect("ViewState::handle should be present at this point");
 
         // build the view
-        inner.build(parent_ecx, entity);
+        // inner.build(parent_ecx, entity);
         let nodes = inner.nodes(prev);
-
-        // put back the handle
-        let mut entt = parent_ecx.world.entity_mut(entity);
-        let Some(mut view_state) = entt.get_mut::<ViewHandle>() else {
-            return NodeSpan::Empty;
-        };
-        view_state.inner = Some(inner);
-
         nodes
     }
 
@@ -233,6 +262,24 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
                 .expect("ViewState::handle should be present at this point");
             inner.raze(ecx, entity)
         }
+    }
+
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        // get the handle from the PresenterState for this invocation.
+        let mut entt = ecx.world.entity_mut(state.expect("Expec"));
+        let Some(ref handle) = entt.get_mut::<ViewHandle>() else {
+            return NodeSpan::Empty;
+        };
+        let inner = handle
+            .inner
+            .as_ref()
+            .expect("ViewState::handle should be present at this point");
+        inner.nodes(nodes)
     }
 }
 
@@ -263,6 +310,7 @@ impl<
         F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
     > View for Bind<V, Props, F>
 {
+    // State holds the PresenterState entity.
     type State = Option<Entity>;
 
     fn build(
@@ -289,22 +337,15 @@ impl<
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
-        let mut inner = handle
+        let inner = handle
             .inner
-            .take()
+            .as_mut()
             .expect("ViewState::handle should be present at this point");
 
-        // build the view
-        inner.build(parent_ecx, entity);
+        // Update child view properties.
+        // TODO: This is not very efficient, props are cloned twice on the first run.
+        inner.update_props(&self.props);
         let nodes = inner.nodes(prev);
-
-        // put back the handle
-        let mut entt = parent_ecx.world.entity_mut(entity);
-        let Some(mut view_state) = entt.get_mut::<ViewHandle>() else {
-            return NodeSpan::Empty;
-        };
-        view_state.inner = Some(inner);
-
         nodes
     }
 
@@ -320,6 +361,24 @@ impl<
                 .expect("ViewState::handle should be present at this point");
             inner.raze(ecx, entity)
         }
+    }
+
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        // get the handle from the PresenterState for this invocation.
+        let mut entt = ecx.world.entity_mut(state.expect("Expec"));
+        let Some(ref handle) = entt.get_mut::<ViewHandle>() else {
+            return NodeSpan::Empty;
+        };
+        let inner = handle
+            .inner
+            .as_ref()
+            .expect("ViewState::handle should be present at this point");
+        inner.nodes(nodes)
     }
 }
 

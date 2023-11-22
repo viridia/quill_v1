@@ -51,4 +51,13 @@ impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + Sync> View for 
     fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan) {
         self.inner.raze(ecx, state, prev);
     }
+
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        self.inner.collect(ecx, state, nodes)
+    }
 }

@@ -105,6 +105,15 @@ impl<V: View> View for ViewStyled<V> {
         self.inner.raze(ecx, state, prev);
     }
 
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        self.inner.collect(ecx, state, nodes)
+    }
+
     // Apply styles to this view.
     // TODO: Possible optimization by replacing the style object rather than wrapping it.
     // fn styled<S: StyleTuple<'a>>(&self, styles: S) -> StyledView<'a, Self> {

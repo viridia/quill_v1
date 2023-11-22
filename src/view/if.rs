@@ -77,4 +77,17 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
             _ => (),
         }
     }
+
+    fn collect(
+        &self,
+        ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        match state {
+            Self::State::True(ref mut true_state) => self.pos.collect(ecx, true_state, nodes),
+            Self::State::False(ref mut false_state) => self.neg.collect(ecx, false_state, nodes),
+            _ => NodeSpan::Empty,
+        }
+    }
 }
