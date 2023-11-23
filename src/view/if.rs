@@ -75,13 +75,6 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
         }
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan) {
-        match state {
-            Self::State::True(ref mut true_state) => self.pos.raze(ecx, true_state, prev),
-            Self::State::False(ref mut false_state) => self.neg.raze(ecx, false_state, prev),
-        }
-    }
-
     fn collect(
         &self,
         ecx: &mut ElementContext,
@@ -91,6 +84,13 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
         match state {
             Self::State::True(ref mut true_state) => self.pos.collect(ecx, true_state, nodes),
             Self::State::False(ref mut false_state) => self.neg.collect(ecx, false_state, nodes),
+        }
+    }
+
+    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan) {
+        match state {
+            Self::State::True(ref mut true_state) => self.pos.raze(ecx, true_state, prev),
+            Self::State::False(ref mut false_state) => self.neg.raze(ecx, false_state, prev),
         }
     }
 }

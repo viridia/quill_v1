@@ -388,6 +388,7 @@ impl<
     }
 
     fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, nodes: &NodeSpan) {
+        println!("Raze2 {:?}", *state);
         let mut entt = ecx.world.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return;
@@ -399,6 +400,7 @@ impl<
         // Raze the contents of the child ViewState.
         inner.raze(ecx, *state);
         // Despawn the ViewHandle.
+        println!("Despawn2 {:?}", *state);
         ecx.world.entity_mut(*state).remove_parent();
         ecx.world.entity_mut(*state).despawn();
     }

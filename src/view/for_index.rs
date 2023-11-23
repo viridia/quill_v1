@@ -109,6 +109,16 @@ where
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
+    fn collect(
+        &self,
+        _ecx: &mut ElementContext,
+        state: &mut Self::State,
+        nodes: &NodeSpan,
+    ) -> NodeSpan {
+        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.node.clone()).collect();
+        NodeSpan::Fragment(child_spans.into_boxed_slice())
+    }
+
     fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, _prev: &NodeSpan) {
         let prev_len = state.len();
 
@@ -120,15 +130,5 @@ where
             }
             i += 1;
         }
-    }
-
-    fn collect(
-        &self,
-        ecx: &mut ElementContext,
-        state: &mut Self::State,
-        nodes: &NodeSpan,
-    ) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.node.clone()).collect();
-        NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 }
