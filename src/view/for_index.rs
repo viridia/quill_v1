@@ -79,6 +79,10 @@ where
         // child_spans.resize(next_len, NodeSpan::Empty);
 
         // Overwrite existing items.
+        // TODO: Blind overwriting might be a problem here if, for example, we overwrite
+        // a text element with a non-text element. Basically we're not razing the old output
+        // (because we don't know if we should) and this could cause leftovers. If only views
+        // were comparable!
         let mut i = 0usize;
         while i < next_len && i < prev_len {
             let child_state = &mut state[i];
