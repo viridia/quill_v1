@@ -70,13 +70,22 @@ impl<A: ViewTuple> View for Element<A> {
 
         if let NodeSpan::Node(entity) = nodes {
             let mut em = ecx.world.entity_mut(*entity);
-            // if changed {
-            em.replace_children(&flat);
-            // }
+            if let Some(children) = em.get::<Children>() {
+                // See if children changed
+                if !children.eq(&flat) {
+                    em.replace_children(&flat);
+                }
+            } else {
+                // No children, unconditional replace
+                em.replace_children(&flat);
+            }
             return NodeSpan::Node(*entity);
         }
 
-        NodeSpan::Empty
+        panic!(
+            "Expected Element NodeSpan to be a single node! {:?}",
+            ecx.entity
+        );
     }
 }
 
