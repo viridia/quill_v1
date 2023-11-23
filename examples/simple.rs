@@ -36,7 +36,7 @@ fn setup_view_root(mut commands: Commands) {
 
 fn root_presenter(mut cx: Cx<u8>) -> impl View {
     let counter = cx.use_resource::<Counter>();
-    Element::new((
+    Element::new().children((
         "Root Presenter: ",
         format!("{}", counter.count),
         If::new(counter.count & 1 == 0, " [even]", " [odd]"),

@@ -24,13 +24,13 @@ fn setup_view_root(mut commands: Commands) {
 }
 
 fn root_presenter(mut _cx: Cx) -> impl View {
-    Element::new(("Root Presenter: ", nested.bind("Fred")))
+    Element::new().children(("Root Presenter: ", nested.bind("Fred")))
 }
 
 fn nested(mut cx: Cx<&str>) -> impl View {
     let name = *cx.props;
     let counter = cx.use_resource::<Counter>();
-    Element::new((
+    Element::new().children((
         "Nested Presenter: ",
         format!("{}: {}", name, counter.count),
         If::new(counter.count & 1 == 0, even, odd),

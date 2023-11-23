@@ -26,26 +26,27 @@ fn setup_view_root(mut commands: Commands) {
 }
 
 fn root_presenter(mut _cx: Cx) -> impl View {
-    Element::new(("Root Presenter: ", nested.bind("Fred")))
+    Element::new().children(("Root Presenter: ", nested.bind("Fred")))
 }
 
 fn nested(mut cx: Cx<&str>) -> impl View {
     let name = *cx.props;
     let counter = cx.use_local::<i32>(|| 0);
-    Element::new((
-        "Nested Presenter: ",
-        format!("{}: {}", name, counter.get()),
-        If::new(counter.get() & 1 == 0, even, odd),
-    ))
-    .once(move |entity, world| {
-        let mut e = world.entity_mut(entity);
-        let mut counter = counter.clone();
-        e.insert(On::<Pointer<Click>>::run(
-            move |_ev: Res<ListenerInput<Pointer<Click>>>| {
-                counter.set(counter.get() + 1);
-            },
-        ));
-    })
+    Element::new()
+        .children((
+            "Nested Presenter: ",
+            format!("{}: {}", name, counter.get()),
+            If::new(counter.get() & 1 == 0, even, odd),
+        ))
+        .once(move |entity, world| {
+            let mut e = world.entity_mut(entity);
+            let mut counter = counter.clone();
+            e.insert(On::<Pointer<Click>>::run(
+                move |_ev: Res<ListenerInput<Pointer<Click>>>| {
+                    counter.set(counter.get() + 1);
+                },
+            ));
+        })
 }
 
 fn even(mut _cx: Cx) -> impl View {

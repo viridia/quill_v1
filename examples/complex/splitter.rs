@@ -61,7 +61,7 @@ pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;
     let current_offset = cx.props.value;
-    Element::new(Element::new(()).styled(STYLE_VSPLITTER_INNER.clone()))
+    Element::new()
         .with(move |entity, world| {
             let mut e = world.entity_mut(entity);
             let mut drag_offset_1 = drag_offset.clone();
@@ -100,4 +100,5 @@ pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
             ));
         })
         .styled(STYLE_VSPLITTER.clone())
+        .children(Element::new().styled(STYLE_VSPLITTER_INNER.clone()))
 }

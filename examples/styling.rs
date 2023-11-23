@@ -62,25 +62,28 @@ fn setup_view_root(mut commands: Commands) {
 
 fn ui_main(mut cx: Cx) -> impl View {
     let counter = cx.use_resource::<Counter>();
-    Element::new((
-        Element::new(()).styled(STYLE_ASIDE.clone()),
-        v_splitter,
-        If::new(counter.count & 1 == 0, even, odd),
-    ))
-    .styled(STYLE_MAIN.clone())
+    Element::new()
+        .children(())
+        .styled(STYLE_MAIN.clone())
+        .children((
+            Element::new().children(()).styled(STYLE_ASIDE.clone()),
+            v_splitter,
+            If::new(counter.count & 1 == 0, even, odd),
+        ))
 }
 
 fn v_splitter(mut _cx: Cx) -> impl View {
-    Element::new(Element::new(()).styled(STYLE_VSPLITTER_INNER.clone()))
+    Element::new()
         .styled(STYLE_VSPLITTER.clone())
+        .children(Element::new().styled(STYLE_VSPLITTER_INNER.clone()))
 }
 
 fn even(mut _cx: Cx) -> impl View {
-    Element::new("even").styled(STYLE_EVEN.clone())
+    Element::new().children("even").styled(STYLE_EVEN.clone())
 }
 
 fn odd(mut _cx: Cx) -> impl View {
-    Element::new("odd").styled(STYLE_ODD.clone())
+    Element::new().children("odd").styled(STYLE_ODD.clone())
 }
 
 #[derive(Resource, Default)]

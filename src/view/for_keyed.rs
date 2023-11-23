@@ -18,7 +18,7 @@ impl<Key: Sync + Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
             .nodes(vc, self.state.as_ref().unwrap())
     }
 
-    fn collect(&mut self, vc: &mut ViewContext) -> NodeSpan {
+    fn assemble(&mut self, vc: &mut ViewContext) -> NodeSpan {
         self.view
             .as_ref()
             .unwrap()
@@ -71,7 +71,7 @@ where
         next_range: Range<usize>,
     ) {
         // Look for longest common subsequence
-        let (prev_start, next_start, length) = lcs(
+        let (prev_start, next_start, lcs_length) = lcs(
             &prev_state[prev_range.clone()],
             &next_state[next_range.clone()],
             |a, b| a.key == b.key,
@@ -108,19 +108,20 @@ where
         }
 
         // For items that match, overwrite.
-        for i in 0..length {
+        for i in 0..lcs_length {
             let prev = &mut prev_state[prev_start + i];
             let next = &mut next_state[next_start + i];
-            next.view = Some((self.each)(&self.items[i]));
+            next.state = prev.state.take();
+            next.view = Some((self.each)(&self.items[next_start + i]));
             prev.view
                 .as_ref()
                 .unwrap()
-                .update(vc, prev.state.as_mut().unwrap());
+                .update(vc, next.state.as_mut().unwrap());
         }
 
         // Stuff that follows the LCS.
-        let prev_end = prev_start + length;
-        let next_end = next_start + length;
+        let prev_end = prev_start + lcs_length;
+        let next_end = next_start + lcs_length;
         if prev_end < prev_range.end {
             if next_end < next_range.end {
                 // Both prev and next have entries after lcs, so recurse
@@ -144,7 +145,6 @@ where
             // Insertions
             for i in next_end..next_range.end {
                 let next = &mut next_state[i];
-                next.view = Some((self.each)(&self.items[i]));
                 let view = (self.each)(&self.items[i]);
                 next.state = Some(view.build(vc));
                 next.view = Some(view);
@@ -207,11 +207,14 @@ where
         }
 
         self.build_recursive(vc, state, 0..prev_len, &mut next_state, 0..next_len);
+        for j in 0..next_len {
+            assert!(next_state[j].state.is_some(), "Emoty state: {}", j);
+        }
         std::mem::swap(state, &mut next_state);
     }
 
     fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.collect(vc)).collect();
+        let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.assemble(vc)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 

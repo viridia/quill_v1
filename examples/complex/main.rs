@@ -96,68 +96,70 @@ fn setup_view_root(mut commands: Commands) {
 
 fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
-    Element::new((
-        Element::new((
-            button.bind(ButtonProps {
-                id: "save",
-                children: "Save",
-            }),
-            button.bind(ButtonProps {
-                id: "load",
-                children: "Load",
-            }),
-            button.bind(ButtonProps {
-                id: "quit",
-                children: "Quit",
-            }),
-        ))
-        .styled((
-            STYLE_ASIDE.clone(),
-            Arc::new(StyleSet::build(|b| b.width(width.value.floor()))),
-        ))
+    Element::new()
+        .styled(STYLE_MAIN.clone())
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
-            println!("Adding event handlers");
-            e.insert(On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
-                println!(
-                    "Received Clicked Button id='{}' target={:?}",
-                    ev.id, ev.target
-                );
-            }));
-        }),
-        v_splitter.bind(SplitterProps {
-            id: "",
-            value: width.value,
-        }),
-        Element::new(())
-            .styled(STYLE_VIEWPORT.clone())
-            .insert(ViewportInsetElement {}),
-    ))
-    .styled(STYLE_MAIN.clone())
-    .once(|entity, world| {
-        let mut e = world.entity_mut(entity);
-        e.insert((
-            // On::<SplitterDragStart>::run(
-            //     move |_ev: Res<ListenerInput<SplitterDragStart>>, mut width: ResMut<PanelWidth>| {
-            //         width.drag_origin = width.value;
-            //     },
-            // ),
-            On::<SplitterDragged>::run(
-                move |ev: Res<ListenerInput<SplitterDragged>>,
-                      mut width: ResMut<PanelWidth>,
-                      query: Query<(&Node, &GlobalTransform)>| {
-                    match query.get(entity) {
-                        Ok((node, transform)) => {
-                            // Measure node width and clamp split position.
-                            let node_width = node.logical_rect(transform).width();
-                            width.value = ev.value.clamp(100., node_width - 100.);
+            e.insert((
+                // On::<SplitterDragStart>::run(
+                //     move |_ev: Res<ListenerInput<SplitterDragStart>>, mut width: ResMut<PanelWidth>| {
+                //         width.drag_origin = width.value;
+                //     },
+                // ),
+                On::<SplitterDragged>::run(
+                    move |ev: Res<ListenerInput<SplitterDragged>>,
+                          mut width: ResMut<PanelWidth>,
+                          query: Query<(&Node, &GlobalTransform)>| {
+                        match query.get(entity) {
+                            Ok((node, transform)) => {
+                                // Measure node width and clamp split position.
+                                let node_width = node.logical_rect(transform).width();
+                                width.value = ev.value.clamp(100., node_width - 100.);
+                            }
+                            _ => return,
                         }
-                        _ => return,
-                    }
-                },
-            ),
-        ));
-    })
+                    },
+                ),
+            ));
+        })
+        .children((
+            Element::new()
+                .styled((
+                    STYLE_ASIDE.clone(),
+                    Arc::new(StyleSet::build(|b| b.width(width.value.floor()))),
+                ))
+                .once(|entity, world| {
+                    let mut e = world.entity_mut(entity);
+                    println!("Adding event handlers");
+                    e.insert(On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
+                        println!(
+                            "Received Clicked Button id='{}' target={:?}",
+                            ev.id, ev.target
+                        );
+                    }));
+                })
+                .children((
+                    button.bind(ButtonProps {
+                        id: "save",
+                        children: "Save",
+                    }),
+                    button.bind(ButtonProps {
+                        id: "load",
+                        children: "Load",
+                    }),
+                    button.bind(ButtonProps {
+                        id: "quit",
+                        children: "Quit",
+                    }),
+                )),
+            v_splitter.bind(SplitterProps {
+                id: "",
+                value: width.value,
+            }),
+            Element::new()
+                .styled(STYLE_VIEWPORT.clone())
+                .insert(ViewportInsetElement {}),
+        ))
 }
 
 #[derive(Clone, PartialEq)]
@@ -176,7 +178,7 @@ pub struct Clicked {
 fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;
-    Element::new(cx.props.children.clone())
+    Element::new()
         .once(move |entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
@@ -205,6 +207,7 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
             ));
         })
         .styled(STYLE_BUTTON.clone())
+        .children(cx.props.children.clone())
 }
 
 fn show_events(mut clicked: EventReader<Clicked>) {

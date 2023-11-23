@@ -3,12 +3,13 @@ use bevy::{
     text::{Text, TextStyle},
 };
 
-use crate::{Cx, ViewHandle};
+use crate::{Cx, ViewHandle, ViewTuple};
 
 use crate::node_span::NodeSpan;
 
 use super::{
     presenter_state::PresenterStateChanged,
+    view_children::ViewChildren,
     view_insert::ViewInsert,
     view_styled::{StyleTuple, ViewStyled},
     view_with::ViewWith,
@@ -81,6 +82,12 @@ where
             callback,
             once: true,
         }
+    }
+
+    /// Sets up a callback which is called for each output UiNode, but only when the node is first
+    /// created.
+    fn children<A: ViewTuple>(self, items: A) -> ViewChildren<Self, A> {
+        ViewChildren { inner: self, items }
     }
 }
 

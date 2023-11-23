@@ -143,41 +143,42 @@ fn setup_view_root(mut commands: Commands) {
 
 fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
-    Element::new((
-        Element::new((
-            button.bind(ButtonProps {
-                id: "save",
-                children: "Save",
+    Element::new().styled(STYLE_MAIN.clone()).children((
+        Element::new()
+            .styled((
+                STYLE_ASIDE.clone(),
+                Arc::new(StyleSet::build(|b| b.width(width.0))),
+            ))
+            .children((
+                button.bind(ButtonProps {
+                    id: "save",
+                    children: "Save",
+                }),
+                button.bind(ButtonProps {
+                    id: "load",
+                    children: "Load",
+                }),
+                button.bind(ButtonProps {
+                    id: "quit",
+                    children: "Quit",
+                }),
+            ))
+            .once(|entity, world| {
+                let mut e = world.entity_mut(entity);
+                e.insert((On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
+                    println!("Clicked {}", ev.id);
+                }),));
             }),
-            button.bind(ButtonProps {
-                id: "load",
-                children: "Load",
-            }),
-            button.bind(ButtonProps {
-                id: "quit",
-                children: "Quit",
-            }),
-        ))
-        .styled((
-            STYLE_ASIDE.clone(),
-            Arc::new(StyleSet::build(|b| b.width(width.0))),
-        ))
-        .once(|entity, world| {
-            let mut e = world.entity_mut(entity);
-            e.insert((On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
-                println!("Clicked {}", ev.id);
-            }),));
-        }),
         v_splitter,
-        Element::new(())
+        Element::new()
             .styled(STYLE_VIEWPORT.clone())
             .insert(ViewportInsetElement {}),
     ))
-    .styled(STYLE_MAIN.clone())
 }
 
 fn v_splitter(_cx: Cx) -> impl View {
-    Element::new(Element::new(()).styled(STYLE_VSPLITTER_INNER.clone()))
+    Element::new()
+        .children(Element::new().styled(STYLE_VSPLITTER_INNER.clone()))
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
@@ -219,7 +220,8 @@ struct Clicked {
 fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;
-    Element::new(cx.props.children.clone())
+    Element::new()
+        .children(cx.props.children.clone())
         .once(move |entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((
