@@ -15,7 +15,7 @@ use super::{
 };
 
 /// Passed to `build` and `raze` methods to give access to the world and the view entity.
-pub struct ElementContext<'w> {
+pub struct ViewContext<'w> {
     pub(crate) world: &'w mut World,
 
     /// The entity which contains the PresenterState.
@@ -29,26 +29,25 @@ where
     type State: Send + Sync;
 
     /// Return the span of UiNodes produced by this View.
-    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan;
+    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan;
 
     /// Construct and patch the tree of UiNodes produced by this view.
     /// This may also spawn child entities representing nested components.
-    fn build(&self, ecx: &mut ElementContext) -> Self::State;
+    fn build(&self, ecx: &mut ViewContext) -> Self::State;
 
-    /// Construct and patch the tree of UiNodes produced by this view.
-    /// This may also spawn child entities representing nested components.
-    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State);
+    /// Update the internal state of this view, re-creating any UiNodes.
+    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State);
 
     /// Attach child nodes to parents. This is typically called after generating/updating
     /// the display nodes (via build/rebuild), however it can also be called after rebuilding
     /// the display graph of nested presenters.
-    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
         self.nodes(ecx, state)
     }
 
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
     /// This calls `.raze()` for any nested views within the current view state.
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State);
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State);
 
     /// Apply styles to this view.
     fn styled<S: StyleTuple>(self, styles: S) -> ViewStyled<Self> {
@@ -89,28 +88,28 @@ where
 impl View for () {
     type State = ();
 
-    fn nodes(&self, _ecx: &ElementContext, _state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _ecx: &ViewContext, _state: &Self::State) -> NodeSpan {
         NodeSpan::Empty
     }
 
-    fn build(&self, _ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, _ecx: &mut ViewContext) -> Self::State {
         ()
     }
 
-    fn rebuild(&self, _ecx: &mut ElementContext, _state: &mut Self::State) {}
+    fn update(&self, _ecx: &mut ViewContext, _state: &mut Self::State) {}
 
-    fn raze(&self, _ecx: &mut ElementContext, _state: &mut Self::State) {}
+    fn raze(&self, _ecx: &mut ViewContext, _state: &mut Self::State) {}
 }
 
 /// View which renders a String
 impl View for String {
     type State = Entity;
 
-    fn nodes(&self, _ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _ecx: &ViewContext, state: &Self::State) -> NodeSpan {
         NodeSpan::Node(*state)
     }
 
-    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, ecx: &mut ViewContext) -> Self::State {
         let id = ecx
             .world
             .spawn((TextBundle {
@@ -129,7 +128,7 @@ impl View for String {
         id
     }
 
-    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         // If it's a single node and has a text component
         let nodes = self.nodes(ecx, state);
         if let NodeSpan::Node(text_node) = nodes {
@@ -149,7 +148,7 @@ impl View for String {
         *state = self.build(ecx)
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         let mut entt = ecx.world.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
@@ -160,11 +159,11 @@ impl View for String {
 impl View for &'static str {
     type State = Entity;
 
-    fn nodes(&self, _ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _ecx: &ViewContext, state: &Self::State) -> NodeSpan {
         NodeSpan::Node(*state)
     }
 
-    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, ecx: &mut ViewContext) -> Self::State {
         let id = ecx
             .world
             .spawn((TextBundle {
@@ -183,7 +182,7 @@ impl View for &'static str {
         id
     }
 
-    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         // If it's a single node and has a text component
         let nodes = self.nodes(ecx, state);
         if let NodeSpan::Node(text_node) = nodes {
@@ -203,7 +202,7 @@ impl View for &'static str {
         *state = self.build(ecx)
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         let mut entt = ecx.world.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
@@ -215,7 +214,7 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
     // State holds the PresenterState entity.
     type State = Entity;
 
-    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan {
         // get the handle from the PresenterState for this invocation.
         let entt = ecx.world.entity(*state);
         let Some(ref handle) = entt.get::<ViewHandle>() else {
@@ -228,7 +227,8 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
         inner.nodes()
     }
 
-    fn build(&self, parent_ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, parent_ecx: &mut ViewContext) -> Self::State {
+        println!("C1");
         let entity = parent_ecx
             .world
             .spawn(ViewHandle::new(*self, ()))
@@ -239,12 +239,12 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
         entity
     }
 
-    fn rebuild(&self, _parent_ecx: &mut ElementContext, _state: &mut Self::State) {
+    fn update(&self, _parent_ecx: &mut ViewContext, _state: &mut Self::State) {
         // Rebuild does nothing: it's up to the child to decide whether or not it wants to
         // rebuild. Since there are no props, we don't mark the child as modified.
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         println!("Raze1 {:?}", *state);
         let mut entt = ecx.world.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
@@ -293,7 +293,7 @@ impl<
     // State holds the PresenterState entity.
     type State = Entity;
 
-    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan {
         // get the handle from the PresenterState for this invocation.
         let entt = ecx.world.entity(*state);
         let Some(ref handle) = entt.get::<ViewHandle>() else {
@@ -306,7 +306,8 @@ impl<
         inner.nodes()
     }
 
-    fn build(&self, parent_ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, parent_ecx: &mut ViewContext) -> Self::State {
+        println!("C2");
         let entity = parent_ecx
             .world
             .spawn(ViewHandle::new(self.presenter, self.props.clone()))
@@ -317,7 +318,7 @@ impl<
         entity
     }
 
-    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         // get the handle from the current view state
         let mut entt = ecx.world.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
@@ -325,11 +326,12 @@ impl<
         };
         // Update child view properties.
         if handle.update_props(&self.props) {
+            println!("C3");
             entt.insert(PresenterStateChanged);
         }
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         println!("Raze2 {:?}", *state);
         let mut entt = ecx.world.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {

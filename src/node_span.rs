@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
-/// Output of a rendered node, which may be a single node or a fragment (multiple nodes).
-/// This gets flattened before attaching to the parent UiNode.
+/// Hierarchical data structure representing an ordered sequence of entities. This is the
+/// rendered output of a `View`. This gets flattened before attaching to the parent UiNode.
 #[derive(Debug, Clone)]
 pub enum NodeSpan {
     // Means that nothing was rendered. This can represent either an initial state
@@ -16,7 +16,7 @@ pub enum NodeSpan {
 }
 
 impl NodeSpan {
-    /// Returns the number of actual entities in the template output.
+    /// Returns the number of actual entities contained in this span.
     pub fn count(&self) -> usize {
         match self {
             Self::Empty => 0,

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use bevy::prelude::*;
 use bevy::utils::HashSet;
 
-use crate::{ElementContext, StyleSet, View};
+use crate::{StyleSet, View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
@@ -48,7 +48,7 @@ impl<V: View> ViewStyled<V> {
         }
     }
 
-    fn insert_styles(&self, nodes: &NodeSpan, ecx: &mut ElementContext) {
+    fn insert_styles(&self, nodes: &NodeSpan, ecx: &mut ViewContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
@@ -97,26 +97,26 @@ impl<V: View> ViewStyled<V> {
 impl<V: View> View for ViewStyled<V> {
     type State = V::State;
 
-    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan {
         self.inner.nodes(ecx, state)
     }
 
-    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, ecx: &mut ViewContext) -> Self::State {
         let state = self.inner.build(ecx);
         self.insert_styles(&self.nodes(ecx, &state), ecx);
         state
     }
 
-    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
-        self.inner.rebuild(ecx, state);
+    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
+        self.inner.update(ecx, state);
         self.insert_styles(&mut self.nodes(ecx, state), ecx);
     }
 
-    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
-        self.inner.collect(ecx, state)
+    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.assemble(ecx, state)
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         self.inner.raze(ecx, state);
     }
 

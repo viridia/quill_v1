@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{ElementContext, View};
+use crate::{View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
@@ -19,11 +19,13 @@ impl<A: ViewTuple> Element<A> {
 impl<A: ViewTuple> View for Element<A> {
     type State = (A::State, Entity);
 
-    fn nodes(&self, _ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _ecx: &ViewContext, state: &Self::State) -> NodeSpan {
+        // Return just the parent node.
         return NodeSpan::Node(state.1);
     }
 
-    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, ecx: &mut ViewContext) -> Self::State {
+        // Build Views for each child element
         let state = self.items.build_spans(ecx);
         let new_entity = ecx
             .world
@@ -35,19 +37,14 @@ impl<A: ViewTuple> View for Element<A> {
         (state, new_entity)
     }
 
-    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
-        self.items.rebuild_spans(ecx, &mut state.0);
-        // self.items.rebuild_child_views(ecx, &mut state.0);
-        // if changed {
-        //     ecx.world
-        //         .entity_mut(ecx.entity)
-        //         .insert(PresenterGraphChanged);
-        // }
+    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
+        // Update the state of all child elements.
+        self.items.update_spans(ecx, &mut state.0);
     }
 
-    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
-        // Rebuild span array, replacing ones that changed.
-        let children = self.items.collect_spans(ecx, &mut state.0);
+    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+        // Attach child view outputs to parent.
+        let children = self.items.assemble_spans(ecx, &mut state.0);
         let mut flat: Vec<Entity> = Vec::with_capacity(children.count());
         children.flatten(&mut flat);
 
@@ -64,7 +61,7 @@ impl<A: ViewTuple> View for Element<A> {
         return NodeSpan::Node(state.1);
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         self.items.raze_spans(ecx, &mut state.0);
         let mut entt = ecx.world.entity_mut(state.1);
         entt.remove_parent();
@@ -80,26 +77,13 @@ pub trait ViewTuple: Send + Sync {
 
     fn len(&self) -> usize;
 
-    fn build_spans(&self, cx: &mut ElementContext) -> Self::State;
+    fn build_spans(&self, cx: &mut ViewContext) -> Self::State;
 
-    fn rebuild_spans(&self, cx: &mut ElementContext, state: &mut Self::State);
+    fn update_spans(&self, cx: &mut ViewContext, state: &mut Self::State);
 
-    fn collect_spans(&self, cx: &mut ElementContext, state: &mut Self::State) -> NodeSpan;
+    fn assemble_spans(&self, cx: &mut ViewContext, state: &mut Self::State) -> NodeSpan;
 
-    fn raze_spans(&self, ecx: &mut ElementContext, state: &mut Self::State);
-
-    // Helper function to build child views for a view.
-    // fn rebuild_child_views(
-    //     &self,
-    //     ecx: &mut ElementContext,
-    //     state_child_views: &mut Self::State,
-    // ) -> bool {
-    //     // Rebuild span array, replacing ones that changed.
-    //     self.rebuild_spans(ecx, state_child_views);
-    //     let changed = state_child_nodes.as_ref() != next_state;
-    //     *state_child_nodes = next_state;
-    //     changed
-    // }
+    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State);
 }
 
 impl<A: View> ViewTuple for A {
@@ -109,19 +93,19 @@ impl<A: View> ViewTuple for A {
         1
     }
 
-    fn build_spans(&self, cx: &mut ElementContext) -> Self::State {
+    fn build_spans(&self, cx: &mut ViewContext) -> Self::State {
         self.build(cx)
     }
 
-    fn rebuild_spans(&self, cx: &mut ElementContext, state: &mut Self::State) {
-        self.rebuild(cx, state)
+    fn update_spans(&self, cx: &mut ViewContext, state: &mut Self::State) {
+        self.update(cx, state)
     }
 
-    fn collect_spans(&self, cx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
-        self.collect(cx, state)
+    fn assemble_spans(&self, cx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+        self.assemble(cx, state)
     }
 
-    fn raze_spans(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         self.raze(ecx, state)
     }
 }
@@ -133,19 +117,19 @@ impl<A: View> ViewTuple for (A,) {
         1
     }
 
-    fn build_spans(&self, cx: &mut ElementContext) -> Self::State {
+    fn build_spans(&self, cx: &mut ViewContext) -> Self::State {
         (self.0.build(cx),)
     }
 
-    fn rebuild_spans(&self, cx: &mut ElementContext, state: &mut Self::State) {
-        self.0.rebuild(cx, &mut state.0)
+    fn update_spans(&self, cx: &mut ViewContext, state: &mut Self::State) {
+        self.0.update(cx, &mut state.0)
     }
 
-    fn collect_spans(&self, cx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
-        NodeSpan::Fragment(Box::new([self.0.collect(cx, &mut state.0)]))
+    fn assemble_spans(&self, cx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+        NodeSpan::Fragment(Box::new([self.0.assemble(cx, &mut state.0)]))
     }
 
-    fn raze_spans(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         self.0.raze(ecx, &mut state.0);
     }
 }
@@ -157,23 +141,23 @@ impl<A0: View, A1: View> ViewTuple for (A0, A1) {
         2
     }
 
-    fn build_spans(&self, cx: &mut ElementContext) -> Self::State {
+    fn build_spans(&self, cx: &mut ViewContext) -> Self::State {
         (self.0.build(cx), self.1.build(cx))
     }
 
-    fn rebuild_spans(&self, cx: &mut ElementContext, state: &mut Self::State) {
-        self.0.rebuild(cx, &mut state.0);
-        self.1.rebuild(cx, &mut state.1);
+    fn update_spans(&self, cx: &mut ViewContext, state: &mut Self::State) {
+        self.0.update(cx, &mut state.0);
+        self.1.update(cx, &mut state.1);
     }
 
-    fn collect_spans(&self, cx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble_spans(&self, cx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
         NodeSpan::Fragment(Box::new([
-            self.0.collect(cx, &mut state.0),
-            self.1.collect(cx, &mut state.1),
+            self.0.assemble(cx, &mut state.0),
+            self.1.assemble(cx, &mut state.1),
         ]))
     }
 
-    fn raze_spans(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         self.0.raze(ecx, &mut state.0);
         self.1.raze(ecx, &mut state.1);
     }
@@ -186,25 +170,25 @@ impl<A0: View, A1: View, A2: View> ViewTuple for (A0, A1, A2) {
         3
     }
 
-    fn build_spans(&self, cx: &mut ElementContext) -> Self::State {
+    fn build_spans(&self, cx: &mut ViewContext) -> Self::State {
         (self.0.build(cx), self.1.build(cx), self.2.build(cx))
     }
 
-    fn rebuild_spans(&self, cx: &mut ElementContext, state: &mut Self::State) {
-        self.0.rebuild(cx, &mut state.0);
-        self.1.rebuild(cx, &mut state.1);
-        self.2.rebuild(cx, &mut state.2);
+    fn update_spans(&self, cx: &mut ViewContext, state: &mut Self::State) {
+        self.0.update(cx, &mut state.0);
+        self.1.update(cx, &mut state.1);
+        self.2.update(cx, &mut state.2);
     }
 
-    fn collect_spans(&self, cx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble_spans(&self, cx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
         NodeSpan::Fragment(Box::new([
-            self.0.collect(cx, &mut state.0),
-            self.1.collect(cx, &mut state.1),
-            self.2.collect(cx, &mut state.2),
+            self.0.assemble(cx, &mut state.0),
+            self.1.assemble(cx, &mut state.1),
+            self.2.assemble(cx, &mut state.2),
         ]))
     }
 
-    fn raze_spans(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         self.0.raze(ecx, &mut state.0);
         self.1.raze(ecx, &mut state.1);
         self.2.raze(ecx, &mut state.2);
@@ -218,7 +202,7 @@ impl<A0: View, A1: View, A2: View, A3: View> ViewTuple for (A0, A1, A2, A3) {
         4
     }
 
-    fn build_spans(&self, cx: &mut ElementContext) -> Self::State {
+    fn build_spans(&self, cx: &mut ViewContext) -> Self::State {
         (
             self.0.build(cx),
             self.1.build(cx),
@@ -227,23 +211,23 @@ impl<A0: View, A1: View, A2: View, A3: View> ViewTuple for (A0, A1, A2, A3) {
         )
     }
 
-    fn rebuild_spans(&self, cx: &mut ElementContext, state: &mut Self::State) {
-        self.0.rebuild(cx, &mut state.0);
-        self.1.rebuild(cx, &mut state.1);
-        self.2.rebuild(cx, &mut state.2);
-        self.3.rebuild(cx, &mut state.3);
+    fn update_spans(&self, cx: &mut ViewContext, state: &mut Self::State) {
+        self.0.update(cx, &mut state.0);
+        self.1.update(cx, &mut state.1);
+        self.2.update(cx, &mut state.2);
+        self.3.update(cx, &mut state.3);
     }
 
-    fn collect_spans(&self, cx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble_spans(&self, cx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
         NodeSpan::Fragment(Box::new([
-            self.0.collect(cx, &mut state.0),
-            self.1.collect(cx, &mut state.1),
-            self.2.collect(cx, &mut state.2),
-            self.3.collect(cx, &mut state.3),
+            self.0.assemble(cx, &mut state.0),
+            self.1.assemble(cx, &mut state.1),
+            self.2.assemble(cx, &mut state.2),
+            self.3.assemble(cx, &mut state.3),
         ]))
     }
 
-    fn raze_spans(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         self.0.raze(ecx, &mut state.0);
         self.1.raze(ecx, &mut state.1);
         self.2.raze(ecx, &mut state.2);

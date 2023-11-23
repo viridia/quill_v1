@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{ElementContext, View};
+use crate::{View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
@@ -11,7 +11,7 @@ pub struct ViewInsert<V: View, C: Component> {
 }
 
 impl<V: View, C: Component + Clone> ViewInsert<V, C> {
-    fn insert_component(component: &C, nodes: &NodeSpan, ecx: &mut ElementContext) {
+    fn insert_component(component: &C, nodes: &NodeSpan, ecx: &mut ViewContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
@@ -38,26 +38,26 @@ impl<V: View, C: Component + Clone> ViewInsert<V, C> {
 impl<V: View, C: Component + Clone> View for ViewInsert<V, C> {
     type State = V::State;
 
-    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan {
         self.inner.nodes(ecx, state)
     }
 
-    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, ecx: &mut ViewContext) -> Self::State {
         let state = self.inner.build(ecx);
         Self::insert_component(&self.component, &mut self.inner.nodes(ecx, &state), ecx);
         state
     }
 
-    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
-        self.inner.rebuild(ecx, state);
+    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
+        self.inner.update(ecx, state);
         Self::insert_component(&self.component, &mut self.nodes(ecx, state), ecx);
     }
 
-    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
-        self.inner.collect(ecx, state)
+    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.assemble(ecx, state)
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         self.inner.raze(ecx, state);
     }
 }

@@ -1,4 +1,4 @@
-use crate::{ElementContext, View};
+use crate::{View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
@@ -8,12 +8,12 @@ pub struct IndexedListItem<V: View + 'static> {
 }
 
 impl<V: View + 'static> IndexedListItem<V> {
-    fn nodes(&self, ecx: &ElementContext) -> NodeSpan {
+    fn nodes(&self, ecx: &ViewContext) -> NodeSpan {
         self.view.as_ref().unwrap().nodes(ecx, &self.state)
     }
 
-    fn collect(&mut self, ecx: &mut ElementContext) -> NodeSpan {
-        self.view.as_ref().unwrap().collect(ecx, &mut self.state)
+    fn collect(&mut self, ecx: &mut ViewContext) -> NodeSpan {
+        self.view.as_ref().unwrap().assemble(ecx, &mut self.state)
     }
 }
 
@@ -48,12 +48,12 @@ where
 {
     type State = Vec<IndexedListItem<V>>;
 
-    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan {
         let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(ecx)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, ecx: &mut ViewContext) -> Self::State {
         let next_len = self.items.len();
         let mut child_spans: Vec<NodeSpan> = Vec::with_capacity(next_len);
         let mut state: Vec<IndexedListItem<V>> = Vec::with_capacity(next_len);
@@ -72,7 +72,7 @@ where
         state
     }
 
-    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         let next_len = self.items.len();
         let mut prev_len = state.len();
         // let mut child_spans: Vec<NodeSpan> = Vec::with_capacity(next_len);
@@ -87,7 +87,7 @@ where
                 .view
                 .as_ref()
                 .unwrap()
-                .rebuild(ecx, &mut child_state.state);
+                .update(ecx, &mut child_state.state);
             // child_spans[i] = child_state.node.clone();
             i += 1;
         }
@@ -114,12 +114,12 @@ where
         }
     }
 
-    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
         let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.collect(ecx)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         let prev_len = state.len();
 
         let mut i = 0usize;

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{ElementContext, TrackedResources};
+use crate::{TrackedResources, ViewContext};
 
 use super::{
     local::{LocalData, TrackedLocals},
@@ -13,7 +13,7 @@ use super::{
 // TODO: Move this to it's own file once it's stable.
 pub struct Cx<'w, 'p, Props = ()> {
     pub props: &'p Props,
-    pub sys: &'p mut ElementContext<'w>,
+    pub sys: &'p mut ViewContext<'w>,
     pub(crate) local_index: usize,
 }
 

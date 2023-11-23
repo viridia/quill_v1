@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, ops::Range};
 
-use crate::{view::lcs::lcs, ElementContext, View};
+use crate::{view::lcs::lcs, View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
@@ -11,18 +11,18 @@ pub struct KeyedListItem<Key: Sync + Send + PartialEq, V: View + 'static> {
 }
 
 impl<Key: Sync + Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
-    fn nodes(&self, ecx: &ElementContext) -> NodeSpan {
+    fn nodes(&self, ecx: &ViewContext) -> NodeSpan {
         self.view
             .as_ref()
             .unwrap()
             .nodes(ecx, self.state.as_ref().unwrap())
     }
 
-    fn collect(&mut self, ecx: &mut ElementContext) -> NodeSpan {
+    fn collect(&mut self, ecx: &mut ViewContext) -> NodeSpan {
         self.view
             .as_ref()
             .unwrap()
-            .collect(ecx, self.state.as_mut().unwrap())
+            .assemble(ecx, self.state.as_mut().unwrap())
     }
 }
 
@@ -64,7 +64,7 @@ where
     /// array items. Matching items are patched, other items are inserted or deleted.
     fn build_recursive(
         &self,
-        ecx: &mut ElementContext,
+        ecx: &mut ViewContext,
         prev_state: &mut [KeyedListItem<Key, V>],
         prev_range: Range<usize>,
         next_state: &mut [KeyedListItem<Key, V>],
@@ -115,7 +115,7 @@ where
             prev.view
                 .as_ref()
                 .unwrap()
-                .rebuild(ecx, prev.state.as_mut().unwrap());
+                .update(ecx, prev.state.as_mut().unwrap());
         }
 
         // Stuff that follows the LCS.
@@ -165,12 +165,12 @@ where
 {
     type State = Vec<KeyedListItem<Key, V>>;
 
-    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan {
         let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(ecx)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+    fn build(&self, ecx: &mut ViewContext) -> Self::State {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
 
@@ -190,7 +190,7 @@ where
         next_state
     }
 
-    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
         let prev_len = state.len();
@@ -210,12 +210,12 @@ where
         std::mem::swap(state, &mut next_state);
     }
 
-    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
         let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.collect(ecx)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
         for i in 0..state.len() {
             let child_state = &mut state[i];
             if let Some(ref view) = child_state.view {

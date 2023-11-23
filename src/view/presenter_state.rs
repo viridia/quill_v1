@@ -2,7 +2,7 @@ use std::any::Any;
 
 use bevy::prelude::*;
 
-use crate::{ElementContext, NodeSpan};
+use crate::{NodeSpan, ViewContext};
 
 use super::{cx::Cx, View};
 
@@ -75,13 +75,13 @@ pub trait AnyPresenterState: Send + Sync {
     fn nodes(&self) -> NodeSpan;
 
     /// Rebuild the NodeSpans for this view and update the state.
-    fn build(&mut self, ecx: &mut ElementContext, entity: Entity);
+    fn build(&mut self, ecx: &mut ViewContext, entity: Entity);
 
     /// Release all state and despawn all child entities.
-    fn raze(&mut self, ecx: &mut ElementContext, entity: Entity);
+    fn raze(&mut self, ecx: &mut ViewContext, entity: Entity);
 
     /// Rebuild the display graph connections.
-    fn attach(&mut self, ecx: &mut ElementContext, entity: Entity);
+    fn attach(&mut self, ecx: &mut ViewContext, entity: Entity);
 
     /// Update the copy of props in this view state.
     fn update_props<'a>(&mut self, props: &'a dyn Any) -> bool;
@@ -93,8 +93,8 @@ impl<
         F: FnMut(Cx<Props>) -> V + Send + Sync,
     > AnyPresenterState for PresenterState<V, Props, F>
 {
-    fn build(&mut self, ecx: &mut ElementContext, entity: Entity) {
-        let mut child_context = ElementContext {
+    fn build(&mut self, ecx: &mut ViewContext, entity: Entity) {
+        let mut child_context = ViewContext {
             world: ecx.world,
             entity,
         };
@@ -109,7 +109,7 @@ impl<
                 self.view
                     .as_ref()
                     .unwrap()
-                    .rebuild(&mut child_context, state);
+                    .update(&mut child_context, state);
                 self.attach(ecx, entity);
             }
             None => {
@@ -126,8 +126,8 @@ impl<
         };
     }
 
-    fn raze(&mut self, ecx: &mut ElementContext, entity: Entity) {
-        let mut child_context = ElementContext {
+    fn raze(&mut self, ecx: &mut ViewContext, entity: Entity) {
+        let mut child_context = ViewContext {
             world: ecx.world,
             entity,
         };
@@ -141,8 +141,8 @@ impl<
         }
     }
 
-    fn attach(&mut self, ecx: &mut ElementContext, entity: Entity) {
-        let mut child_context = ElementContext {
+    fn attach(&mut self, ecx: &mut ViewContext, entity: Entity) {
+        let mut child_context = ViewContext {
             world: ecx.world,
             entity,
         };
@@ -150,7 +150,7 @@ impl<
             .view
             .as_ref()
             .unwrap()
-            .collect(&mut child_context, &mut self.state.as_mut().unwrap());
+            .assemble(&mut child_context, &mut self.state.as_mut().unwrap());
         if self.nodes != nodes {
             self.nodes = nodes;
             // Parent needs to rebuild children

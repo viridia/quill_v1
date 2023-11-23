@@ -3,8 +3,8 @@ use bevy_mod_picking::focus::{HoverMap, PreviousHoverMap};
 
 use crate::{
     style::{ComputedStyle, UpdateComputedStyle},
-    ElementClasses, ElementContext, ElementStyles, PresenterGraphChanged, PresenterStateChanged,
-    SelectorMatcher, TrackedLocals, TrackedResources, ViewHandle,
+    ElementClasses, ElementStyles, PresenterGraphChanged, PresenterStateChanged, SelectorMatcher,
+    TrackedLocals, TrackedResources, ViewContext, ViewHandle,
 };
 
 pub struct QuillPlugin;
@@ -70,7 +70,7 @@ fn render_views(world: &mut World) {
             .take()
             .expect("ViewHandle::inner should be present at this point");
 
-        let mut ec = ElementContext { world, entity: e };
+        let mut ec = ViewContext { world, entity: e };
         inner.build(&mut ec, e);
 
         // Now that we are done with the handle we can put it back in the world
@@ -99,7 +99,7 @@ fn render_views(world: &mut World) {
                 .inner
                 .take()
                 .expect("ViewState::handle should be present at this point");
-            let mut ecx = ElementContext { world, entity: e };
+            let mut ecx = ViewContext { world, entity: e };
             inner.attach(&mut ecx, e);
             let Some(mut view_handle) = world.get_mut::<ViewHandle>(e) else {
                 continue;
