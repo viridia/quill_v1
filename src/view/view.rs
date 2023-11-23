@@ -228,7 +228,6 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
     }
 
     fn build(&self, parent_ecx: &mut ViewContext) -> Self::State {
-        println!("C1");
         let entity = parent_ecx
             .world
             .spawn(ViewHandle::new(*self, ()))
@@ -245,7 +244,6 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
     }
 
     fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        println!("Raze1 {:?}", *state);
         let mut entt = ecx.world.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return;
@@ -257,7 +255,6 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
         // Raze the contents of the child ViewState.
         inner.raze(ecx, *state);
         // Despawn the ViewHandle.
-        println!("Despawn1 {:?}", *state);
         ecx.world.entity_mut(*state).remove_parent();
         ecx.world.entity_mut(*state).despawn();
     }
@@ -307,7 +304,6 @@ impl<
     }
 
     fn build(&self, parent_ecx: &mut ViewContext) -> Self::State {
-        println!("C2");
         let entity = parent_ecx
             .world
             .spawn(ViewHandle::new(self.presenter, self.props.clone()))
@@ -326,13 +322,11 @@ impl<
         };
         // Update child view properties.
         if handle.update_props(&self.props) {
-            println!("C3");
             entt.insert(PresenterStateChanged);
         }
     }
 
     fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        println!("Raze2 {:?}", *state);
         let mut entt = ecx.world.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return;
@@ -344,7 +338,6 @@ impl<
         // Raze the contents of the child ViewState.
         inner.raze(ecx, *state);
         // Despawn the ViewHandle.
-        println!("Despawn2 {:?}", *state);
         ecx.world.entity_mut(*state).remove_parent();
         ecx.world.entity_mut(*state).despawn();
     }

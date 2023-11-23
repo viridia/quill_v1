@@ -28,7 +28,6 @@ fn render_views(world: &mut World) {
     let mut q = world.query::<(Entity, &TrackedResources)>();
     for (e, tracked_resources) in q.iter(world) {
         if tracked_resources.data.iter().any(|x| x.is_changed(world)) {
-            println!("Resources changed {:?}", e);
             v.insert(e);
         }
     }
@@ -37,7 +36,6 @@ fn render_views(world: &mut World) {
     let mut q = world.query::<(Entity, &mut TrackedLocals)>();
     for (e, tracked_locals) in q.iter_mut(world) {
         if TrackedLocals::cas(&tracked_locals) {
-            println!("Locals changed {:?}", e);
             v.insert(e);
         }
     }
@@ -45,19 +43,17 @@ fn render_views(world: &mut World) {
     // force build every view that just got spawned
     let mut qf = world.query_filtered::<Entity, Added<ViewHandle>>();
     for e in qf.iter(world) {
-        println!("Added {:?}", e);
         v.insert(e);
     }
 
     // force build every view that just got spawned
     let mut qf = world.query_filtered::<Entity, (With<ViewHandle>, With<PresenterStateChanged>)>();
     for e in qf.iter_mut(world) {
-        println!("State change {:?}", e);
         v.insert(e);
     }
 
     for e in v.iter() {
-        world.entity_mut(*e).remove::<PresenterGraphChanged>();
+        world.entity_mut(*e).remove::<PresenterStateChanged>();
     }
 
     // phase 2
@@ -87,9 +83,9 @@ fn render_views(world: &mut World) {
         if changed_entities.len() == 0 {
             break;
         }
-        println!("Entities changed: {}", changed_entities.len());
+        // println!("Entities changed: {}", changed_entities.len());
         for e in changed_entities {
-            println!("PresenterGraphChanged {:?}", e);
+            // println!("PresenterGraphChanged {:?}", e);
             let mut ent = world.entity_mut(e);
             ent.remove::<PresenterGraphChanged>();
             let Some(mut view_handle) = world.get_mut::<ViewHandle>(e) else {
