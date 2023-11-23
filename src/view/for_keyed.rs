@@ -8,7 +8,22 @@ pub struct KeyedListItem<Key: Sync + Send + PartialEq, V: View + 'static> {
     view: Option<V>,
     state: Option<V::State>,
     key: Key,
-    node: NodeSpan,
+}
+
+impl<Key: Sync + Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
+    fn nodes(&self, ecx: &ElementContext) -> NodeSpan {
+        self.view
+            .as_ref()
+            .unwrap()
+            .nodes(ecx, self.state.as_ref().unwrap())
+    }
+
+    fn collect(&mut self, ecx: &mut ElementContext) -> NodeSpan {
+        self.view
+            .as_ref()
+            .unwrap()
+            .collect(ecx, self.state.as_mut().unwrap())
+    }
 }
 
 pub struct ForKeyed<
@@ -78,7 +93,7 @@ where
                 for i in prev_range.start..prev_start {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(ecx, prev.state.as_mut().unwrap(), &prev.node);
+                        view.raze(ecx, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -87,10 +102,8 @@ where
             for i in next_range.start..next_start {
                 let next = &mut next_state[i];
                 let view = (self.each)(&self.items[i]);
-                let (st, node) = view.build(ecx);
+                next.state = Some(view.build(ecx));
                 next.view = Some(view);
-                next.state = Some(st);
-                next.node = node;
             }
         }
 
@@ -99,11 +112,10 @@ where
             let prev = &mut prev_state[prev_start + i];
             let next = &mut next_state[next_start + i];
             next.view = Some((self.each)(&self.items[i]));
-            next.node =
-                prev.view
-                    .as_ref()
-                    .unwrap()
-                    .rebuild(ecx, prev.state.as_mut().unwrap(), &prev.node);
+            prev.view
+                .as_ref()
+                .unwrap()
+                .rebuild(ecx, prev.state.as_mut().unwrap());
         }
 
         // Stuff that follows the LCS.
@@ -124,7 +136,7 @@ where
                 for i in next_end..next_range.end {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(ecx, prev.state.as_mut().unwrap(), &prev.node);
+                        view.raze(ecx, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -134,10 +146,8 @@ where
                 let next = &mut next_state[i];
                 next.view = Some((self.each)(&self.items[i]));
                 let view = (self.each)(&self.items[i]);
-                let (st, node) = view.build(ecx);
+                next.state = Some(view.build(ecx));
                 next.view = Some(view);
-                next.state = Some(st);
-                next.node = node;
             }
         }
     }
@@ -155,38 +165,32 @@ where
 {
     type State = Vec<KeyedListItem<Key, V>>;
 
-    fn build(&self, ecx: &mut ElementContext) -> (Self::State, NodeSpan) {
+    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(ecx)).collect();
+        NodeSpan::Fragment(child_spans.into_boxed_slice())
+    }
+
+    fn build(&self, ecx: &mut ElementContext) -> Self::State {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
-        let mut child_spans: Vec<NodeSpan> = Vec::with_capacity(next_len);
 
         // Initialize next state array to default values; fill in keys.
         for j in 0..next_len {
             let view = (self.each)(&self.items[j]);
-            let (state, node) = view.build(ecx);
-            child_spans.push(node.clone());
+            let state = view.build(ecx);
             next_state.push({
                 KeyedListItem {
                     view: Some(view),
                     state: Some(state),
                     key: (self.keyof)(&self.items[j]),
-                    node,
                 }
             });
         }
 
-        (
-            next_state,
-            NodeSpan::Fragment(child_spans.into_boxed_slice()),
-        )
+        next_state
     }
 
-    fn rebuild(
-        &self,
-        ecx: &mut ElementContext,
-        state: &mut Self::State,
-        _prev: &NodeSpan,
-    ) -> NodeSpan {
+    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
         let prev_len = state.len();
@@ -198,36 +202,24 @@ where
                     view: None,
                     state: None,
                     key: (self.keyof)(&self.items[j]),
-                    node: NodeSpan::Empty,
                 }
             });
         }
 
         self.build_recursive(ecx, state, 0..prev_len, &mut next_state, 0..next_len);
         std::mem::swap(state, &mut next_state);
+    }
 
-        let mut child_spans: Vec<NodeSpan> = Vec::with_capacity(next_len);
-        for st in state {
-            child_spans.push(st.node.clone())
-        }
+    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
+        let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.collect(ecx)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn collect(
-        &self,
-        _ecx: &mut ElementContext,
-        state: &mut Self::State,
-        nodes: &NodeSpan,
-    ) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.node.clone()).collect();
-        NodeSpan::Fragment(child_spans.into_boxed_slice())
-    }
-
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, _prev: &NodeSpan) {
+    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
         for i in 0..state.len() {
             let child_state = &mut state[i];
             if let Some(ref view) = child_state.view {
-                view.raze(ecx, child_state.state.as_mut().unwrap(), &child_state.node);
+                view.raze(ecx, child_state.state.as_mut().unwrap());
             }
         }
     }

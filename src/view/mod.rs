@@ -14,7 +14,6 @@ mod view_styled;
 mod view_with;
 
 pub use cx::Cx;
-pub use cx::ElementContext;
 pub use element::Element;
 pub use element::ViewTuple;
 pub use for_index::ForIndex;
@@ -22,6 +21,7 @@ pub use for_keyed::ForKeyed;
 pub use local::LocalData;
 pub use local::TrackedLocals;
 pub use presenter_state::PresenterGraphChanged;
+pub use presenter_state::PresenterStateChanged;
 pub use presenter_state::ViewHandle;
 pub use r#for::For;
 pub use r#if::If;

@@ -160,7 +160,7 @@ fn ui_main(mut cx: Cx) -> impl View {
     })
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct ButtonProps<V: View> {
     pub id: &'static str,
     pub children: V,

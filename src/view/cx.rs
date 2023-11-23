@@ -1,27 +1,11 @@
 use bevy::prelude::*;
 
-use crate::{PresenterGraphChanged, TrackedResources};
+use crate::{ElementContext, TrackedResources};
 
 use super::{
     local::{LocalData, TrackedLocals},
     resource::AnyRes,
 };
-
-/// Passed to `build` and `raze` methods to give access to the world and the view entity.
-pub struct ElementContext<'w> {
-    pub(crate) world: &'w mut World,
-    pub(crate) entity: Entity,
-}
-
-impl<'w> ElementContext<'w> {
-    /// Add a marker component to indicate that the structure of the display graph needs to
-    /// be rebuilt.
-    pub fn set_nodes_changed(&mut self) {
-        self.world
-            .entity_mut(self.entity)
-            .insert(PresenterGraphChanged);
-    }
-}
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's
 /// properties (passed from the parent presenter), plus other context information needed

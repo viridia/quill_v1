@@ -3,8 +3,8 @@ use bevy_mod_picking::focus::{HoverMap, PreviousHoverMap};
 
 use crate::{
     style::{ComputedStyle, UpdateComputedStyle},
-    ElementClasses, ElementContext, ElementStyles, PresenterGraphChanged, SelectorMatcher,
-    TrackedLocals, TrackedResources, ViewHandle,
+    ElementClasses, ElementContext, ElementStyles, PresenterGraphChanged, PresenterStateChanged,
+    SelectorMatcher, TrackedLocals, TrackedResources, ViewHandle,
 };
 
 pub struct QuillPlugin;
@@ -28,6 +28,7 @@ fn render_views(world: &mut World) {
     let mut q = world.query::<(Entity, &TrackedResources)>();
     for (e, tracked_resources) in q.iter(world) {
         if tracked_resources.data.iter().any(|x| x.is_changed(world)) {
+            println!("Resources changed {:?}", e);
             v.insert(e);
         }
     }
@@ -36,6 +37,7 @@ fn render_views(world: &mut World) {
     let mut q = world.query::<(Entity, &mut TrackedLocals)>();
     for (e, tracked_locals) in q.iter_mut(world) {
         if TrackedLocals::cas(&tracked_locals) {
+            println!("Locals changed {:?}", e);
             v.insert(e);
         }
     }
@@ -43,13 +45,19 @@ fn render_views(world: &mut World) {
     // force build every view that just got spawned
     let mut qf = world.query_filtered::<Entity, Added<ViewHandle>>();
     for e in qf.iter(world) {
+        println!("Added {:?}", e);
         v.insert(e);
     }
 
     // force build every view that just got spawned
-    let mut qf = world.query::<(Entity, &mut ViewHandle)>();
-    for (e, _vh) in qf.iter(world) {
+    let mut qf = world.query_filtered::<Entity, (With<ViewHandle>, With<PresenterStateChanged>)>();
+    for e in qf.iter_mut(world) {
+        println!("State change {:?}", e);
         v.insert(e);
+    }
+
+    for e in v.iter() {
+        world.entity_mut(*e).remove::<PresenterGraphChanged>();
     }
 
     // phase 2

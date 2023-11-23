@@ -35,36 +35,28 @@ impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + Sync> ViewWith<
 impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + Sync> View for ViewWith<V, F> {
     type State = V::State;
 
-    fn build(&self, ecx: &mut ElementContext) -> (Self::State, NodeSpan) {
-        let (state, mut nodes) = self.inner.build(ecx);
-        Self::with_entity(&self.callback, &mut nodes, ecx.world);
-        (state, nodes)
+    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+        self.inner.nodes(ecx, state)
     }
 
-    fn rebuild(
-        &self,
-        ecx: &mut ElementContext,
-        state: &mut Self::State,
-        nodes_prev: &NodeSpan,
-    ) -> NodeSpan {
-        let mut nodes = self.inner.rebuild(ecx, state, nodes_prev);
-        if !self.once || nodes != *nodes_prev {
-            Self::with_entity(&self.callback, &mut nodes, ecx.world);
+    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+        let state = self.inner.build(ecx);
+        Self::with_entity(&self.callback, &mut self.nodes(ecx, &state), ecx.world);
+        state
+    }
+
+    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        self.inner.rebuild(ecx, state);
+        if !self.once {
+            Self::with_entity(&self.callback, &mut self.nodes(ecx, state), ecx.world);
         }
-        nodes
     }
 
-    fn collect(
-        &self,
-        ecx: &mut ElementContext,
-        state: &mut Self::State,
-        nodes: &NodeSpan,
-    ) -> NodeSpan {
-        self.inner.collect(ecx, state, nodes)
+    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.collect(ecx, state)
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, nodes: &NodeSpan) {
-        self.inner.raze(ecx, state, nodes);
-        // *nodes = NodeSpan::Empty;
+    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        self.inner.raze(ecx, state);
     }
 }

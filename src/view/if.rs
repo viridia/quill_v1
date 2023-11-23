@@ -26,71 +26,62 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
     /// Union of true and false states.
     type State = IfState<Pos::State, Neg::State>;
 
-    fn build(&self, ecx: &mut ElementContext) -> (Self::State, NodeSpan) {
-        if self.test {
-            let (state, nodes) = self.pos.build(ecx);
-            (IfState::True(state), nodes)
-        } else {
-            let (state, nodes) = self.neg.build(ecx);
-            (IfState::False(state), nodes)
+    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+        match state {
+            Self::State::True(ref true_state) => self.pos.nodes(ecx, true_state),
+            Self::State::False(ref false_state) => self.neg.nodes(ecx, false_state),
         }
     }
 
-    fn rebuild(
-        &self,
-        ecx: &mut ElementContext,
-        state: &mut Self::State,
-        prev: &NodeSpan,
-    ) -> NodeSpan {
+    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+        if self.test {
+            IfState::True(self.pos.build(ecx))
+        } else {
+            IfState::False(self.neg.build(ecx))
+        }
+    }
+
+    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
         if self.test {
             match state {
                 Self::State::True(ref mut true_state) => {
                     // Mutate state in place
-                    self.pos.rebuild(ecx, true_state, prev)
+                    self.pos.rebuild(ecx, true_state)
                 }
 
                 _ => {
                     // Despawn old state and construct new state
-                    self.raze(ecx, state, prev);
-                    let (st, nodes) = self.pos.build(ecx);
-                    *state = Self::State::True(st);
-                    nodes
+                    self.raze(ecx, state);
+                    *state = Self::State::True(self.pos.build(ecx));
                 }
             }
         } else {
             match state {
                 Self::State::False(ref mut false_state) => {
                     // Mutate state in place
-                    self.neg.rebuild(ecx, false_state, prev)
+                    self.neg.rebuild(ecx, false_state)
                 }
 
                 _ => {
                     // Despawn old state and construct new state
-                    self.raze(ecx, state, prev);
-                    let (st, nodes) = self.neg.build(ecx);
-                    *state = Self::State::False(st);
-                    nodes
+                    self.raze(ecx, state);
+                    *state = Self::State::False(self.neg.build(ecx));
                 }
             }
         }
     }
 
-    fn collect(
-        &self,
-        ecx: &mut ElementContext,
-        state: &mut Self::State,
-        nodes: &NodeSpan,
-    ) -> NodeSpan {
+    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
         match state {
-            Self::State::True(ref mut true_state) => self.pos.collect(ecx, true_state, nodes),
-            Self::State::False(ref mut false_state) => self.neg.collect(ecx, false_state, nodes),
+            Self::State::True(ref mut true_state) => self.pos.collect(ecx, true_state),
+            Self::State::False(ref mut false_state) => self.neg.collect(ecx, false_state),
         }
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan) {
+    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
         match state {
-            Self::State::True(ref mut true_state) => self.pos.raze(ecx, true_state, prev),
-            Self::State::False(ref mut false_state) => self.neg.raze(ecx, false_state, prev),
+            Self::State::True(ref mut true_state) => self.pos.raze(ecx, true_state),
+            Self::State::False(ref mut false_state) => self.neg.raze(ecx, false_state),
         }
     }
 }

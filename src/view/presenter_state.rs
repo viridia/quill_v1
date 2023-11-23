@@ -2,12 +2,9 @@ use std::any::Any;
 
 use bevy::prelude::*;
 
-use crate::NodeSpan;
+use crate::{ElementContext, NodeSpan};
 
-use super::{
-    cx::{Cx, ElementContext},
-    View,
-};
+use super::{cx::Cx, View};
 
 /// A ViewHandle holds a type-erased reference to a presenter function and its props and state.
 #[derive(Component)]
@@ -19,7 +16,7 @@ impl ViewHandle {
     /// Construct a new ViewRoot from a presenter and props.
     pub fn new<
         V: View + 'static,
-        Props: Send + Sync + Clone + 'static,
+        Props: Send + Sync + Clone + PartialEq + 'static,
         F: FnMut(Cx<Props>) -> V + Send + Sync + 'static,
     >(
         presenter: F,
@@ -28,6 +25,11 @@ impl ViewHandle {
         Self {
             inner: Some(Box::new(PresenterState::new(presenter, props))),
         }
+    }
+
+    /// Update the copy of props in this view state.
+    pub fn update_props<'a>(&mut self, props: &'a dyn Any) -> bool {
+        self.inner.as_mut().unwrap().update_props(props)
     }
 }
 
@@ -52,7 +54,9 @@ pub struct PresenterState<V: View, Props: Send + Sync, F: FnMut(Cx<Props>) -> V>
     nodes: NodeSpan,
 }
 
-impl<V: View, Props: Send + Sync, F: FnMut(Cx<Props>) -> V> PresenterState<V, Props, F> {
+impl<V: View, Props: Send + Sync + PartialEq, F: FnMut(Cx<Props>) -> V>
+    PresenterState<V, Props, F>
+{
     pub fn new(presenter: F, props: Props) -> Self {
         Self {
             presenter,
@@ -80,11 +84,14 @@ pub trait AnyPresenterState: Send + Sync {
     fn attach(&mut self, ecx: &mut ElementContext, entity: Entity);
 
     /// Update the copy of props in this view state.
-    fn update_props<'a>(&mut self, props: &'a dyn Any);
+    fn update_props<'a>(&mut self, props: &'a dyn Any) -> bool;
 }
 
-impl<V: View, Props: Send + Sync + Clone + 'static, F: FnMut(Cx<Props>) -> V + Send + Sync>
-    AnyPresenterState for PresenterState<V, Props, F>
+impl<
+        V: View,
+        Props: Send + Sync + Clone + PartialEq + 'static,
+        F: FnMut(Cx<Props>) -> V + Send + Sync,
+    > AnyPresenterState for PresenterState<V, Props, F>
 {
     fn build(&mut self, ecx: &mut ElementContext, entity: Entity) {
         let mut child_context = ElementContext {
@@ -99,20 +106,16 @@ impl<V: View, Props: Send + Sync + Clone + 'static, F: FnMut(Cx<Props>) -> V + S
         self.view = Some((self.presenter)(cx));
         match self.state {
             Some(ref mut state) => {
-                let nodes =
-                    self.view
-                        .as_ref()
-                        .unwrap()
-                        .rebuild(&mut child_context, state, &self.nodes);
-                if self.nodes != nodes {
-                    // self.nodes = nodes;
-                    ecx.world.entity_mut(entity).insert(PresenterGraphChanged);
-                }
+                self.view
+                    .as_ref()
+                    .unwrap()
+                    .rebuild(&mut child_context, state);
+                self.attach(ecx, entity);
             }
             None => {
-                let (state, nodes) = self.view.as_ref().unwrap().build(&mut child_context);
+                let state = self.view.as_ref().unwrap().build(&mut child_context);
                 self.state = Some(state);
-                self.nodes = nodes;
+                // TODO: Move this to rebuild()
                 ecx.world.entity_mut(entity).insert(PresenterGraphChanged);
                 if let Some(parent) = ecx.world.entity(ecx.entity).get::<Parent>() {
                     ecx.world
@@ -131,7 +134,7 @@ impl<V: View, Props: Send + Sync + Clone + 'static, F: FnMut(Cx<Props>) -> V + S
         if let Some(ref view) = self.view {
             // Despawn the presenter state entity.
             if let Some(ref mut state) = self.state {
-                view.raze(&mut child_context, state, &mut self.nodes);
+                view.raze(&mut child_context, state);
             }
             self.view = None;
             self.state = None;
@@ -143,11 +146,11 @@ impl<V: View, Props: Send + Sync + Clone + 'static, F: FnMut(Cx<Props>) -> V + S
             world: ecx.world,
             entity,
         };
-        let nodes = self.view.as_ref().unwrap().collect(
-            &mut child_context,
-            &mut self.state.as_mut().unwrap(),
-            &self.nodes,
-        );
+        let nodes = self
+            .view
+            .as_ref()
+            .unwrap()
+            .collect(&mut child_context, &mut self.state.as_mut().unwrap());
         if self.nodes != nodes {
             self.nodes = nodes;
             // Parent needs to rebuild children
@@ -163,14 +166,24 @@ impl<V: View, Props: Send + Sync + Clone + 'static, F: FnMut(Cx<Props>) -> V + S
         self.nodes.clone()
     }
 
-    fn update_props<'a>(&mut self, new_props: &'a dyn Any) {
-        self.props.clone_from(
-            new_props
-                .downcast_ref::<Props>()
-                .expect("Mismatched props type"),
-        );
+    fn update_props<'a>(&mut self, new_props: &'a dyn Any) -> bool {
+        let new_props = new_props
+            .downcast_ref::<Props>()
+            .expect("Mismatched props type");
+
+        if self.props != *new_props {
+            self.props.clone_from(new_props);
+            true
+        } else {
+            false
+        }
     }
 }
+
+/// Marker component that lets us know when the internal state of a presenter needs to be
+/// rebuilt.
+#[derive(Component)]
+pub struct PresenterStateChanged;
 
 /// Marker component that lets us know when the display graph for a presenter needs to be
 /// rebuilt.

@@ -40,7 +40,7 @@ lazy_static! {
 
 const CLS_DRAG: &str = "drag";
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct SplitterProps {
     pub value: f32,
     pub id: &'static str,

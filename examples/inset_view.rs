@@ -203,7 +203,7 @@ fn v_splitter(_cx: Cx) -> impl View {
         .styled(STYLE_VSPLITTER.clone())
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 struct ButtonProps<V: View> {
     id: &'static str,
     children: V,

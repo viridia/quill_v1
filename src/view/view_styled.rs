@@ -97,34 +97,27 @@ impl<V: View> ViewStyled<V> {
 impl<V: View> View for ViewStyled<V> {
     type State = V::State;
 
-    fn build(&self, ecx: &mut ElementContext) -> (Self::State, NodeSpan) {
-        let (state, nodes) = self.inner.build(ecx);
-        self.insert_styles(&nodes, ecx);
-        (state, nodes)
+    fn nodes(&self, ecx: &ElementContext, state: &Self::State) -> NodeSpan {
+        self.inner.nodes(ecx, state)
     }
 
-    fn rebuild(
-        &self,
-        ecx: &mut ElementContext,
-        state: &mut Self::State,
-        prev: &NodeSpan,
-    ) -> NodeSpan {
-        let nodes = self.inner.rebuild(ecx, state, prev);
-        self.insert_styles(&nodes, ecx);
-        nodes
+    fn build(&self, ecx: &mut ElementContext) -> Self::State {
+        let state = self.inner.build(ecx);
+        self.insert_styles(&self.nodes(ecx, &state), ecx);
+        state
     }
 
-    fn collect(
-        &self,
-        ecx: &mut ElementContext,
-        state: &mut Self::State,
-        nodes: &NodeSpan,
-    ) -> NodeSpan {
-        self.inner.collect(ecx, state, nodes)
+    fn rebuild(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        self.inner.rebuild(ecx, state);
+        self.insert_styles(&mut self.nodes(ecx, state), ecx);
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, nodes: &NodeSpan) {
-        self.inner.raze(ecx, state, nodes);
+    fn collect(&self, ecx: &mut ElementContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.collect(ecx, state)
+    }
+
+    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State) {
+        self.inner.raze(ecx, state);
     }
 
     // Apply styles to this view.
