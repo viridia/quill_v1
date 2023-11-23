@@ -5,10 +5,7 @@ use crate::node_span::NodeSpan;
 
 // If
 
-#[derive(Default)]
 pub enum IfState<Pos, Neg> {
-    #[default]
-    Indeterminate,
     True(Pos),
     False(Neg),
 }
@@ -29,7 +26,17 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
     /// Union of true and false states.
     type State = IfState<Pos::State, Neg::State>;
 
-    fn build(
+    fn build(&self, ecx: &mut ElementContext) -> (Self::State, NodeSpan) {
+        if self.test {
+            let (state, nodes) = self.pos.build(ecx);
+            (IfState::True(state), nodes)
+        } else {
+            let (state, nodes) = self.neg.build(ecx);
+            (IfState::False(state), nodes)
+        }
+    }
+
+    fn rebuild(
         &self,
         ecx: &mut ElementContext,
         state: &mut Self::State,
@@ -39,15 +46,14 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
             match state {
                 Self::State::True(ref mut true_state) => {
                     // Mutate state in place
-                    self.pos.build(ecx, true_state, prev)
+                    self.pos.rebuild(ecx, true_state, prev)
                 }
 
                 _ => {
                     // Despawn old state and construct new state
                     self.raze(ecx, state, prev);
-                    let mut true_state: Pos::State = Default::default();
-                    let nodes = self.pos.build(ecx, &mut true_state, &NodeSpan::Empty);
-                    *state = Self::State::True(true_state);
+                    let (st, nodes) = self.pos.build(ecx);
+                    *state = Self::State::True(st);
                     nodes
                 }
             }
@@ -55,15 +61,14 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
             match state {
                 Self::State::False(ref mut false_state) => {
                     // Mutate state in place
-                    self.neg.build(ecx, false_state, prev)
+                    self.neg.rebuild(ecx, false_state, prev)
                 }
 
                 _ => {
                     // Despawn old state and construct new state
                     self.raze(ecx, state, prev);
-                    let mut false_state: Neg::State = Default::default();
-                    let nodes = self.neg.build(ecx, &mut false_state, &NodeSpan::Empty);
-                    *state = Self::State::False(false_state);
+                    let (st, nodes) = self.neg.build(ecx);
+                    *state = Self::State::False(st);
                     nodes
                 }
             }
@@ -74,7 +79,6 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
         match state {
             Self::State::True(ref mut true_state) => self.pos.raze(ecx, true_state, prev),
             Self::State::False(ref mut false_state) => self.neg.raze(ecx, false_state, prev),
-            _ => (),
         }
     }
 
@@ -87,7 +91,6 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
         match state {
             Self::State::True(ref mut true_state) => self.pos.collect(ecx, true_state, nodes),
             Self::State::False(ref mut false_state) => self.neg.collect(ecx, false_state, nodes),
-            _ => NodeSpan::Empty,
         }
     }
 }

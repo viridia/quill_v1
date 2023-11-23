@@ -35,21 +35,28 @@ impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + Sync> ViewWith<
 impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + Sync> View for ViewWith<V, F> {
     type State = V::State;
 
-    fn build(
+    fn build(&self, ecx: &mut ElementContext) -> (Self::State, NodeSpan) {
+        let (state, mut nodes) = self.inner.build(ecx);
+        Self::with_entity(&self.callback, &mut nodes, ecx.world);
+        (state, nodes)
+    }
+
+    fn rebuild(
         &self,
         ecx: &mut ElementContext,
         state: &mut Self::State,
-        prev: &NodeSpan,
+        nodes_prev: &NodeSpan,
     ) -> NodeSpan {
-        let mut nodes = self.inner.build(ecx, state, prev);
-        if !self.once || nodes != *prev {
+        let mut nodes = self.inner.rebuild(ecx, state, nodes_prev);
+        if !self.once || nodes != *nodes_prev {
             Self::with_entity(&self.callback, &mut nodes, ecx.world);
         }
         nodes
     }
 
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan) {
-        self.inner.raze(ecx, state, prev);
+    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, nodes: &NodeSpan) {
+        self.inner.raze(ecx, state, nodes);
+        // *nodes = NodeSpan::Empty;
     }
 
     fn collect(

@@ -39,7 +39,27 @@ where
 {
     type State = Vec<IndexedListItem<V>>;
 
-    fn build(
+    fn build(&self, ecx: &mut ElementContext) -> (Self::State, NodeSpan) {
+        let next_len = self.items.len();
+        let mut child_spans: Vec<NodeSpan> = Vec::with_capacity(next_len);
+        let mut state: Vec<IndexedListItem<V>> = Vec::with_capacity(next_len);
+        child_spans.resize(next_len, NodeSpan::Empty);
+
+        // Append new items
+        for i in 0..next_len {
+            let view = (self.each)(&self.items[i], i);
+            let (st, node) = view.build(ecx);
+            state.push(IndexedListItem {
+                view: Some(view),
+                state: st,
+                node: node,
+            });
+        }
+
+        (state, NodeSpan::Fragment(child_spans.into_boxed_slice()))
+    }
+
+    fn rebuild(
         &self,
         ecx: &mut ElementContext,
         state: &mut Self::State,
@@ -55,7 +75,7 @@ where
         while i < next_len && i < prev_len {
             let child_state = &mut state[i];
             child_state.view = Some((self.each)(&self.items[i], i));
-            child_state.node = child_state.view.as_ref().unwrap().build(
+            child_state.node = child_state.view.as_ref().unwrap().rebuild(
                 ecx,
                 &mut child_state.state,
                 &child_state.node,
@@ -66,10 +86,12 @@ where
 
         // Append new items
         while i < next_len {
+            let view = (self.each)(&self.items[i], i);
+            let (st, node) = view.build(ecx);
             state.push(IndexedListItem {
-                view: Some((self.each)(&self.items[i], i)),
-                state: Default::default(),
-                node: NodeSpan::Empty,
+                view: Some(view),
+                state: st,
+                node,
             });
             i += 1;
         }
@@ -106,7 +128,7 @@ where
         state: &mut Self::State,
         nodes: &NodeSpan,
     ) -> NodeSpan {
-        let mut child_spans: Vec<NodeSpan> = state.iter().map(|item| item.node.clone()).collect();
+        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.node.clone()).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 }

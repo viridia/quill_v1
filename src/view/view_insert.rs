@@ -38,19 +38,21 @@ impl<V: View, C: Component + Clone> ViewInsert<V, C> {
 impl<V: View, C: Component + Clone> View for ViewInsert<V, C> {
     type State = V::State;
 
-    fn build(
+    fn build(&self, ecx: &mut ElementContext) -> (Self::State, NodeSpan) {
+        let (state, mut nodes) = self.inner.build(ecx);
+        Self::insert_component(&self.component, &mut nodes, ecx);
+        (state, nodes)
+    }
+
+    fn rebuild(
         &self,
         ecx: &mut ElementContext,
         state: &mut Self::State,
-        prev: &NodeSpan,
+        nodes: &NodeSpan,
     ) -> NodeSpan {
-        let mut nodes = self.inner.build(ecx, state, prev);
+        let mut nodes = self.inner.rebuild(ecx, state, nodes);
         Self::insert_component(&self.component, &mut nodes, ecx);
         nodes
-    }
-
-    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, prev: &NodeSpan) {
-        self.inner.raze(ecx, state, prev);
     }
 
     fn collect(
@@ -60,5 +62,9 @@ impl<V: View, C: Component + Clone> View for ViewInsert<V, C> {
         nodes: &NodeSpan,
     ) -> NodeSpan {
         self.inner.collect(ecx, state, nodes)
+    }
+
+    fn raze(&self, ecx: &mut ElementContext, state: &mut Self::State, nodes: &NodeSpan) {
+        self.inner.raze(ecx, state, nodes);
     }
 }

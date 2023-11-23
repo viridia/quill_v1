@@ -73,7 +73,6 @@ fn render_views(world: &mut World) {
     }
 
     // phase 3
-    println!("Phase 3");
     loop {
         let mut qf = world.query_filtered::<Entity, With<PresenterGraphChanged>>();
         let changed_entities: Vec<Entity> = qf.iter(world).collect();
@@ -93,7 +92,7 @@ fn render_views(world: &mut World) {
                 .take()
                 .expect("ViewState::handle should be present at this point");
             let mut ecx = ElementContext { world, entity: e };
-            inner.assemble(&mut ecx, e);
+            inner.attach(&mut ecx, e);
             let Some(mut view_handle) = world.get_mut::<ViewHandle>(e) else {
                 continue;
             };

@@ -6,7 +6,7 @@ use crate::node_span::NodeSpan;
 
 pub struct KeyedListItem<Key: Sync + Send + PartialEq, V: View + 'static> {
     view: Option<V>,
-    state: V::State,
+    state: Option<V::State>,
     key: Key,
     node: NodeSpan,
 }
@@ -78,7 +78,7 @@ where
                 for i in prev_range.start..prev_start {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(ecx, &mut prev.state, &prev.node);
+                        view.raze(ecx, prev.state.as_mut().unwrap(), &prev.node);
                     }
                 }
             }
@@ -86,12 +86,11 @@ where
             // Insertions
             for i in next_range.start..next_start {
                 let next = &mut next_state[i];
-                next.view = Some((self.each)(&self.items[i]));
-                next.node =
-                    next.view
-                        .as_ref()
-                        .unwrap()
-                        .build(ecx, &mut next.state, &NodeSpan::Empty);
+                let view = (self.each)(&self.items[i]);
+                let (st, node) = view.build(ecx);
+                next.view = Some(view);
+                next.state = Some(st);
+                next.node = node;
             }
         }
 
@@ -100,11 +99,11 @@ where
             let prev = &mut prev_state[prev_start + i];
             let next = &mut next_state[next_start + i];
             next.view = Some((self.each)(&self.items[i]));
-            next.node = prev
-                .view
-                .as_ref()
-                .unwrap()
-                .build(ecx, &mut prev.state, &prev.node);
+            next.node =
+                prev.view
+                    .as_ref()
+                    .unwrap()
+                    .rebuild(ecx, prev.state.as_mut().unwrap(), &prev.node);
         }
 
         // Stuff that follows the LCS.
@@ -125,7 +124,7 @@ where
                 for i in next_end..next_range.end {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(ecx, &mut prev.state, &prev.node);
+                        view.raze(ecx, prev.state.as_mut().unwrap(), &prev.node);
                     }
                 }
             }
@@ -134,11 +133,11 @@ where
             for i in next_end..next_range.end {
                 let next = &mut next_state[i];
                 next.view = Some((self.each)(&self.items[i]));
-                next.node =
-                    next.view
-                        .as_ref()
-                        .unwrap()
-                        .build(ecx, &mut next.state, &NodeSpan::Empty);
+                let view = (self.each)(&self.items[i]);
+                let (st, node) = view.build(ecx);
+                next.view = Some(view);
+                next.state = Some(st);
+                next.node = node;
             }
         }
     }
@@ -156,7 +155,33 @@ where
 {
     type State = Vec<KeyedListItem<Key, V>>;
 
-    fn build(
+    fn build(&self, ecx: &mut ElementContext) -> (Self::State, NodeSpan) {
+        let next_len = self.items.len();
+        let mut next_state: Self::State = Vec::with_capacity(next_len);
+        let mut child_spans: Vec<NodeSpan> = Vec::with_capacity(next_len);
+
+        // Initialize next state array to default values; fill in keys.
+        for j in 0..next_len {
+            let view = (self.each)(&self.items[j]);
+            let (state, node) = view.build(ecx);
+            child_spans.push(node.clone());
+            next_state.push({
+                KeyedListItem {
+                    view: Some(view),
+                    state: Some(state),
+                    key: (self.keyof)(&self.items[j]),
+                    node,
+                }
+            });
+        }
+
+        (
+            next_state,
+            NodeSpan::Fragment(child_spans.into_boxed_slice()),
+        )
+    }
+
+    fn rebuild(
         &self,
         ecx: &mut ElementContext,
         state: &mut Self::State,
@@ -166,12 +191,12 @@ where
         let mut next_state: Self::State = Vec::with_capacity(next_len);
         let prev_len = state.len();
 
-        // Initialize next state array to default values; fill in keys.
+        // Initialize output state array; fill in keys.
         for j in 0..next_len {
             next_state.push({
                 KeyedListItem {
                     view: None,
-                    state: Default::default(),
+                    state: None,
                     key: (self.keyof)(&self.items[j]),
                     node: NodeSpan::Empty,
                 }
@@ -192,7 +217,7 @@ where
         for i in 0..state.len() {
             let child_state = &mut state[i];
             if let Some(ref view) = child_state.view {
-                view.raze(ecx, &mut child_state.state, &child_state.node);
+                view.raze(ecx, child_state.state.as_mut().unwrap(), &child_state.node);
             }
         }
     }
