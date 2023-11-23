@@ -95,8 +95,8 @@ fn render_views(world: &mut World) {
                 .inner
                 .take()
                 .expect("ViewState::handle should be present at this point");
-            let mut ecx = ViewContext { world, entity: e };
-            inner.attach(&mut ecx, e);
+            let mut vc = ViewContext { world, entity: e };
+            inner.attach(&mut vc, e);
             let Some(mut view_handle) = world.get_mut::<ViewHandle>(e) else {
                 continue;
             };

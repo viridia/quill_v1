@@ -19,15 +19,15 @@ impl<A: ViewTuple> Element<A> {
 impl<A: ViewTuple> View for Element<A> {
     type State = (A::State, Entity);
 
-    fn nodes(&self, _ecx: &ViewContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _vc: &ViewContext, state: &Self::State) -> NodeSpan {
         // Return just the parent node.
         return NodeSpan::Node(state.1);
     }
 
-    fn build(&self, ecx: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut ViewContext) -> Self::State {
         // Build Views for each child element
-        let state = self.items.build_spans(ecx);
-        let new_entity = ecx
+        let state = self.items.build_spans(vc);
+        let new_entity = vc
             .world
             .spawn((NodeBundle {
                 visibility: Visibility::Visible,
@@ -37,18 +37,18 @@ impl<A: ViewTuple> View for Element<A> {
         (state, new_entity)
     }
 
-    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
         // Update the state of all child elements.
-        self.items.update_spans(ecx, &mut state.0);
+        self.items.update_spans(vc, &mut state.0);
     }
 
-    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
         // Attach child view outputs to parent.
-        let children = self.items.assemble_spans(ecx, &mut state.0);
+        let children = self.items.assemble_spans(vc, &mut state.0);
         let mut flat: Vec<Entity> = Vec::with_capacity(children.count());
         children.flatten(&mut flat);
 
-        let mut em = ecx.world.entity_mut(state.1);
+        let mut em = vc.world.entity_mut(state.1);
         if let Some(children) = em.get::<Children>() {
             // See if children changed
             if !children.eq(&flat) {
@@ -61,9 +61,9 @@ impl<A: ViewTuple> View for Element<A> {
         return NodeSpan::Node(state.1);
     }
 
-    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        self.items.raze_spans(ecx, &mut state.0);
-        let mut entt = ecx.world.entity_mut(state.1);
+    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+        self.items.raze_spans(vc, &mut state.0);
+        let mut entt = vc.world.entity_mut(state.1);
         entt.remove_parent();
         entt.despawn();
     }
@@ -83,7 +83,7 @@ pub trait ViewTuple: Send + Sync {
 
     fn assemble_spans(&self, cx: &mut ViewContext, state: &mut Self::State) -> NodeSpan;
 
-    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State);
+    fn raze_spans(&self, vc: &mut ViewContext, state: &mut Self::State);
 }
 
 impl<A: View> ViewTuple for A {
@@ -105,8 +105,8 @@ impl<A: View> ViewTuple for A {
         self.assemble(cx, state)
     }
 
-    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        self.raze(ecx, state)
+    fn raze_spans(&self, vc: &mut ViewContext, state: &mut Self::State) {
+        self.raze(vc, state)
     }
 }
 
@@ -129,8 +129,8 @@ impl<A: View> ViewTuple for (A,) {
         NodeSpan::Fragment(Box::new([self.0.assemble(cx, &mut state.0)]))
     }
 
-    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        self.0.raze(ecx, &mut state.0);
+    fn raze_spans(&self, vc: &mut ViewContext, state: &mut Self::State) {
+        self.0.raze(vc, &mut state.0);
     }
 }
 
@@ -157,9 +157,9 @@ impl<A0: View, A1: View> ViewTuple for (A0, A1) {
         ]))
     }
 
-    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        self.0.raze(ecx, &mut state.0);
-        self.1.raze(ecx, &mut state.1);
+    fn raze_spans(&self, vc: &mut ViewContext, state: &mut Self::State) {
+        self.0.raze(vc, &mut state.0);
+        self.1.raze(vc, &mut state.1);
     }
 }
 
@@ -188,10 +188,10 @@ impl<A0: View, A1: View, A2: View> ViewTuple for (A0, A1, A2) {
         ]))
     }
 
-    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        self.0.raze(ecx, &mut state.0);
-        self.1.raze(ecx, &mut state.1);
-        self.2.raze(ecx, &mut state.2);
+    fn raze_spans(&self, vc: &mut ViewContext, state: &mut Self::State) {
+        self.0.raze(vc, &mut state.0);
+        self.1.raze(vc, &mut state.1);
+        self.2.raze(vc, &mut state.2);
     }
 }
 
@@ -227,10 +227,10 @@ impl<A0: View, A1: View, A2: View, A3: View> ViewTuple for (A0, A1, A2, A3) {
         ]))
     }
 
-    fn raze_spans(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        self.0.raze(ecx, &mut state.0);
-        self.1.raze(ecx, &mut state.1);
-        self.2.raze(ecx, &mut state.2);
-        self.3.raze(ecx, &mut state.3);
+    fn raze_spans(&self, vc: &mut ViewContext, state: &mut Self::State) {
+        self.0.raze(vc, &mut state.0);
+        self.1.raze(vc, &mut state.1);
+        self.2.raze(vc, &mut state.2);
+        self.3.raze(vc, &mut state.3);
     }
 }

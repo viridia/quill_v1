@@ -48,11 +48,11 @@ impl<V: View> ViewStyled<V> {
         }
     }
 
-    fn insert_styles(&self, nodes: &NodeSpan, ecx: &mut ViewContext) {
+    fn insert_styles(&self, nodes: &NodeSpan, vc: &mut ViewContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
-                let em = &mut ecx.world.entity_mut(*entity);
+                let em = &mut vc.world.entity_mut(*entity);
                 let selector_depth = self
                     .styles
                     .iter()
@@ -87,7 +87,7 @@ impl<V: View> ViewStyled<V> {
             NodeSpan::Fragment(ref nodes) => {
                 for node in nodes.iter() {
                     // Recurse
-                    self.insert_styles(node, ecx);
+                    self.insert_styles(node, vc);
                 }
             }
         }
@@ -97,27 +97,27 @@ impl<V: View> ViewStyled<V> {
 impl<V: View> View for ViewStyled<V> {
     type State = V::State;
 
-    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan {
-        self.inner.nodes(ecx, state)
+    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+        self.inner.nodes(vc, state)
     }
 
-    fn build(&self, ecx: &mut ViewContext) -> Self::State {
-        let state = self.inner.build(ecx);
-        self.insert_styles(&self.nodes(ecx, &state), ecx);
+    fn build(&self, vc: &mut ViewContext) -> Self::State {
+        let state = self.inner.build(vc);
+        self.insert_styles(&self.nodes(vc, &state), vc);
         state
     }
 
-    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        self.inner.update(ecx, state);
-        self.insert_styles(&mut self.nodes(ecx, state), ecx);
+    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
+        self.inner.update(vc, state);
+        self.insert_styles(&mut self.nodes(vc, state), vc);
     }
 
-    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
-        self.inner.assemble(ecx, state)
+    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.assemble(vc, state)
     }
 
-    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
-        self.inner.raze(ecx, state);
+    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+        self.inner.raze(vc, state);
     }
 
     // Apply styles to this view.

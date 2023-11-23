@@ -8,12 +8,12 @@ pub struct IndexedListItem<V: View + 'static> {
 }
 
 impl<V: View + 'static> IndexedListItem<V> {
-    fn nodes(&self, ecx: &ViewContext) -> NodeSpan {
-        self.view.as_ref().unwrap().nodes(ecx, &self.state)
+    fn nodes(&self, vc: &ViewContext) -> NodeSpan {
+        self.view.as_ref().unwrap().nodes(vc, &self.state)
     }
 
-    fn collect(&mut self, ecx: &mut ViewContext) -> NodeSpan {
-        self.view.as_ref().unwrap().assemble(ecx, &mut self.state)
+    fn collect(&mut self, vc: &mut ViewContext) -> NodeSpan {
+        self.view.as_ref().unwrap().assemble(vc, &mut self.state)
     }
 }
 
@@ -48,12 +48,12 @@ where
 {
     type State = Vec<IndexedListItem<V>>;
 
-    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(ecx)).collect();
+    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(vc)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn build(&self, ecx: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut ViewContext) -> Self::State {
         let next_len = self.items.len();
         let mut child_spans: Vec<NodeSpan> = Vec::with_capacity(next_len);
         let mut state: Vec<IndexedListItem<V>> = Vec::with_capacity(next_len);
@@ -62,7 +62,7 @@ where
         // Append new items
         for i in 0..next_len {
             let view = (self.each)(&self.items[i], i);
-            let st = view.build(ecx);
+            let st = view.build(vc);
             state.push(IndexedListItem {
                 view: Some(view),
                 state: st,
@@ -72,7 +72,7 @@ where
         state
     }
 
-    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
         let next_len = self.items.len();
         let mut prev_len = state.len();
         // let mut child_spans: Vec<NodeSpan> = Vec::with_capacity(next_len);
@@ -87,7 +87,7 @@ where
                 .view
                 .as_ref()
                 .unwrap()
-                .update(ecx, &mut child_state.state);
+                .update(vc, &mut child_state.state);
             // child_spans[i] = child_state.node.clone();
             i += 1;
         }
@@ -95,7 +95,7 @@ where
         // Append new items
         while i < next_len {
             let view = (self.each)(&self.items[i], i);
-            let st = view.build(ecx);
+            let st = view.build(vc);
             state.push(IndexedListItem {
                 view: Some(view),
                 state: st,
@@ -108,25 +108,25 @@ where
             prev_len -= 1;
             let child_state = &mut state[prev_len];
             if let Some(ref view) = child_state.view {
-                view.raze(ecx, &mut child_state.state);
+                view.raze(vc, &mut child_state.state);
             }
             state.pop();
         }
     }
 
-    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.collect(ecx)).collect();
+    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+        let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.collect(vc)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
         let prev_len = state.len();
 
         let mut i = 0usize;
         while i < prev_len {
             let child_state = &mut state[i];
             if let Some(ref view) = child_state.view {
-                view.raze(ecx, &mut child_state.state);
+                view.raze(vc, &mut child_state.state);
             }
             i += 1;
         }

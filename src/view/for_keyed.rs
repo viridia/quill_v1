@@ -11,18 +11,18 @@ pub struct KeyedListItem<Key: Sync + Send + PartialEq, V: View + 'static> {
 }
 
 impl<Key: Sync + Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
-    fn nodes(&self, ecx: &ViewContext) -> NodeSpan {
+    fn nodes(&self, vc: &ViewContext) -> NodeSpan {
         self.view
             .as_ref()
             .unwrap()
-            .nodes(ecx, self.state.as_ref().unwrap())
+            .nodes(vc, self.state.as_ref().unwrap())
     }
 
-    fn collect(&mut self, ecx: &mut ViewContext) -> NodeSpan {
+    fn collect(&mut self, vc: &mut ViewContext) -> NodeSpan {
         self.view
             .as_ref()
             .unwrap()
-            .assemble(ecx, self.state.as_mut().unwrap())
+            .assemble(vc, self.state.as_mut().unwrap())
     }
 }
 
@@ -64,7 +64,7 @@ where
     /// array items. Matching items are patched, other items are inserted or deleted.
     fn build_recursive(
         &self,
-        ecx: &mut ViewContext,
+        vc: &mut ViewContext,
         prev_state: &mut [KeyedListItem<Key, V>],
         prev_range: Range<usize>,
         next_state: &mut [KeyedListItem<Key, V>],
@@ -82,7 +82,7 @@ where
             if next_start > next_range.start {
                 // Both prev and next have entries before lcs, so recurse
                 self.build_recursive(
-                    ecx,
+                    vc,
                     prev_state,
                     prev_range.start..prev_start,
                     next_state,
@@ -93,7 +93,7 @@ where
                 for i in prev_range.start..prev_start {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(ecx, prev.state.as_mut().unwrap());
+                        view.raze(vc, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -102,7 +102,7 @@ where
             for i in next_range.start..next_start {
                 let next = &mut next_state[i];
                 let view = (self.each)(&self.items[i]);
-                next.state = Some(view.build(ecx));
+                next.state = Some(view.build(vc));
                 next.view = Some(view);
             }
         }
@@ -115,7 +115,7 @@ where
             prev.view
                 .as_ref()
                 .unwrap()
-                .update(ecx, prev.state.as_mut().unwrap());
+                .update(vc, prev.state.as_mut().unwrap());
         }
 
         // Stuff that follows the LCS.
@@ -125,7 +125,7 @@ where
             if next_end < next_range.end {
                 // Both prev and next have entries after lcs, so recurse
                 self.build_recursive(
-                    ecx,
+                    vc,
                     prev_state,
                     prev_end..prev_range.end,
                     next_state,
@@ -136,7 +136,7 @@ where
                 for i in next_end..next_range.end {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(ecx, prev.state.as_mut().unwrap());
+                        view.raze(vc, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -146,7 +146,7 @@ where
                 let next = &mut next_state[i];
                 next.view = Some((self.each)(&self.items[i]));
                 let view = (self.each)(&self.items[i]);
-                next.state = Some(view.build(ecx));
+                next.state = Some(view.build(vc));
                 next.view = Some(view);
             }
         }
@@ -165,19 +165,19 @@ where
 {
     type State = Vec<KeyedListItem<Key, V>>;
 
-    fn nodes(&self, ecx: &ViewContext, state: &Self::State) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(ecx)).collect();
+    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(vc)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn build(&self, ecx: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut ViewContext) -> Self::State {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
 
         // Initialize next state array to default values; fill in keys.
         for j in 0..next_len {
             let view = (self.each)(&self.items[j]);
-            let state = view.build(ecx);
+            let state = view.build(vc);
             next_state.push({
                 KeyedListItem {
                     view: Some(view),
@@ -190,7 +190,7 @@ where
         next_state
     }
 
-    fn update(&self, ecx: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
         let prev_len = state.len();
@@ -206,20 +206,20 @@ where
             });
         }
 
-        self.build_recursive(ecx, state, 0..prev_len, &mut next_state, 0..next_len);
+        self.build_recursive(vc, state, 0..prev_len, &mut next_state, 0..next_len);
         std::mem::swap(state, &mut next_state);
     }
 
-    fn assemble(&self, ecx: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.collect(ecx)).collect();
+    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+        let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.collect(vc)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn raze(&self, ecx: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
         for i in 0..state.len() {
             let child_state = &mut state[i];
             if let Some(ref view) = child_state.view {
-                view.raze(ecx, child_state.state.as_mut().unwrap());
+                view.raze(vc, child_state.state.as_mut().unwrap());
             }
         }
     }

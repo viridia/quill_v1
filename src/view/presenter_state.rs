@@ -75,13 +75,13 @@ pub trait AnyPresenterState: Send + Sync {
     fn nodes(&self) -> NodeSpan;
 
     /// Rebuild the NodeSpans for this view and update the state.
-    fn build(&mut self, ecx: &mut ViewContext, entity: Entity);
+    fn build(&mut self, vc: &mut ViewContext, entity: Entity);
 
     /// Release all state and despawn all child entities.
-    fn raze(&mut self, ecx: &mut ViewContext, entity: Entity);
+    fn raze(&mut self, vc: &mut ViewContext, entity: Entity);
 
     /// Rebuild the display graph connections.
-    fn attach(&mut self, ecx: &mut ViewContext, entity: Entity);
+    fn attach(&mut self, vc: &mut ViewContext, entity: Entity);
 
     /// Update the copy of props in this view state.
     fn update_props<'a>(&mut self, props: &'a dyn Any) -> bool;
@@ -93,9 +93,9 @@ impl<
         F: FnMut(Cx<Props>) -> V + Send + Sync,
     > AnyPresenterState for PresenterState<V, Props, F>
 {
-    fn build(&mut self, ecx: &mut ViewContext, entity: Entity) {
+    fn build(&mut self, vc: &mut ViewContext, entity: Entity) {
         let mut child_context = ViewContext {
-            world: ecx.world,
+            world: vc.world,
             entity,
         };
         let cx = Cx::<Props> {
@@ -110,15 +110,15 @@ impl<
                     .as_ref()
                     .unwrap()
                     .update(&mut child_context, state);
-                self.attach(ecx, entity);
+                self.attach(vc, entity);
             }
             None => {
                 let state = self.view.as_ref().unwrap().build(&mut child_context);
                 self.state = Some(state);
                 // TODO: Move this to rebuild()
-                ecx.world.entity_mut(entity).insert(PresenterGraphChanged);
-                if let Some(parent) = ecx.world.entity(ecx.entity).get::<Parent>() {
-                    ecx.world
+                vc.world.entity_mut(entity).insert(PresenterGraphChanged);
+                if let Some(parent) = vc.world.entity(vc.entity).get::<Parent>() {
+                    vc.world
                         .entity_mut(parent.get())
                         .insert(PresenterGraphChanged);
                 }
@@ -126,9 +126,9 @@ impl<
         };
     }
 
-    fn raze(&mut self, ecx: &mut ViewContext, entity: Entity) {
+    fn raze(&mut self, vc: &mut ViewContext, entity: Entity) {
         let mut child_context = ViewContext {
-            world: ecx.world,
+            world: vc.world,
             entity,
         };
         if let Some(ref view) = self.view {
@@ -141,9 +141,9 @@ impl<
         }
     }
 
-    fn attach(&mut self, ecx: &mut ViewContext, entity: Entity) {
+    fn attach(&mut self, vc: &mut ViewContext, entity: Entity) {
         let mut child_context = ViewContext {
-            world: ecx.world,
+            world: vc.world,
             entity,
         };
         let nodes = self
@@ -154,8 +154,8 @@ impl<
         if self.nodes != nodes {
             self.nodes = nodes;
             // Parent needs to rebuild children
-            if let Some(parent) = ecx.world.entity(ecx.entity).get::<Parent>() {
-                ecx.world
+            if let Some(parent) = vc.world.entity(vc.entity).get::<Parent>() {
+                vc.world
                     .entity_mut(parent.get())
                     .insert(PresenterGraphChanged);
             }
