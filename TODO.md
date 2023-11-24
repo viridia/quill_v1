@@ -12,7 +12,6 @@
 * Basic widgets: Button, Slider, Text Input.
 * ElementContext shouldn't need to be mutable except for world - use a refcell?
 * Support for `cursor` style property.
-* Rename to 'bevy_quill' since 'quill' is taken.
 * Change QuillPlugin to add bevy_mod_picking plugins if needed:
 
     .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))

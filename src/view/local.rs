@@ -46,20 +46,6 @@ impl<T: Send + Sync + Clone + PartialEq + 'static> LocalData<T> {
     }
 }
 
-// impl<T: Send + Sync + Clone + PartialEq + 'static> Deref for LocalData<T> {
-//     type Target = T;
-//     fn deref(&self) -> &Self::Target {
-//         &self.get()
-//     }
-// }
-
-// impl<T: Send + Sync + Clone + PartialEq + 'static> DerefMut for LocalData<T> {
-//     fn deref_mut(&mut self) -> &mut Self::Target {
-//         // self.changed = true;
-//         &mut self.data
-//     }
-// }
-
 /// Tracks local vars used by each View tree entity.
 #[derive(Component, Default)]
 pub struct TrackedLocals {

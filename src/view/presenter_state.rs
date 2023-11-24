@@ -115,8 +115,7 @@ impl<
             None => {
                 let state = self.view.as_ref().unwrap().build(&mut child_context);
                 self.state = Some(state);
-                // TODO: Move this to rebuild()
-                vc.world.entity_mut(entity).insert(PresenterGraphChanged);
+                vc.mark_changed_shape();
                 if let Some(parent) = vc.world.entity(vc.entity).get::<Parent>() {
                     vc.world
                         .entity_mut(parent.get())

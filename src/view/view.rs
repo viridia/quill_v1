@@ -3,7 +3,7 @@ use bevy::{
     text::{Text, TextStyle},
 };
 
-use crate::{Cx, ViewHandle, ViewTuple};
+use crate::{Cx, PresenterGraphChanged, ViewHandle, ViewTuple};
 
 use crate::node_span::NodeSpan;
 
@@ -21,6 +21,15 @@ pub struct ViewContext<'w> {
 
     /// The entity which contains the PresenterState.
     pub(crate) entity: Entity,
+}
+
+impl<'w> ViewContext<'w> {
+    /// Indicate that the shape of the display graph has changed.
+    pub fn mark_changed_shape(&mut self) {
+        self.world
+            .entity_mut(self.entity)
+            .insert(PresenterGraphChanged);
+    }
 }
 
 pub trait View: Send + Sync
@@ -152,6 +161,7 @@ impl View for String {
 
         // Despawn node and create new text node
         nodes.despawn(vc.world);
+        vc.mark_changed_shape();
         *state = self.build(vc)
     }
 
@@ -206,6 +216,7 @@ impl View for &'static str {
 
         // Despawn node and create new text node
         nodes.despawn(vc.world);
+        vc.mark_changed_shape();
         *state = self.build(vc)
     }
 

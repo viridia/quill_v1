@@ -52,6 +52,7 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
                 _ => {
                     // Despawn old state and construct new state
                     self.raze(vc, state);
+                    vc.mark_changed_shape();
                     *state = Self::State::True(self.pos.build(vc));
                 }
             }
@@ -65,6 +66,7 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
                 _ => {
                     // Despawn old state and construct new state
                     self.raze(vc, state);
+                    vc.mark_changed_shape();
                     *state = Self::State::False(self.neg.build(vc));
                 }
             }

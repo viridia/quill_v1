@@ -12,7 +12,7 @@ use bevy_mod_picking::{
     prelude::*,
 };
 use bevy_quill::{
-    Cx, Element, ElementClasses, PresenterFn, QuillPlugin, StyleSet, View, ViewHandle,
+    Cx, Element, ElementClasses, For, PresenterFn, QuillPlugin, StyleSet, View, ViewHandle,
 };
 use lazy_static::lazy_static;
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
@@ -22,6 +22,7 @@ fn main() {
     App::new()
         .init_resource::<ViewportInset>()
         .init_resource::<PanelWidth>()
+        .init_resource::<ClickLog>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(EventListenerPlugin::<Clicked>::default())
@@ -76,7 +77,32 @@ lazy_static! {
             .background_color(Some(Color::hex("#2F2F2F").unwrap())))
         .selector(":hover.pressed", |ss| ss
             .background_color(Some(Color::hex("#484848").unwrap())))));
-    static ref STYLE_VIEWPORT: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss.flex_grow(1.)));
+    static ref STYLE_VIEWPORT: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .flex_grow(1.)
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .justify_content(ui::JustifyContent::FlexEnd)));
+    static ref STYLE_LOG: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .background_color(Some(Color::hex("#0008").unwrap()))
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Row)
+        .align_self(ui::AlignSelf::Stretch)
+        .height(ui::Val::Percent(30.))
+        .margin(8)));
+    static ref STYLE_LOG_INNER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .justify_content(ui::JustifyContent::FlexEnd)
+        .align_self(ui::AlignSelf::Stretch)
+        .flex_grow(1.)
+        .flex_basis(0)
+        .overflow(ui::OverflowAxis::Clip)
+        .gap(3)
+        .margin(8)));
+    static ref STYLE_LOG_ENTRY: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .display(ui::Display::Flex)
+        .justify_content(ui::JustifyContent::SpaceBetween)
+        .align_self(ui::AlignSelf::Stretch)));
 }
 
 const CLS_PRESSED: &str = "pressed";
@@ -92,37 +118,34 @@ impl Default for PanelWidth {
     }
 }
 
+#[derive(Resource, Default)]
+pub struct ClickLog(Vec<String>);
+
 fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewHandle::new(ui_main, ()));
 }
 
 fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
+    // let log = cx.use_resource_mut::<ClickLog>();
     Element::new()
         .styled(STYLE_MAIN.clone())
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
-            e.insert((
-                // On::<SplitterDragStart>::run(
-                //     move |_ev: Res<ListenerInput<SplitterDragStart>>, mut width: ResMut<PanelWidth>| {
-                //         width.drag_origin = width.value;
-                //     },
-                // ),
-                On::<SplitterDragged>::run(
-                    move |ev: Res<ListenerInput<SplitterDragged>>,
-                          mut width: ResMut<PanelWidth>,
-                          query: Query<(&Node, &GlobalTransform)>| {
-                        match query.get(entity) {
-                            Ok((node, transform)) => {
-                                // Measure node width and clamp split position.
-                                let node_width = node.logical_rect(transform).width();
-                                width.value = ev.value.clamp(100., node_width - 100.);
-                            }
-                            _ => return,
+            e.insert((On::<SplitterDragged>::run(
+                move |ev: Res<ListenerInput<SplitterDragged>>,
+                      mut width: ResMut<PanelWidth>,
+                      query: Query<(&Node, &GlobalTransform)>| {
+                    match query.get(entity) {
+                        Ok((node, transform)) => {
+                            // Measure node width and clamp split position.
+                            let node_width = node.logical_rect(transform).width();
+                            width.value = ev.value.clamp(100., node_width - 100.);
                         }
-                    },
-                ),
-            ));
+                        _ => return,
+                    }
+                },
+            ),));
         })
         .children((
             Element::new()
@@ -160,7 +183,8 @@ fn ui_main(mut cx: Cx) -> impl View {
             }),
             Element::new()
                 .styled(STYLE_VIEWPORT.clone())
-                .insert(ViewportInsetElement {}),
+                .insert(ViewportInsetElement {})
+                .children(event_log),
         ))
 }
 
@@ -212,11 +236,26 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
         .children(cx.props.children.clone())
 }
 
-fn show_events(mut clicked: EventReader<Clicked>) {
+fn event_log(mut cx: Cx) -> impl View {
+    let log = cx.use_resource::<ClickLog>();
+    Element::new().styled(STYLE_LOG.clone()).children(
+        Element::new()
+            .styled(STYLE_LOG_INNER.clone())
+            .children(For::each(&log.0, |item| {
+                Element::new()
+                    .styled(STYLE_LOG_ENTRY.clone())
+                    .children((item.to_owned(), "00:00:00"))
+            })),
+    )
+}
+
+fn show_events(mut clicked: EventReader<Clicked>, mut log: ResMut<ClickLog>) {
     for ev in clicked.read() {
         println!(
             "Reading global clicked: id='{}' target={:?}",
             ev.id, ev.target
         );
+        log.0
+            .push(format!("Button Clicked: id='{}'", ev.id).to_string())
     }
 }
