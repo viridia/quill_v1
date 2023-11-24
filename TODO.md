@@ -3,10 +3,10 @@
 * Work on cargo docs.
 * Some kind of sugar for stylesets that avoids all the Arc::new() and .clone() calls.
 * Change style builder methods to accept `impl StyleValue`. Then define `Var("varname")`
-* Leaf nodes render when dependencies change (currently render unconditionally).
 * Option for ViewHandle to parent to an explicit (manually constructed) UiNode.
 * Experiment with dependency injection instead of hooks.
-* Detect changes to presenter props.
+* [test] Leaf nodes render when dependencies change (currently render unconditionally).
+* [test] Detect changes to presenter props.
 * `use` hooks for components, events, etc.
 * Implement button click handler. (Right now using an event, but closure would be better).
 * Basic widgets: Button, Slider, Text Input.

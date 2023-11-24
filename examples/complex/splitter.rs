@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
+use bevy_quill::{Cx, Element, ElementClasses, PointerEvents, StyleSet, View};
 use lazy_static::lazy_static;
-use quill::{Cx, Element, ElementClasses, PointerEvents, StyleSet, View};
 
 pub struct SplitterPlugin;
 

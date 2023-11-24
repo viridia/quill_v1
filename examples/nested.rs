@@ -6,7 +6,7 @@ use bevy_mod_picking::{
     input::InputPlugin,
     picking_core::{CorePlugin, InteractionPlugin},
 };
-use quill::{Cx, Element, If, PresenterFn, QuillPlugin, View, ViewHandle};
+use bevy_quill::{Cx, Element, If, PresenterFn, QuillPlugin, View, ViewHandle};
 
 fn main() {
     App::new()

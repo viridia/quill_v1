@@ -5,18 +5,19 @@ constructing reactive user interfaces, similar to frameworks like React and Soli
 foundation of Bevy ECS state management.
 
 Quill is an experimental library which borrows ideas from a number of popular UI frameworks,
-including React.js, Solid.js, and Xilem. However, the way these ideas are implemented is quite
-different, owing to the need to build on the foundations of Bevy ECS.
+including React.js, Solid.js, Dioxus, and Xilem. However, the way these ideas are implemented is
+quite different, owing to the need to build on the foundations of Bevy ECS.
 
-This project is in "proof of concept" phase. This means that nothing is set in stone yet.
+At this point in time, Quill is meant to be more of a research platform - a "proof of concept" -
+than a usable library. This means that nothing is set in stone yet.
 
 ## Getting started
 
-For now, you can run the example:
+For now, you can run the examples:
 
 ```sh
 cargo run --example simple
-cargo run --example nested
+cargo run --example complex
 ```
 
 When the window opens, hit the spacebar to update the counter.
@@ -24,10 +25,9 @@ When the window opens, hit the spacebar to update the counter.
 ## Aspirations / guiding principles:
 
 * Allows easy composition and re-use of hierarchical widgets.
+* Built on top of existing Bevy UI components.
 * No special syntax required, it's just Rust.
 * Allows reactive hooks such as `use_resource()` that hook into Bevy's change detection framework.
-* Built on top of existing Bevy UI components - presenters construct a graph and modify it in
-  response to reactions.
 * State management built on top of Bevy ECS, rather than maintaining its own separate UI "world".
 * Any data type (String, int, color, etc.) can be displayed in the UI so long as it implements
   the `View` trait.
@@ -37,18 +37,62 @@ When the window opens, hit the spacebar to update the counter.
 
 ## Architecture and Rendering Lifecycle
 
-### Display Trees and View Trees
+A Quill UI is made up of individual elements called `Views`. If you are familiar with web frameworks
+like React.js, Solid.js or Vue, you'll recognizes that Quill views are like "components" or
+"widgets": modular, resable elements that are arranged hierarchically. However, `Views` are not the
+same as Bevy UI nodes; instead `Views` are templates which produce UI nodes.
 
-Quill maintains several different hierarchical structures:
+Views allow "reactive" programming, which is a paradigm in which UI elements automatically react
+to changes in the data that those elements depend on.
+
+Views fall into two categories: built-in views, like `Element`, and user-created views. User-created
+views are created by user functions written in Rust, which are called "presenters".
+
+> [!NOTE]
+> Note: The name "presenter" has nothing to do with the "Model/View/Presenter" design pattern. (Well,
+> almost nothing.)
+
+Presenter functions can depend on external data sources such as resources or state variables.
+When these data sources are updated, the presenter function is run again, generating a new `View`.
+The `View`, in turn, creates or modifies the Bevy UI nodes that make up the actual UI. Most of the
+time, the UI nodes will be modified in place rather than being generated anew.
+
+Here's an example of a basic presenter which creates an element with two children:
+
+```rust
+fn hello_world(mut cx: Cx) -> impl View {
+    // `Element` is a generic UI node, kind of like an HTML "div".
+    Element::new()
+        .children((
+            "Hello, ", // Yes, raw string slices implement `View` too!
+            Element::new("World!"),
+        ))
+}
+```
+
+This examples shows a presenter function which returns a built-in `Element` view. It also
+has two children, one of which is another `Element`, and one which is a string slice (`&str`).
+Because Strings and string slices implement `View` they can be used anywhere a view can be.
+
+When a UI is no longer needed (such as when a dialog or menu is closed), the view is *razed*
+(the opposite of built), causing the various UI entities to be despawned.
+
+The next sections describe this process in more detail.
+
+### Display Trees and View Trees
 
 The **display tree** is the tree of Bevy Ui Node entities which actually render. These are the
 nodes which actually produce rendering commands which are sent to the GPU. In Quill, the display
-tree is analogous to the HTML DOM: it's the output of a template or generator.
+tree is analogous to the HTML DOM: it's the output of a `View`.
 
-The **view tree** is the tree of nodes that generate the display tree. It's made up of `View` trait
-objects. The most important method of a view is the `.build()` method, which is what actually
-generates the nodes of the display tree. Views are able to differentially 'patch' the display
-tree, modifying it in place instead of replacing it.
+The **view tree** is the tree of `View`s that generate the display tree. `View`s are trait
+objects that know how to build and patch the display tree. Views contain a number of methods
+for mantaining the display tree:
+
+* `.build()` - initializes the nodes of the display graph.
+* `.update()` - react to changes in the environment by modifying the nodes of the display graph.
+* `.assemble()` - link together the nodes of the display graph in parent/child relationships.
+* `.raze()` - disconnect and despawn any nodes generated by this view.
 
 The display tree and view tree have similar hierarchical structure, but they are not the same.
 Most view nodes generate a single display node, and most view nodes with children will generate
@@ -56,71 +100,58 @@ a display node with the same number of children. However, there are exeptions: A
 will generate multiple children depending on the length of the array used as input, and conditional
 nodes will generate a single child out of multiple possible options.
 
-**Presenters** are Rust functions which generate a view tree; the return type of a presenter is
-`impl View`. (If you have used React, Solid, or other similar frameworks, these are called
-"component functions", however the name "component" means something different in Bevy.)
+As an example, an `If` node has a true branch and a false branch, but only one branch can be built
+at a time. When the conditional expression changes from `true` to `false`, the children generated
+by the true branch are razed, and in their place the children generated by the false branch are
+built.
 
-> [!NOTE]
-> Note: The name "presenter" has nothing to do with the "Model/View/Presenter" design pattern. (Well,
-> almost nothing.)
+The view tree is really a tree of trees: that is, there is a larger tree whose nodes are made up
+of `PresenterState`s, and each of those `PresenterState` nodes contains a tree of all the `Views`
+generated by that presenter. If a presenter calls another presenter, then the `View` nodes of the
+parent `PresenterState` will contain links to the child `PresenterState`.
 
-Here's an example of a basic presenter which creates an element with two children:
+`PresenterState`s are what subscribes to reactive data sources and are the "unit of update
+granularity"; it is not possible to update individual `View`s in isolation, instead the
+entire `PresenterState` is updated together, with all of the `View`s within it. (This is closer
+to the way React works than Solid does.) A `PresenterState` contains everything needed to
+regenerate the views, which means that they can be updated in isolation, even if they are leaf
+nodes or interior nodes of the view graph.
 
-```rust
-fn hello_world(mut cx: Cx) -> impl View {
-    // `Element` is a generic UI node, kind of like an HTML "div".
-    Element::new((
-        "Hello, ", // Yes, raw string slices implement `View` too!
-        Element::new("World!"),
-    ))
-}
-```
+This diagram shows the relationship between presenters, `PresenterStates`, `Views`, and display nodes:
 
-A presenter is typically responsible for a small subset of the total view tree for the whole UI.
-The `View` nodes output by a presenter fall into one of several types:
-
-* "Built-in" view types, such as `Element`, `For`, `If` and so on. These are Rust objects which
-  directly implement the `View` trait.
-* Primitive types which implement `View`, such as `String` and `&str`.
-* View nodes which invoke another presenter function.
+![View Tree](doc/ViewTree.drawio.png)
 
 For those who are familiar with React, the built-in views correspond to "intrinsic" types such as
-`<div>` or `<button>`, where the presenter nodes correspond to components such as `<MyComponent>`.
-However, the convention of using upper-case/lower-case is reversed here: Built-in views generally
-start with an upper-case letter (because they are Rust structs), whereas presenters start with
-a lower-case letter (because they are Rust functions).
-
-`View` trees are stateless and immutable: each rendering cycle, a new `View` tree is constructed.
-However, this is actually very cheap, because the output of a single presenter is not a tree of
-allocated/boxed nodes in memory, but a set of nested tuples - in other words, it's a single
-object stored in continguous memory. The only exception is when a presenter invokes another
-presenter - in this case, the output of the nested presenter is boxed and stored in an ECS
-component called a `ViewHandle`, which contains a type-erased reference to the output of the
-presenter.
+`<div>` or `<button>`, whereas presenter functions correspond to function components such as
+`<MyComponent>`. However, the convention of using upper-case/lower-case is reversed here: Built-in
+views generally start with an upper-case letter (because they are Rust structs), whereas presenters
+start with a lower-case letter (because they are Rust functions).
 
 ### Managing State
+
+`View`s are stateless and immutable: each rendering cycle, a new `View` tree is constructed.
+However, this is actually very cheap, because the output of a single presenter is not a tree of
+allocated/boxed nodes in memory, but a set of nested tuples - in other words, it's a single
+object stored in continguous memory.
 
 Because `View`s are stateless, their state must be managed externally. Each `View` has an associated
 type, `View::State` which defines the type of the view's state. For most views, the `State` not only
 includes the state for itself, but the state for all child views as well. This means that the state
-object, like the view object, is a set of nested tuples stored in a single contiguous memory region.
-View states, like `View`s, are also stored in the `ViewHandle`, however unlike the view tree the
-state is mutable. The `.build()` method is responsible for updating the state at the same time
-as it generates the display tree nodes.
+object, like the view object, is a set of nested tuples stored in a single contiguous memory
+region. This is only true, however, for views that have a fixed number of children; for views
+that have dynamic children, the view states are stored in a `Vec`.
 
-A bit more about `ViewHandle`s: The handle contains everything needed to re-render a presenter,
-including a reference to the presenter itself, it's arguments, the previous view tree (from the
-last time the presenter was called) and the view state. This means that it's possible to regenerate
-just a subset of the display tree without having to regenerate the whole thing, so long as you
-have a reference to the `ViewHandle`.
+View states, like `View`s, are also stored in the `PresenterState`, however unlike the view tree the
+state is mutable. The `.build()` and `.update()` methods are responsible for updating the state at
+the same time as it generates the display tree nodes. `PresenterStates` also keep a copy of the
+parameters that were passed to the presenter function, and a copy of the last output.
 
-`ViewHandles` are ECS components which are attached to the entities that make up the view tree.
-Even though the output of a single presenter is a single `View` object, there are multiple
-presenters (and in some cases a presenter may be invoked more than once), and each presenter
-invocation is represented by an entity with a `ViewHandle`. Other ECS components are
-also attached to this entity. The most important of these are components that handle reactivity.
+`PresenterState`s are in turn stored inside an ECS component called a `ViewHandle`. The
+`PresenterState` is type-erased (via `AnyPresenterState`). Thus, to maintain a reference to
+the root of a UI, one only needs to keep track of the `ViewHandle` entity. You can have multiple
+`ViewHandle`s for multiple independent UI displays.
 
-To instantiate a Quill UI, all you need to do is insert a `ViewHandle` into the ECS world:
+Here's how to create a UI, given a root presenter:
 
 ```rust
 commands.spawn(ViewHandle::new(ui_main, ()));
@@ -137,7 +168,7 @@ or B2 changes), there's no need to explicitly subscribe to them.
 
 During rendering, presenters can invoke "reactive" functions such as `use_resource()`. These
 functions do two things: First, they return the data that was requested, such as a resource.
-Secondly, they add a "tracking" component to the view handle entity that indicates that the
+Secondly, they add a "tracking" component to the `ViewHandle` entity that indicates that the
 `ViewHandle` and it's presenter has a dependency on that data, so that when that data changes,
 the `ViewHandle` is re-rendered.
 
@@ -177,24 +208,27 @@ fn setup_view_root(mut commands: Commands) {
 fn ui_main(mut cx: Cx) -> impl View {
     let counter = cx.use_resource::<Counter>();
     // Render an element with children
-    Element::new((
-        Element::new(()).styled(STYLE_ASIDE.clone()),
-        v_splitter,
-        // A conditional element
-        If::new(
-            counter.count & 1 == 0,
-            // Strings and string slices also implement `View`.
-            "even",
-            "odd",
-        ),
-    ))
-    .styled(STYLE_MAIN.clone())
+    Element::new()
+        .styled(STYLE_MAIN.clone())
+        .children((
+            Element::new(()).styled(STYLE_ASIDE.clone()),
+            v_splitter,
+            // A conditional element
+            If::new(
+                counter.count & 1 == 0,
+                // Strings and string slices also implement `View`.
+                "even",
+                "odd",
+            ),
+        ))
 }
 
 /// A presenter function
 fn v_splitter(mut _cx: Cx) -> impl View {
-    Element::new(Element::new(()).styled(STYLE_VSPLITTER_INNER.clone()))
+    Element::new()
         .styled(STYLE_VSPLITTER.clone())
+        .children(
+            Element::new().styled(STYLE_VSPLITTER_INNER.clone()))
 }
 
 ```
@@ -221,15 +255,6 @@ pixels is the default unit, so for example `.border(2)` specifies a border width
 **Coming Soon**: CSS variables.
 
 # Design Notes
-
-A Quill user inteface consists of a "view root", which represents the topmost element of the UI.
-View roots are Bevy components, and multiple view roots are permitted.
-
-The `View` trait has several methods, but the most important one is `.build()`. This is the
-method that actually builds the display graph. When called the first time, it will create the
-UiNodes for the display graph. On subsequent calls, it will take the existing display graph and
-update it, applying the minimum changes needed to bring it up to date with the current
-view state.
 
 Any object can implement `View`. For example, there are implementations of `View` for both
 `String` and `&str`, which means that ordinary strings can be used as child nodes without the

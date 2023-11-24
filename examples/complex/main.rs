@@ -11,8 +11,10 @@ use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
     prelude::*,
 };
+use bevy_quill::{
+    Cx, Element, ElementClasses, PresenterFn, QuillPlugin, StyleSet, View, ViewHandle,
+};
 use lazy_static::lazy_static;
-use quill::{Cx, Element, ElementClasses, PresenterFn, QuillPlugin, StyleSet, View, ViewHandle};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use viewport::{ViewportInset, ViewportInsetElement};
 
