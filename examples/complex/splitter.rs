@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
-use bevy_quill::{Cx, Element, ElementClasses, PointerEvents, StyleSet, View};
+use bevy_quill::prelude::*;
 use lazy_static::lazy_static;
 
 pub struct SplitterPlugin;

@@ -8,7 +8,7 @@ use bevy_mod_picking::{
     input::InputPlugin,
     picking_core::{CorePlugin, InteractionPlugin},
 };
-use bevy_quill::{Cx, Element, If, QuillPlugin, StyleSet, View, ViewHandle};
+use bevy_quill::prelude::*;
 use lazy_static::lazy_static;
 
 fn main() {

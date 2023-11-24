@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{TrackedResources, ViewContext};
+use crate::{resource::TrackedResources, ViewContext};
 
 use super::{
     local::{LocalData, TrackedLocals},

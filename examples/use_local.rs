@@ -8,7 +8,7 @@ use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
     prelude::*,
 };
-use bevy_quill::{Cx, Element, If, PresenterFn, QuillPlugin, View, ViewHandle};
+use bevy_quill::prelude::*;
 
 fn main() {
     App::new()

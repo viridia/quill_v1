@@ -17,10 +17,7 @@ use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
     prelude::*,
 };
-use bevy_quill::{
-    Cx, Element, ElementClasses, PointerEvents, PresenterFn, QuillPlugin, StyleSet, View,
-    ViewHandle,
-};
+use bevy_quill::prelude::*;
 use lazy_static::lazy_static;
 
 fn main() {

@@ -2,9 +2,10 @@ use bevy::{prelude::*, utils::HashSet};
 use bevy_mod_picking::focus::{HoverMap, PreviousHoverMap};
 
 use crate::{
+    presenter_state::{PresenterGraphChanged, PresenterStateChanged},
     style::{ComputedStyle, UpdateComputedStyle},
-    ElementClasses, ElementStyles, PresenterGraphChanged, PresenterStateChanged, SelectorMatcher,
-    TrackedLocals, TrackedResources, ViewContext, ViewHandle,
+    view::resource::TrackedResources,
+    ElementClasses, ElementStyles, SelectorMatcher, TrackedLocals, ViewContext, ViewHandle,
 };
 
 pub struct QuillPlugin;
