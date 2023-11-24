@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_quill::prelude::*;
@@ -17,16 +15,16 @@ impl Plugin for SplitterPlugin {
 // Style definitions for the splitter widget.
 lazy_static! {
     // The splitter widget
-    static ref STYLE_VSPLITTER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+    static ref STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#181818").unwrap()))
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
         .width(9)
         .selector(".drag", |ss| ss
-            .background_color(Some(Color::hex("#080808").unwrap())))));
+            .background_color(Some(Color::hex("#080808").unwrap()))));
     // The decorative handle inside the splitter.
-    static ref STYLE_VSPLITTER_INNER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+    static ref STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#282828").unwrap()))
         .display(ui::Display::Flex)
         .width(5)
@@ -35,7 +33,7 @@ lazy_static! {
         .selector(":hover > &", |ss| ss
             .background_color(Some(Color::hex("#383838").unwrap())))
         .selector(".drag > &", |ss| ss
-            .background_color(Some(Color::hex("#484848").unwrap())))));
+            .background_color(Some(Color::hex("#484848").unwrap()))));
 }
 
 const CLS_DRAG: &str = "drag";

@@ -1,7 +1,6 @@
 //! Example that shows how to add custom ECS components to a Quill View.
 
 use std::f32::consts::PI;
-use std::sync::Arc;
 
 use bevy::{
     core_pipeline::clear_color::ClearColorConfig,
@@ -43,7 +42,7 @@ fn main() {
 }
 
 lazy_static! {
-    static ref STYLE_MAIN: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+    static ref STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| ss
         .position(ui::PositionType::Absolute)
         .left(10.)
         .top(10.)
@@ -51,23 +50,23 @@ lazy_static! {
         .right(10.)
         .border(1)
         .border_color(Some(Color::hex("#888").unwrap()))
-        .display(ui::Display::Flex)));
-    static ref STYLE_ASIDE: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .display(ui::Display::Flex));
+    static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#222").unwrap()))
         .display(ui::Display::Flex)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
-        .width(200)));
-    static ref STYLE_VSPLITTER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .width(200));
+    static ref STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#181818").unwrap()))
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
         .width(9)
         .selector(".drag", |ss| ss
-            .background_color(Some(Color::hex("#080808").unwrap())))));
-    static ref STYLE_VSPLITTER_INNER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+            .background_color(Some(Color::hex("#080808").unwrap()))));
+    static ref STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#282828").unwrap()))
         .display(ui::Display::Flex)
         .width(5)
@@ -76,8 +75,8 @@ lazy_static! {
         .selector(":hover > &", |ss| ss
             .background_color(Some(Color::hex("#383838").unwrap())))
         .selector(".drag > &", |ss| ss
-            .background_color(Some(Color::hex("#484848").unwrap())))));
-    static ref STYLE_BUTTON: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+            .background_color(Some(Color::hex("#484848").unwrap()))));
+    static ref STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#282828").unwrap()))
         .border_color(Some(Color::hex("#383838").unwrap()))
         .border(1)
@@ -93,8 +92,8 @@ lazy_static! {
             .border_color(Some(Color::hex("#444").unwrap()))
             .background_color(Some(Color::hex("#2F2F2F").unwrap())))
         .selector(":hover.pressed", |ss| ss
-            .background_color(Some(Color::hex("#484848").unwrap())))));
-    static ref STYLE_VIEWPORT: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss.flex_grow(1.)));
+            .background_color(Some(Color::hex("#484848").unwrap()))));
+    static ref STYLE_VIEWPORT: StyleHandle = StyleHandle::build(|ss| ss.flex_grow(1.));
 }
 
 const DEFAULT_FOV: f32 = 0.69; // 40 degrees
@@ -144,7 +143,7 @@ fn ui_main(mut cx: Cx) -> impl View {
         Element::new()
             .styled((
                 STYLE_ASIDE.clone(),
-                Arc::new(StyleSet::build(|b| b.width(width.0))),
+                StyleHandle::build(|b| b.width(width.0)),
             ))
             .children((
                 button.bind(ButtonProps {

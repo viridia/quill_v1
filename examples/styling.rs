@@ -1,7 +1,5 @@
 //! Example of styling.
 
-use std::sync::Arc;
-
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::{
     backends::bevy_ui::BevyUiBackend,
@@ -23,7 +21,7 @@ fn main() {
 }
 
 lazy_static! {
-    static ref STYLE_MAIN: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+    static ref STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| ss
         .position(ui::PositionType::Absolute)
         .left(10.)
         .top(10.)
@@ -31,29 +29,29 @@ lazy_static! {
         .right(10.)
         .border(1)
         .border_color(Some(Color::hex("#888").unwrap()))
-        .display(ui::Display::Flex)));
-    static ref STYLE_ASIDE: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .display(ui::Display::Flex));
+    static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#222").unwrap()))
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
-        .width(200)));
-    static ref STYLE_VSPLITTER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .width(200));
+    static ref STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#181818").unwrap()))
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
-        .width(7)));
-    static ref STYLE_VSPLITTER_INNER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .width(7));
+    static ref STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#282828").unwrap()))
         .display(ui::Display::Flex)
         .width(3)
-        .height(ui::Val::Percent(30.))));
-    static ref STYLE_EVEN: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .height(ui::Val::Percent(30.)));
+    static ref STYLE_EVEN: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::RED))
-        .padding(UiRect::all(Val::Px(2.)))));
-    static ref STYLE_ODD: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .padding(UiRect::all(Val::Px(2.))));
+    static ref STYLE_ODD: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::GREEN))
-        .padding(UiRect::all(Val::Px(2.)))));
+        .padding(UiRect::all(Val::Px(2.))));
 }
 
 fn setup_view_root(mut commands: Commands) {

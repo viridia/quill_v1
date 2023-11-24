@@ -198,7 +198,7 @@ that all props must implement `PartialEq`.
 ```rust
 /// Define some styles
 lazy_static! {
-    static ref STYLE_MAIN: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+    static ref STYLE_MAIN: StyleHandle = StyleHandle::build::build(|ss| ss
         .position(ui::PositionType::Absolute)
         .left(10.)
         .top(10.)
@@ -206,12 +206,12 @@ lazy_static! {
         .right(10.)
         .border(1)
         .border_color(Some(Color::hex("#888").unwrap()))
-        .display(ui::Display::Flex)));
-    static ref STYLE_ASIDE: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .display(ui::Display::Flex));
+    static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#222").unwrap()))
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
-        .width(200)));
+        .width(200));
 }
 
 /// Function to set up the view root

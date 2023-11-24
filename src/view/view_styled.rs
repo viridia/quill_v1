@@ -1,16 +1,14 @@
-use std::sync::Arc;
-
 use bevy::prelude::*;
 use bevy::utils::HashSet;
 
-use crate::{StyleSet, View, ViewContext};
+use crate::{StyleHandle, View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
 /// List of style objects which are attached to a given UiNode.
 #[derive(Component, Default)]
 pub struct ElementStyles {
-    pub styles: Vec<Arc<StyleSet>>,
+    pub styles: Vec<StyleHandle>,
 
     // How far up the hierarchy the selectors need to search
     pub(crate) selector_depth: usize,
@@ -37,7 +35,7 @@ impl ElementClasses {
 // A wrapper view which applies styles to the output of an inner view.
 pub struct ViewStyled<V: View> {
     inner: V,
-    styles: Vec<Arc<StyleSet>>,
+    styles: Vec<StyleHandle>,
 }
 
 impl<V: View> ViewStyled<V> {
@@ -53,16 +51,11 @@ impl<V: View> ViewStyled<V> {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
                 let em = &mut vc.world.entity_mut(*entity);
-                let selector_depth = self
-                    .styles
-                    .iter()
-                    .map(|s| s.as_ref().depth())
-                    .max()
-                    .unwrap_or(0);
+                let selector_depth = self.styles.iter().map(|s| s.depth()).max().unwrap_or(0);
                 let uses_hover = self
                     .styles
                     .iter()
-                    .map(|s| s.as_ref().uses_hover())
+                    .map(|s| s.uses_hover())
                     .max()
                     .unwrap_or(false);
 
@@ -131,35 +124,35 @@ impl<V: View> View for ViewStyled<V> {
 
 // TODO: Turn this into a macro once it's stable.
 pub trait StyleTuple: Send + Sync {
-    fn to_vec(&self) -> Vec<Arc<StyleSet>>;
+    fn to_vec(&self) -> Vec<StyleHandle>;
 }
 
 impl StyleTuple for () {
-    fn to_vec(&self) -> Vec<Arc<StyleSet>> {
+    fn to_vec(&self) -> Vec<StyleHandle> {
         Vec::new()
     }
 }
 
-impl StyleTuple for Arc<StyleSet> {
-    fn to_vec(&self) -> Vec<Arc<StyleSet>> {
+impl StyleTuple for StyleHandle {
+    fn to_vec(&self) -> Vec<StyleHandle> {
         vec![self.clone()]
     }
 }
 
-impl StyleTuple for &Arc<StyleSet> {
-    fn to_vec(&self) -> Vec<Arc<StyleSet>> {
+impl StyleTuple for &StyleHandle {
+    fn to_vec(&self) -> Vec<StyleHandle> {
         vec![(*self).clone()]
     }
 }
 
-impl StyleTuple for (Arc<StyleSet>,) {
-    fn to_vec(&self) -> Vec<Arc<StyleSet>> {
+impl StyleTuple for (StyleHandle,) {
+    fn to_vec(&self) -> Vec<StyleHandle> {
         vec![self.0.clone()]
     }
 }
 
-impl StyleTuple for (Arc<StyleSet>, Arc<StyleSet>) {
-    fn to_vec(&self) -> Vec<Arc<StyleSet>> {
+impl StyleTuple for (StyleHandle, StyleHandle) {
+    fn to_vec(&self) -> Vec<StyleHandle> {
         vec![self.0.clone(), self.1.clone()]
     }
 }

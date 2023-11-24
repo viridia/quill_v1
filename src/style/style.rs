@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::{
     asset::AssetPath,
     ecs::entity::Entity,
@@ -13,6 +15,42 @@ use super::{
     computed::ComputedStyle, selector::Selector, selector_matcher::SelectorMatcher,
     style_expr::StyleExpr,
 };
+
+#[derive(Clone)]
+pub struct StyleHandle(pub Arc<StyleSet>);
+
+/// Handle which maintains a shared reference to a set of styles and selectors.
+impl StyleHandle {
+    /// Build a StyleSet using a builder callback.
+    pub fn build(builder_fn: impl FnOnce(&mut StyleSetBuilder) -> &mut StyleSetBuilder) -> Self {
+        let mut builder = StyleSetBuilder::new();
+        builder_fn(&mut builder);
+        Self(Arc::new(StyleSet {
+            props: builder.props,
+            selectors: builder.selectors,
+        }))
+    }
+
+    /// Merge the style properties into a computed `Style` object.
+    pub fn apply_to<'a>(
+        &self,
+        computed: &mut ComputedStyle,
+        matcher: &SelectorMatcher,
+        entity: &Entity,
+    ) {
+        self.0.as_ref().apply_to(computed, matcher, entity);
+    }
+
+    /// Return the number of UiNode levels referenced by selectors.
+    pub fn depth(&self) -> usize {
+        self.0.as_ref().depth()
+    }
+
+    /// Return whether any of the selectors use the ':hover' pseudo-class.
+    pub fn uses_hover(&self) -> bool {
+        self.0.as_ref().uses_hover()
+    }
+}
 
 /// Controls behavior of bevy_mod_picking
 #[derive(Debug, Clone, Copy, PartialEq)]

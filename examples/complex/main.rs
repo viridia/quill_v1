@@ -3,8 +3,6 @@ mod shapes;
 mod splitter;
 mod viewport;
 
-use std::sync::Arc;
-
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::{
     events::PointerCancel,
@@ -42,7 +40,7 @@ fn main() {
 }
 
 lazy_static! {
-    static ref STYLE_MAIN: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+    static ref STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| ss
         .position(ui::PositionType::Absolute)
         .left(10.)
         .top(10.)
@@ -50,15 +48,15 @@ lazy_static! {
         .right(10.)
         .border(1)
         .border_color(Some(Color::hex("#888").unwrap()))
-        .display(ui::Display::Flex)));
-    static ref STYLE_ASIDE: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .display(ui::Display::Flex));
+    static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#222").unwrap()))
         .display(ui::Display::Flex)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
-        .width(200)));
-    static ref STYLE_BUTTON: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .width(200));
+    static ref STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#282828").unwrap()))
         .border_color(Some(Color::hex("#383838").unwrap()))
         .border(1)
@@ -74,20 +72,20 @@ lazy_static! {
             .border_color(Some(Color::hex("#444").unwrap()))
             .background_color(Some(Color::hex("#2F2F2F").unwrap())))
         .selector(":hover.pressed", |ss| ss
-            .background_color(Some(Color::hex("#484848").unwrap())))));
-    static ref STYLE_VIEWPORT: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+            .background_color(Some(Color::hex("#484848").unwrap()))));
+    static ref STYLE_VIEWPORT: StyleHandle = StyleHandle::build(|ss| ss
         .flex_grow(1.)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
-        .justify_content(ui::JustifyContent::FlexEnd)));
-    static ref STYLE_LOG: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .justify_content(ui::JustifyContent::FlexEnd));
+    static ref STYLE_LOG: StyleHandle = StyleHandle::build(|ss| ss
         .background_color(Some(Color::hex("#0008").unwrap()))
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
         .align_self(ui::AlignSelf::Stretch)
         .height(ui::Val::Percent(30.))
-        .margin(8)));
-    static ref STYLE_LOG_INNER: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .margin(8));
+    static ref STYLE_LOG_INNER: StyleHandle = StyleHandle::build(|ss| ss
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .justify_content(ui::JustifyContent::FlexEnd)
@@ -96,11 +94,11 @@ lazy_static! {
         .flex_basis(0)
         .overflow(ui::OverflowAxis::Clip)
         .gap(3)
-        .margin(8)));
-    static ref STYLE_LOG_ENTRY: Arc<StyleSet> = Arc::new(StyleSet::build(|ss| ss
+        .margin(8));
+    static ref STYLE_LOG_ENTRY: StyleHandle = StyleHandle::build(|ss| ss
         .display(ui::Display::Flex)
         .justify_content(ui::JustifyContent::SpaceBetween)
-        .align_self(ui::AlignSelf::Stretch)));
+        .align_self(ui::AlignSelf::Stretch));
 }
 
 const CLS_PRESSED: &str = "pressed";
@@ -149,7 +147,7 @@ fn ui_main(mut cx: Cx) -> impl View {
             Element::new()
                 .styled((
                     STYLE_ASIDE.clone(),
-                    Arc::new(StyleSet::build(|b| b.width(width.value.floor()))),
+                    StyleHandle::build(|b| b.width(width.value.floor())),
                 ))
                 .once(|entity, world| {
                     let mut e = world.entity_mut(entity);
