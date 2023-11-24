@@ -178,7 +178,22 @@ because the presenter is expected to re-subscribe to its dependencies as a side-
 This is how reactive frameworks like React and Solid work, and it's how we can get away with
 not having to explicitly unsubscribe from our dependencies.
 
-## Example
+## Memoization
+
+`PresenterState` nodes are automatically memoized. This means that unless there is a change
+to a dependency, or the props passed to the presenter change, then the presenter will not be
+called again, the views will not be rebuilt, and the output display nodes will be the same as
+from the previous render cycle.
+
+A parent presenter can be re-rendered without re-rendering its children; similarly a child
+presenter can be re-rendered without re-rendering its parent. If, however, the child node
+produces a different entity than it did on the previous run, then the parent's display tree
+will be updated to splice in the new child entity (this is what `.assemble()` does.).
+
+Presenter props changes are detected by comparing the old prop values with the new. This means
+that all props must implement `PartialEq`.
+
+## Complex example
 
 ```rust
 /// Define some styles
