@@ -2,6 +2,13 @@
 name = "bevy_quill"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE"
+description = "A reactive UI framework for Bevy"
+homepage = "https://github.com/viridia/quill"
+repository = "https://github.com/viridia/quill"
+readme = "README.md"
+keywords = ["bevy", "game", "gui"]
+categories = ["gui", "game-development"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
