@@ -98,11 +98,7 @@ impl<
             world: vc.world,
             entity,
         };
-        let cx = Cx::<Props> {
-            sys: &mut child_context,
-            props: &self.props,
-            local_index: 0,
-        };
+        let cx = Cx::new(&self.props, &mut child_context);
         self.view = Some((self.presenter)(cx));
         match self.state {
             Some(ref mut state) => {

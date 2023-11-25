@@ -63,7 +63,7 @@ pub enum PointerEvents {
 
 #[derive(Debug, Clone)]
 pub enum StyleProp {
-    BackgroundImage(Option<Handle<Image>>),
+    BackgroundImage(Option<AssetPath<'static>>),
     BackgroundColor(StyleExpr<Option<Color>>),
     BorderColor(StyleExpr<Option<Color>>),
     Color(StyleExpr<Option<Color>>),
@@ -125,23 +125,29 @@ pub enum StyleProp {
     JustifyItems(StyleExpr<ui::JustifyItems>),
     JustifySelf(StyleExpr<ui::JustifySelf>),
     JustifyContent(StyleExpr<ui::JustifyContent>),
-    // TODO:
-    // GridAutoFlow(bevy::ui::GridAutoFlow),
-    // // pub grid_template_rows: Option<Vec<RepeatedGridTrack>>,
-    // // pub grid_template_columns: Option<Vec<RepeatedGridTrack>>,
-    // // pub grid_auto_rows: Option<Vec<GridTrack>>,
-    // // pub grid_auto_columns: Option<Vec<GridTrack>>,
-    // GridRow(bevy::ui::GridPlacement),
-    // GridRowStart(StyleExpr<i16>),
-    // GridRowSpan(StyleExpr<u16>),
-    // GridRowEnd(i16),
-    // GridColumn(bevy::ui::GridPlacement),
-    // GridColumnStart(i16),
-    // GridColumnSpan(u16),
-    // GridColumnEnd(i16),
 
+    GridAutoFlow(StyleExpr<ui::GridAutoFlow>),
+    GridTemplateRows(Vec<ui::RepeatedGridTrack>),
+    GridTemplateColumns(Vec<ui::RepeatedGridTrack>),
+    GridAutoRows(Vec<ui::GridTrack>),
+    GridAutoColumns(Vec<ui::GridTrack>),
+    GridRow(StyleExpr<ui::GridPlacement>),
+    GridRowStart(StyleExpr<i16>),
+    GridRowSpan(StyleExpr<u16>),
+    GridRowEnd(StyleExpr<i16>),
+    GridColumn(StyleExpr<ui::GridPlacement>),
+    GridColumnStart(StyleExpr<i16>),
+    GridColumnSpan(StyleExpr<u16>),
+    GridColumnEnd(StyleExpr<i16>),
+
+    // TODO:
     // LineBreak(BreakLineOn),
     PointerEvents(StyleExpr<PointerEvents>),
+
+    // Outlines
+    OutlineColor(StyleExpr<Option<Color>>),
+    OutlineWidth(StyleExpr<ui::Val>),
+    OutlineOffset(StyleExpr<ui::Val>),
 
     // TODO: Future planned features
     Cursor(StyleExpr<Cursor>),
@@ -476,6 +482,92 @@ impl StyleSet {
                     }
                 }
 
+                StyleProp::GridAutoFlow(expr) => {
+                    if let Ok(af) = expr.eval() {
+                        computed.style.grid_auto_flow = af;
+                    }
+                }
+
+                StyleProp::GridTemplateRows(expr) => {
+                    computed.style.grid_template_rows.clone_from(expr);
+                }
+
+                StyleProp::GridTemplateColumns(expr) => {
+                    computed.style.grid_template_columns.clone_from(expr);
+                }
+
+                StyleProp::GridAutoRows(expr) => {
+                    computed.style.grid_auto_rows.clone_from(expr);
+                }
+
+                StyleProp::GridAutoColumns(expr) => {
+                    computed.style.grid_auto_columns.clone_from(expr);
+                }
+
+                StyleProp::GridRow(expr) => {
+                    if let Ok(af) = expr.eval() {
+                        computed.style.grid_row = af;
+                    }
+                }
+                StyleProp::GridRowStart(expr) => {
+                    if let Ok(val) = expr.eval() {
+                        computed.style.grid_row.set_start(val);
+                    }
+                }
+
+                StyleProp::GridRowSpan(expr) => {
+                    if let Ok(val) = expr.eval() {
+                        computed.style.grid_row.set_span(val);
+                    }
+                }
+
+                StyleProp::GridRowEnd(expr) => {
+                    if let Ok(val) = expr.eval() {
+                        computed.style.grid_row.set_end(val);
+                    }
+                }
+
+                StyleProp::GridColumn(expr) => {
+                    if let Ok(af) = expr.eval() {
+                        computed.style.grid_column = af;
+                    }
+                }
+                StyleProp::GridColumnStart(expr) => {
+                    if let Ok(val) = expr.eval() {
+                        computed.style.grid_column.set_start(val);
+                    }
+                }
+
+                StyleProp::GridColumnSpan(expr) => {
+                    if let Ok(val) = expr.eval() {
+                        computed.style.grid_column.set_span(val);
+                    }
+                }
+
+                StyleProp::GridColumnEnd(expr) => {
+                    if let Ok(val) = expr.eval() {
+                        computed.style.grid_column.set_end(val);
+                    }
+                }
+
+                StyleProp::OutlineColor(expr) => {
+                    if let Ok(color) = expr.eval() {
+                        computed.outline_color = color;
+                    }
+                }
+
+                StyleProp::OutlineWidth(expr) => {
+                    if let Ok(width) = expr.eval() {
+                        computed.outline_width = width;
+                    }
+                }
+
+                StyleProp::OutlineOffset(expr) => {
+                    if let Ok(offs) = expr.eval() {
+                        computed.outline_offset = offs;
+                    }
+                }
+
                 StyleProp::PointerEvents(expr) => {
                     if let Ok(pickable) = expr.eval() {
                         computed.pickable = Some(pickable);
@@ -555,9 +647,10 @@ impl StyleSetBuilder {
         }
     }
 
-    pub fn background_image(&mut self, img: Option<Handle<Image>>) -> &mut Self {
-        self.props.push(StyleProp::BackgroundImage(img));
-        self
+    pub fn background_image(&mut self, _img: Option<Handle<Image>>) -> &mut Self {
+        todo!();
+        // self.props.push(StyleProp::BackgroundImage(img));
+        // self
     }
 
     pub fn background_color(&mut self, color: Option<Color>) -> &mut Self {
@@ -861,22 +954,102 @@ impl StyleSetBuilder {
         self
     }
 
-    // // TODO:
-    // GridAutoFlow(bevy::ui::GridAutoFlow),
-    // // pub grid_template_rows: Option<Vec<RepeatedGridTrack>>,
-    // // pub grid_template_columns: Option<Vec<RepeatedGridTrack>>,
-    // // pub grid_auto_rows: Option<Vec<GridTrack>>,
-    // // pub grid_auto_columns: Option<Vec<GridTrack>>,
-    // GridRow(bevy::ui::GridPlacement),
-    // GridRowStart(StyleExpr<i16>),
-    // GridRowSpan(StyleExpr<u16>),
-    // GridRowEnd(i16),
-    // GridColumn(bevy::ui::GridPlacement),
-    // GridColumnStart(i16),
-    // GridColumnSpan(u16),
-    // GridColumnEnd(i16),
+    pub fn grid_auto_flow(&mut self, flow: ui::GridAutoFlow) -> &mut Self {
+        self.props
+            .push(StyleProp::GridAutoFlow(StyleExpr::Constant(flow)));
+        self
+    }
+
+    pub fn grid_template_rows(&mut self, rows: Vec<ui::RepeatedGridTrack>) -> &mut Self {
+        self.props.push(StyleProp::GridTemplateRows(rows));
+        self
+    }
+
+    pub fn grid_template_columns(&mut self, columns: Vec<ui::RepeatedGridTrack>) -> &mut Self {
+        self.props.push(StyleProp::GridTemplateColumns(columns));
+        self
+    }
+
+    pub fn grid_auto_rows(&mut self, rows: Vec<ui::GridTrack>) -> &mut Self {
+        self.props.push(StyleProp::GridAutoRows(rows));
+        self
+    }
+
+    pub fn grid_auto_columns(&mut self, columns: Vec<ui::GridTrack>) -> &mut Self {
+        self.props.push(StyleProp::GridAutoColumns(columns));
+        self
+    }
+
+    pub fn grid_row(&mut self, val: ui::GridPlacement) -> &mut Self {
+        self.props
+            .push(StyleProp::GridRow(StyleExpr::Constant(val)));
+        self
+    }
+
+    pub fn grid_row_start(&mut self, val: i16) -> &mut Self {
+        self.props
+            .push(StyleProp::GridRowStart(StyleExpr::Constant(val)));
+        self
+    }
+
+    pub fn grid_row_span(&mut self, val: u16) -> &mut Self {
+        self.props
+            .push(StyleProp::GridRowSpan(StyleExpr::Constant(val)));
+        self
+    }
+
+    pub fn grid_row_end(&mut self, val: i16) -> &mut Self {
+        self.props
+            .push(StyleProp::GridRowEnd(StyleExpr::Constant(val)));
+        self
+    }
+
+    pub fn grid_column(&mut self, val: ui::GridPlacement) -> &mut Self {
+        self.props
+            .push(StyleProp::GridColumn(StyleExpr::Constant(val)));
+        self
+    }
+
+    pub fn grid_column_start(&mut self, val: i16) -> &mut Self {
+        self.props
+            .push(StyleProp::GridColumnStart(StyleExpr::Constant(val)));
+        self
+    }
+
+    pub fn grid_column_span(&mut self, val: u16) -> &mut Self {
+        self.props
+            .push(StyleProp::GridColumnSpan(StyleExpr::Constant(val)));
+        self
+    }
+
+    pub fn grid_column_end(&mut self, val: i16) -> &mut Self {
+        self.props
+            .push(StyleProp::GridColumnEnd(StyleExpr::Constant(val)));
+        self
+    }
 
     // LineBreak(BreakLineOn),
+
+    pub fn outline_color(&mut self, color: Option<Color>) -> &mut Self {
+        self.props
+            .push(StyleProp::OutlineColor(StyleExpr::Constant(color)));
+        self
+    }
+
+    pub fn outline_width(&mut self, length: impl LengthParam) -> &mut Self {
+        self.props.push(StyleProp::OutlineWidth(StyleExpr::Constant(
+            length.as_val(),
+        )));
+        self
+    }
+
+    pub fn outline_offset(&mut self, length: impl LengthParam) -> &mut Self {
+        self.props
+            .push(StyleProp::OutlineOffset(StyleExpr::Constant(
+                length.as_val(),
+            )));
+        self
+    }
 
     pub fn pointer_events(&mut self, pe: PointerEvents) -> &mut Self {
         self.props

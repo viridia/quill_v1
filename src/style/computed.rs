@@ -1,8 +1,9 @@
+use bevy::asset::AssetPath;
 use bevy::ecs::system::Command;
 use bevy::prelude::*;
 use bevy::text::BreakLineOn;
-use bevy::ui::widget::UiImageSize;
-use bevy::ui::ContentSize;
+// use bevy::ui::widget::UiImageSize;
+// use bevy::ui::ContentSize;
 use bevy_mod_picking::prelude::Pickable;
 
 use super::style::PointerEvents;
@@ -22,10 +23,13 @@ pub struct ComputedStyle {
     // pub text_style: TextStyle,
     pub border_color: Option<Color>,
     pub background_color: Option<Color>,
+    pub outline_color: Option<Color>,
+    pub outline_width: Val,
+    pub outline_offset: Val,
     pub z_index: Option<i32>,
 
     // Image properties
-    pub image: Option<Handle<Image>>,
+    pub image: Option<AssetPath<'static>>,
     pub flip_x: bool,
     pub flip_y: bool,
 
@@ -143,18 +147,19 @@ impl Command for UpdateComputedStyle {
             }
 
             match e.get_mut::<UiImage>() {
-                Some(mut img) => {
+                Some(_img) => {
                     match self.computed.image {
-                        Some(src) => {
-                            if img.texture != src {
-                                img.texture = src;
-                            }
-                            if img.flip_x != self.computed.flip_x {
-                                img.flip_x = self.computed.flip_x;
-                            }
-                            if img.flip_y != self.computed.flip_y {
-                                img.flip_y = self.computed.flip_y;
-                            }
+                        Some(_src) => {
+                            todo!("Finish implementing textures");
+                            // if img.texture != src {
+                            //     img.texture = src;
+                            // }
+                            // if img.flip_x != self.computed.flip_x {
+                            //     img.flip_x = self.computed.flip_x;
+                            // }
+                            // if img.flip_y != self.computed.flip_y {
+                            //     img.flip_y = self.computed.flip_y;
+                            // }
                         }
                         None => {
                             // Remove the image.
@@ -164,19 +169,39 @@ impl Command for UpdateComputedStyle {
                 }
 
                 None => {
-                    if let Some(src) = self.computed.image {
+                    if let Some(_src) = self.computed.image {
                         // Create image component
-                        e.insert((
-                            UiImage {
-                                texture: src,
-                                flip_x: self.computed.flip_x,
-                                flip_y: self.computed.flip_y,
-                            },
-                            ContentSize::default(),
-                            UiImageSize::default(),
-                        ));
+                        todo!();
+                        // e.insert((
+                        //     UiImage {
+                        //         texture: src,
+                        //         flip_x: self.computed.flip_x,
+                        //         flip_y: self.computed.flip_y,
+                        //     },
+                        //     ContentSize::default(),
+                        //     UiImageSize::default(),
+                        // ));
                     }
                 }
+            }
+
+            match (self.computed.outline_color, e.get_mut::<Outline>()) {
+                (Some(color), Some(mut outline)) => {
+                    outline.width = self.computed.outline_width;
+                    outline.offset = self.computed.outline_offset;
+                    outline.color = color;
+                }
+                (None, Some(_)) => {
+                    e.remove::<Outline>();
+                }
+                (Some(color), None) => {
+                    e.insert(Outline {
+                        width: self.computed.outline_width,
+                        offset: self.computed.outline_offset,
+                        color,
+                    });
+                }
+                (None, None) => {}
             }
 
             match (self.computed.pickable, e.get_mut::<Pickable>()) {

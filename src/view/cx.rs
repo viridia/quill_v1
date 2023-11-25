@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use bevy::prelude::*;
 
 use crate::{resource::TrackedResources, ViewContext};
@@ -10,14 +12,21 @@ use super::{
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's
 /// properties (passed from the parent presenter), plus other context information needed
 /// in building the view state graph.
-// TODO: Move this to it's own file once it's stable.
 pub struct Cx<'w, 'p, Props = ()> {
     pub props: &'p Props,
     pub sys: &'p mut ViewContext<'w>,
-    pub(crate) local_index: usize,
+    local_index: Cell<usize>,
 }
 
 impl<'w, 'p, Props> Cx<'w, 'p, Props> {
+    pub(crate) fn new(props: &'p Props, sys: &'p mut ViewContext<'w>) -> Self {
+        Self {
+            props,
+            sys,
+            local_index: Cell::new(0),
+        }
+    }
+
     fn add_tracked_resource<T: Resource>(&mut self) {
         if let Some(mut tracked) = self.sys.world.get_mut::<TrackedResources>(self.sys.entity) {
             tracked.data.push(Box::new(AnyRes::<T>::new()));
@@ -45,8 +54,8 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// Return a local state variable. Calling this function also adds the state variable as
     /// a dependency of the current presenter invocation.
     pub fn use_local<T: Send + Sync + Clone>(&mut self, init: impl FnOnce() -> T) -> LocalData<T> {
-        let index = self.local_index;
-        self.local_index += 1;
+        let index = self.local_index.get();
+        self.local_index.set(index + 1);
         if let Some(mut tracked) = self.sys.world.get_mut::<TrackedLocals>(self.sys.entity) {
             tracked.get::<T>(index, init)
         } else {

@@ -1,6 +1,7 @@
 //! Complex example with multiple views
 mod shapes;
 mod splitter;
+mod swatch;
 mod viewport;
 
 use bevy::{prelude::*, ui};
@@ -12,6 +13,7 @@ use bevy_mod_picking::{
 use bevy_quill::prelude::*;
 use lazy_static::lazy_static;
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
+use swatch::{swatch, swatch_grid, SwatchGridProps, SwatchProps};
 use viewport::{ViewportInset, ViewportInsetElement};
 
 fn main() {
@@ -99,6 +101,33 @@ lazy_static! {
         .display(ui::Display::Flex)
         .justify_content(ui::JustifyContent::SpaceBetween)
         .align_self(ui::AlignSelf::Stretch));
+    static ref COLORS: Vec<Color> = vec![
+        Color::hex("#fff").unwrap(),
+        Color::hex("#ffc").unwrap(),
+        Color::hex("#ff8").unwrap(),
+        Color::hex("#ff4").unwrap(),
+        Color::hex("#ff0").unwrap(),
+        Color::hex("#fcf").unwrap(),
+        Color::hex("#fcc").unwrap(),
+        Color::hex("#fc8").unwrap(),
+        Color::hex("#fc4").unwrap(),
+        Color::hex("#fc0").unwrap(),
+        Color::hex("#f8f").unwrap(),
+        Color::hex("#f8c").unwrap(),
+        Color::hex("#f88").unwrap(),
+        Color::hex("#f84").unwrap(),
+        Color::hex("#f80").unwrap(),
+        Color::hex("#f4f").unwrap(),
+        Color::hex("#f4c").unwrap(),
+        Color::hex("#f48").unwrap(),
+        Color::hex("#f44").unwrap(),
+        Color::hex("#f40").unwrap(),
+        Color::hex("#f0f").unwrap(),
+        Color::hex("#f0c").unwrap(),
+        Color::hex("#f08").unwrap(),
+        Color::hex("#f04").unwrap(),
+        Color::hex("#f00").unwrap(),
+    ];
 }
 
 const CLS_PRESSED: &str = "pressed";
@@ -172,6 +201,13 @@ fn ui_main(mut cx: Cx) -> impl View {
                         id: "quit",
                         children: "Quit",
                     }),
+                    Fragment::new((
+                        swatch.bind(SwatchProps { color: Color::RED }),
+                        swatch_grid.bind(SwatchGridProps {
+                            colors: &COLORS,
+                            row_span: 4,
+                        }),
+                    )),
                 )),
             v_splitter.bind(SplitterProps {
                 id: "",
