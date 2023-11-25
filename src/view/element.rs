@@ -40,7 +40,7 @@ impl View for Element {
     }
 
     fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
-        let mut entt = vc.world.entity_mut(*state);
+        let mut entt = vc.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
     }

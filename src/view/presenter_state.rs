@@ -112,10 +112,8 @@ impl<
                 let state = self.view.as_ref().unwrap().build(&mut child_context);
                 self.state = Some(state);
                 vc.mark_changed_shape();
-                if let Some(parent) = vc.world.entity(vc.entity).get::<Parent>() {
-                    vc.world
-                        .entity_mut(parent.get())
-                        .insert(PresenterGraphChanged);
+                if let Some(parent) = vc.entity(vc.entity).get::<Parent>() {
+                    vc.entity_mut(parent.get()).insert(PresenterGraphChanged);
                 }
             }
         };
@@ -149,7 +147,7 @@ impl<
         if self.nodes != nodes {
             self.nodes = nodes;
             // Parent needs to rebuild children
-            if let Some(parent) = vc.world.entity(vc.entity).get::<Parent>() {
+            if let Some(parent) = vc.entity(vc.entity).get::<Parent>() {
                 vc.world
                     .entity_mut(parent.get())
                     .insert(PresenterGraphChanged);

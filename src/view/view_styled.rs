@@ -50,7 +50,7 @@ impl<V: View> ViewStyled<V> {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
-                let em = &mut vc.world.entity_mut(*entity);
+                let em = &mut vc.entity_mut(*entity);
                 let selector_depth = self.styles.iter().map(|s| s.depth()).max().unwrap_or(0);
                 let uses_hover = self
                     .styles

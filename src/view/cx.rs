@@ -2,12 +2,9 @@ use std::cell::Cell;
 
 use bevy::prelude::*;
 
-use crate::{resource::TrackedResources, ViewContext};
+use crate::ViewContext;
 
-use super::{
-    local::{LocalData, TrackedLocals},
-    resource::AnyRes,
-};
+use super::local::{LocalData, TrackedLocals};
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's
 /// properties (passed from the parent presenter), plus other context information needed
@@ -27,27 +24,17 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         }
     }
 
-    fn add_tracked_resource<T: Resource>(&mut self) {
-        if let Some(mut tracked) = self.vc.world.get_mut::<TrackedResources>(self.vc.entity) {
-            tracked.data.push(Box::new(AnyRes::<T>::new()));
-        } else {
-            let mut tracked = TrackedResources::default();
-            tracked.data.push(Box::new(AnyRes::<T>::new()));
-            self.vc.world.entity_mut(self.vc.entity).insert(tracked);
-        }
-    }
-
     /// Return a reference to the resource of the given type. Calling this function
     /// adds the resource as a dependency of the current presenter invocation.
     pub fn use_resource<T: Resource>(&mut self) -> &T {
-        self.add_tracked_resource::<T>();
+        self.vc.add_tracked_resource::<T>();
         self.vc.world.resource::<T>()
     }
 
     /// Return a mutable reference to the resource of the given type. Calling this function
     /// adds the resource as a dependency of the current presenter invocation.
     pub fn use_resource_mut<T: Resource>(&mut self) -> Mut<T> {
-        self.add_tracked_resource::<T>();
+        self.vc.add_tracked_resource::<T>();
         self.vc.world.resource_mut::<T>()
     }
 

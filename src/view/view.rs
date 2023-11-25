@@ -3,7 +3,11 @@ use bevy::{
     text::{Text, TextStyle},
 };
 
-use crate::{presenter_state::PresenterGraphChanged, Cx, ViewHandle, ViewTuple};
+use crate::{
+    presenter_state::PresenterGraphChanged,
+    resource::{AnyRes, TrackedResources},
+    Cx, ViewHandle, ViewTuple,
+};
 
 use crate::node_span::NodeSpan;
 
@@ -29,6 +33,24 @@ impl<'w> ViewContext<'w> {
         self.world
             .entity_mut(self.entity)
             .insert(PresenterGraphChanged);
+    }
+
+    pub(crate) fn add_tracked_resource<T: Resource>(&mut self) {
+        if let Some(mut tracked) = self.world.get_mut::<TrackedResources>(self.entity) {
+            tracked.data.push(Box::new(AnyRes::<T>::new()));
+        } else {
+            let mut tracked = TrackedResources::default();
+            tracked.data.push(Box::new(AnyRes::<T>::new()));
+            self.world.entity_mut(self.entity).insert(tracked);
+        }
+    }
+
+    pub fn entity(&self, entity: Entity) -> EntityRef {
+        self.world.entity(entity)
+    }
+
+    pub fn entity_mut(&mut self, entity: Entity) -> EntityWorldMut {
+        self.world.entity_mut(entity)
     }
 }
 
@@ -148,7 +170,7 @@ impl View for String {
         // If it's a single node and has a text component
         let nodes = self.nodes(vc, state);
         if let NodeSpan::Node(text_node) = nodes {
-            if let Some(mut old_text) = vc.world.entity_mut(text_node).get_mut::<Text>() {
+            if let Some(mut old_text) = vc.entity_mut(text_node).get_mut::<Text>() {
                 // TODO: compare text for equality.
                 old_text.sections.clear();
                 old_text.sections.push(TextSection {
@@ -166,7 +188,7 @@ impl View for String {
     }
 
     fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
-        let mut entt = vc.world.entity_mut(*state);
+        let mut entt = vc.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
     }
@@ -203,7 +225,7 @@ impl View for &'static str {
         // If it's a single node and has a text component
         let nodes = self.nodes(vc, state);
         if let NodeSpan::Node(text_node) = nodes {
-            if let Some(mut old_text) = vc.world.entity_mut(text_node).get_mut::<Text>() {
+            if let Some(mut old_text) = vc.entity_mut(text_node).get_mut::<Text>() {
                 // TODO: compare text for equality.
                 old_text.sections.clear();
                 old_text.sections.push(TextSection {
@@ -221,7 +243,7 @@ impl View for &'static str {
     }
 
     fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
-        let mut entt = vc.world.entity_mut(*state);
+        let mut entt = vc.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
     }
@@ -234,7 +256,7 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
 
     fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
         // get the handle from the PresenterState for this invocation.
-        let entt = vc.world.entity(*state);
+        let entt = vc.entity(*state);
         let Some(ref handle) = entt.get::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
@@ -262,7 +284,7 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
     }
 
     fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
-        let mut entt = vc.world.entity_mut(*state);
+        let mut entt = vc.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return;
         };
@@ -273,8 +295,8 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
         // Raze the contents of the child ViewState.
         inner.raze(vc, *state);
         // Despawn the ViewHandle.
-        vc.world.entity_mut(*state).remove_parent();
-        vc.world.entity_mut(*state).despawn();
+        vc.entity_mut(*state).remove_parent();
+        vc.entity_mut(*state).despawn();
     }
 }
 
@@ -310,7 +332,7 @@ impl<
 
     fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
         // get the handle from the PresenterState for this invocation.
-        let entt = vc.world.entity(*state);
+        let entt = vc.entity(*state);
         let Some(ref handle) = entt.get::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
@@ -334,7 +356,7 @@ impl<
 
     fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
         // get the handle from the current view state
-        let mut entt = vc.world.entity_mut(*state);
+        let mut entt = vc.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return;
         };
@@ -345,7 +367,7 @@ impl<
     }
 
     fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
-        let mut entt = vc.world.entity_mut(*state);
+        let mut entt = vc.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return;
         };
@@ -356,8 +378,8 @@ impl<
         // Raze the contents of the child ViewState.
         inner.raze(vc, *state);
         // Despawn the ViewHandle.
-        vc.world.entity_mut(*state).remove_parent();
-        vc.world.entity_mut(*state).despawn();
+        vc.entity_mut(*state).remove_parent();
+        vc.entity_mut(*state).despawn();
     }
 }
 

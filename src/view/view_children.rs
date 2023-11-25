@@ -41,7 +41,7 @@ impl<V: View, A: ViewTuple> View for ViewChildren<V, A> {
             let mut flat: Vec<Entity> = Vec::with_capacity(children.count());
             children.flatten(&mut flat);
 
-            let mut em = vc.world.entity_mut(parent);
+            let mut em = vc.entity_mut(parent);
             if let Some(children) = em.get::<Children>() {
                 // See if children changed
                 if !children.eq(&flat) {

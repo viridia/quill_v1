@@ -15,7 +15,7 @@ impl<V: View, C: Component + Clone> ViewInsert<V, C> {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
-                let em = &mut vc.world.entity_mut(*entity);
+                let em = &mut vc.entity_mut(*entity);
                 match em.get::<C>() {
                     Some(_) => {
                         // TODO: Compare and see if changed.
