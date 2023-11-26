@@ -181,12 +181,16 @@ fn ui_main(mut cx: Cx) -> impl View {
                 .once(|entity, world| {
                     let mut e = world.entity_mut(entity);
                     println!("Adding event handlers");
-                    e.insert(On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
-                        println!(
-                            "Received Clicked Button id='{}' target={:?}",
-                            ev.id, ev.target
-                        );
-                    }));
+                    e.insert(On::<Clicked>::run(
+                        |ev: Res<ListenerInput<Clicked>>, mut log: ResMut<ClickLog>| {
+                            log.0
+                                .push(format!("Button Clicked: id='{}'", ev.id).to_string());
+                            println!(
+                                "Received Clicked Button id='{}' target={:?}",
+                                ev.id, ev.target
+                            );
+                        },
+                    ));
                 })
                 .children((
                     button.bind(ButtonProps {
@@ -281,13 +285,11 @@ fn event_log(mut cx: Cx) -> impl View {
     )
 }
 
-fn show_events(mut clicked: EventReader<Clicked>, mut log: ResMut<ClickLog>) {
+fn show_events(mut clicked: EventReader<Clicked>) {
     for ev in clicked.read() {
         println!(
             "Reading global clicked: id='{}' target={:?}",
             ev.id, ev.target
         );
-        log.0
-            .push(format!("Button Clicked: id='{}'", ev.id).to_string())
     }
 }
