@@ -56,6 +56,10 @@ pub struct SplitterDragged {
 pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
     let drag_offset = cx.use_local::<f32>(|| 0.);
 
+    // This is needed because bevy_eventlistener sometimes sends events out of order,
+    // so that we get Drag before DragStart.
+    let is_dragging = cx.use_local::<bool>(|| false);
+
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;
     let current_offset = cx.props.value;
@@ -63,7 +67,12 @@ pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
         .with(move |entity, world| {
             let mut e = world.entity_mut(entity);
             let mut drag_offset_1 = drag_offset.clone();
-            let drag_offset_2 = drag_offset_1.clone();
+            let drag_offset_2 = drag_offset.clone();
+
+            // Horrible: we need to clone the state reference 3 times because 3 handlers.
+            let mut is_dragging_1 = is_dragging.clone();
+            let mut is_dragging_2 = is_dragging.clone();
+            let is_dragging_3 = is_dragging.clone();
             e.insert((
                 On::<Pointer<DragStart>>::run(
                     move |ev: Res<ListenerInput<Pointer<DragStart>>>,
@@ -71,22 +80,28 @@ pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
                         // println!("Start drag offset: {}", current_offset);
                         // Save initial value to use as drag offset.
                         drag_offset_1.set(current_offset);
+                        is_dragging_1.set(true);
                         if let Ok(mut classes) = query.get_mut(ev.target) {
                             classes.add_class(CLS_DRAG)
                         }
                     },
                 ),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.remove_class(CLS_DRAG)
-                }),
+                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(
+                    move |_, classes| {
+                        classes.remove_class(CLS_DRAG);
+                        is_dragging_2.set(true);
+                    },
+                ),
                 On::<Pointer<Drag>>::run(
                     move |ev: Res<ListenerInput<Pointer<Drag>>>,
                           mut writer: EventWriter<SplitterDragged>| {
-                        writer.send(SplitterDragged {
-                            target: ev.target,
-                            id,
-                            value: ev.distance.x + drag_offset_2.get(),
-                        });
+                        if is_dragging_3.get() {
+                            writer.send(SplitterDragged {
+                                target: ev.target,
+                                id,
+                                value: ev.distance.x + drag_offset_2.get(),
+                            });
+                        }
                     },
                 ),
                 On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(

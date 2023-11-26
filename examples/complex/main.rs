@@ -1,4 +1,5 @@
 //! Complex example with multiple views
+mod button;
 mod slider;
 mod splitter;
 mod swatch;
@@ -7,11 +8,11 @@ mod viewport;
 
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::{
-    events::PointerCancel,
     picking_core::{CorePlugin, InteractionPlugin},
     prelude::*,
 };
 use bevy_quill::prelude::*;
+use button::{button, ButtonProps, Clicked};
 use lazy_static::lazy_static;
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
@@ -51,7 +52,6 @@ fn main() {
                 test_scene::rotate,
                 test_scene::update_viewport_inset,
                 test_scene::update_camera_viewport,
-                show_events,
             ),
         )
         .run();
@@ -89,6 +89,10 @@ lazy_static! {
             .border_color("#444")
             .background_color("#2F2F2F"))
         .selector(":hover.pressed", |ss| ss.background_color("#484848")));
+    static ref COLOR_EDIT: StyleHandle = StyleHandle::build(|ss| ss
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .gap(8));
     static ref STYLE_VIEWPORT: StyleHandle = StyleHandle::build(|ss| ss
         .flex_grow(1.)
         .display(ui::Display::Flex)
@@ -144,8 +148,6 @@ lazy_static! {
     ];
 }
 
-const CLS_PRESSED: &str = "pressed";
-
 #[derive(Resource)]
 pub struct PanelWidth {
     value: f32,
@@ -171,7 +173,6 @@ fn setup_view_root(mut commands: Commands) {
 
 fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
-    // let edit_color = cx.use_resource::<EditColor>();
     // let log = cx.use_resource_mut::<ClickLog>();
     Element::new()
         .styled(STYLE_MAIN.clone())
@@ -191,19 +192,6 @@ fn ui_main(mut cx: Cx) -> impl View {
                     }
                 },
             ),));
-            e.insert((On::<OnChange<f32>>::run(
-                move |ev: Res<ListenerInput<OnChange<f32>>>| {
-                    println!("Change event: {} {}", ev.id, ev.value);
-                    // match query.get(entity) {
-                    //     Ok((node, transform)) => {
-                    //         // Measure node width and clamp split position.
-                    //         let node_width = node.logical_rect(transform).width();
-                    //         width.value = ev.value.clamp(100., node_width - 100.);
-                    //     }
-                    //     _ => return,
-                    // }
-                },
-            ),));
         })
         .children((
             Element::new()
@@ -213,7 +201,6 @@ fn ui_main(mut cx: Cx) -> impl View {
                 ))
                 .once(|entity, world| {
                     let mut e = world.entity_mut(entity);
-                    println!("Adding event handlers");
                     e.insert(On::<Clicked>::run(
                         |ev: Res<ListenerInput<Clicked>>, mut log: ResMut<ClickLog>| {
                             log.0
@@ -238,25 +225,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                         id: "quit",
                         children: "Quit",
                     }),
-                    Fragment::new((
-                        swatch.bind(SwatchProps { color: Color::RED }),
-                        swatch_grid.bind(SwatchGridProps {
-                            colors: &COLORS,
-                            row_span: 4,
-                        }),
-                        h_slider.bind(SliderProps {
-                            id: "r",
-                            min: 0.,
-                            max: 255.,
-                            value: 128.,
-                        }),
-                        h_slider.bind(SliderProps {
-                            id: "g",
-                            min: 0.,
-                            max: 255.,
-                            value: 20.,
-                        }),
-                    )),
+                    color_edit,
                 )),
             v_splitter.bind(SplitterProps {
                 id: "",
@@ -269,52 +238,58 @@ fn ui_main(mut cx: Cx) -> impl View {
         ))
 }
 
-#[derive(Clone, PartialEq)]
-pub struct ButtonProps<V: View> {
-    pub id: &'static str,
-    pub children: V,
-}
-
-#[derive(Clone, Event, EntityEvent)]
-pub struct Clicked {
-    #[target] // Marks the field of the event that specifies the target entity
-    pub target: Entity,
-    pub id: &'static str,
-}
-
-fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
-    // Needs to be a local variable so that it can be captured in the event handler.
-    let id = cx.props.id;
+fn color_edit(mut cx: Cx) -> impl View {
+    let edit_color = cx.use_resource::<EditColor>();
     Element::new()
-        .once(move |entity, world| {
+        .styled(COLOR_EDIT.clone())
+        .once(|entity, world| {
             let mut e = world.entity_mut(entity);
-            e.insert((
-                On::<Pointer<Click>>::run(
-                    move |ev: Res<ListenerInput<Pointer<Click>>>,
-                          mut writer: EventWriter<Clicked>| {
-                        println!("Sending Clicked id='{}' target={:?}", id, ev.target);
-                        writer.send(Clicked {
-                            target: ev.target,
-                            id,
-                        });
-                    },
-                ),
-                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.add_class(CLS_PRESSED)
-                }),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.remove_class(CLS_PRESSED)
-                }),
-                On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
-                    |_, classes| {
-                        println!("Cancel");
-                        classes.remove_class(CLS_PRESSED)
-                    },
-                ),
-            ));
+            e.insert((On::<OnChange<f32>>::run(
+                move |ev: Res<ListenerInput<OnChange<f32>>>, mut color: ResMut<EditColor>| match ev
+                    .id
+                {
+                    "r" => {
+                        color.as_mut().color.set_r(ev.value / 255.0);
+                    }
+                    "g" => {
+                        color.as_mut().color.set_g(ev.value / 255.0);
+                    }
+                    "b" => {
+                        color.as_mut().color.set_b(ev.value / 255.0);
+                    }
+                    _ => (),
+                },
+            ),));
         })
-        .styled(STYLE_BUTTON.clone())
-        .children(cx.props.children.clone())
+        .children((
+            swatch.bind(SwatchProps {
+                color: edit_color.color,
+            }),
+            swatch_grid.bind(SwatchGridProps {
+                colors: &COLORS,
+                row_span: 4,
+            }),
+            Fragment::new((
+                h_slider.bind(SliderProps {
+                    id: "r",
+                    min: 0.,
+                    max: 255.,
+                    value: edit_color.color.r() * 255.0,
+                }),
+                h_slider.bind(SliderProps {
+                    id: "g",
+                    min: 0.,
+                    max: 255.,
+                    value: edit_color.color.g() * 255.0,
+                }),
+                h_slider.bind(SliderProps {
+                    id: "b",
+                    min: 0.,
+                    max: 255.,
+                    value: edit_color.color.b() * 255.0,
+                }),
+            )),
+        ))
 }
 
 fn event_log(mut cx: Cx) -> impl View {
@@ -328,13 +303,4 @@ fn event_log(mut cx: Cx) -> impl View {
                     .children((item.to_owned(), "00:00:00"))
             })),
     )
-}
-
-fn show_events(mut clicked: EventReader<Clicked>) {
-    for ev in clicked.read() {
-        println!(
-            "Reading global clicked: id='{}' target={:?}",
-            ev.id, ev.target
-        );
-    }
 }

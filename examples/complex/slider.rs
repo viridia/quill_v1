@@ -105,42 +105,74 @@ pub struct OnChange<T: Clone + Send + Sync + 'static> {
 }
 
 // Horizontal slider widget
-pub fn h_slider(cx: Cx<SliderProps>) -> impl View {
+pub fn h_slider(mut cx: Cx<SliderProps>) -> impl View {
+    let drag_offset = cx.use_local::<f32>(|| 0.);
+    let is_dragging = cx.use_local::<bool>(|| false);
+    // Pain point: Need to capture all props for closures.
     let id = cx.props.id;
-    let pos = if cx.props.max > cx.props.min {
-        cx.props.value / (cx.props.max - cx.props.min)
+    let min = cx.props.min;
+    let max = cx.props.max;
+    let value = cx.props.value;
+    let range = cx.props.max - cx.props.min;
+    let pos = if range > 0. {
+        (cx.props.value - cx.props.min) / range
     } else {
         0.
     }
     .clamp(0., 1.);
     Element::new()
         .styled(STYLE_SLIDER.clone())
-        .once(move |entity, world| {
+        .with(move |entity, world| {
             let mut e = world.entity_mut(entity);
+            let mut drag_offset_1 = drag_offset.clone();
+            let drag_offset_2 = drag_offset.clone();
+            // Horrible: we need to clone the state reference 3 times because 3 handlers.
+            let mut is_dragging_1 = is_dragging.clone();
+            let mut is_dragging_2 = is_dragging.clone();
+            let is_dragging_3 = is_dragging.clone();
             e.insert((
                 On::<Pointer<DragStart>>::run(
                     move |ev: Res<ListenerInput<Pointer<DragStart>>>,
                           mut query: Query<&mut ElementClasses>| {
-                        // println!("Start drag offset: {}", current_offset);
                         // Save initial value to use as drag offset.
-                        // drag_offset_1.set(current_offset);
+                        drag_offset_1.set(value);
+                        is_dragging_1.set(true);
                         if let Ok(mut classes) = query.get_mut(ev.target) {
                             classes.add_class(CLS_DRAG)
                         }
                     },
                 ),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.remove_class(CLS_DRAG)
-                }),
+                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(
+                    move |_, classes| {
+                        is_dragging_2.set(false);
+                        classes.remove_class(CLS_DRAG)
+                    },
+                ),
                 On::<Pointer<Drag>>::run(
                     move |ev: Res<ListenerInput<Pointer<Drag>>>,
+                          query: Query<(&Node, &GlobalTransform)>,
                           mut writer: EventWriter<OnChange<f32>>| {
-                        writer.send(OnChange::<f32> {
-                            target: ev.target,
-                            id,
-                            value: ev.distance.x + 0.,
-                            finish: false,
-                        });
+                        if is_dragging_3.get() {
+                            match query.get(entity) {
+                                Ok((node, transform)) => {
+                                    // Measure node width and slider value.
+                                    let slider_width =
+                                        node.logical_rect(transform).width() - THUMB_SIZE;
+                                    let new_value = if range > 0. {
+                                        drag_offset_2.get() + (ev.distance.x * range) / slider_width
+                                    } else {
+                                        min + range * 0.5
+                                    };
+                                    writer.send(OnChange::<f32> {
+                                        target: ev.target,
+                                        id,
+                                        value: new_value.clamp(min, max),
+                                        finish: false,
+                                    });
+                                }
+                                _ => return,
+                            }
+                        }
                     },
                 ),
                 On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
