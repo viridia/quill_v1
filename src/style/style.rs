@@ -5,8 +5,8 @@ use bevy::{
     ecs::entity::Entity,
     log::error,
     math::IVec2,
-    prelude::{Color, Handle, Image},
-    ui,
+    prelude::Color,
+    ui::{self, ZIndex},
 };
 
 use crate::Cursor;
@@ -68,7 +68,7 @@ pub enum StyleProp {
     BorderColor(StyleExpr<Option<Color>>),
     Color(StyleExpr<Option<Color>>),
 
-    ZIndex(StyleExpr<Option<i32>>),
+    ZIndex(StyleExpr<Option<ui::ZIndex>>),
 
     Display(StyleExpr<ui::Display>),
     Position(StyleExpr<ui::PositionType>),
@@ -582,6 +582,29 @@ impl StyleSet {
     }
 }
 
+/// Trait that represents a CSS color
+pub trait ColorParam {
+    fn as_val(self) -> Option<Color>;
+}
+
+impl ColorParam for Option<Color> {
+    fn as_val(self) -> Option<Color> {
+        self
+    }
+}
+
+impl ColorParam for Color {
+    fn as_val(self) -> Option<Color> {
+        Some(self)
+    }
+}
+
+impl ColorParam for &str {
+    fn as_val(self) -> Option<Color> {
+        Some(Color::hex(self).unwrap())
+    }
+}
+
 /// Trait that represents a CSS "length"
 pub trait LengthParam {
     fn as_val(self) -> ui::Val;
@@ -602,6 +625,23 @@ impl LengthParam for f32 {
 impl LengthParam for i32 {
     fn as_val(self) -> ui::Val {
         ui::Val::Px(self as f32)
+    }
+}
+
+/// Trait that represents a CSS Z-index
+pub trait ZIndexParam {
+    fn as_val(self) -> Option<ZIndex>;
+}
+
+impl ZIndexParam for ZIndex {
+    fn as_val(self) -> Option<ZIndex> {
+        Some(self)
+    }
+}
+
+impl ZIndexParam for i32 {
+    fn as_val(self) -> Option<ZIndex> {
+        Some(ZIndex::Local(self))
     }
 }
 
@@ -647,33 +687,34 @@ impl StyleSetBuilder {
         }
     }
 
-    pub fn background_image(&mut self, _img: Option<Handle<Image>>) -> &mut Self {
-        todo!();
-        // self.props.push(StyleProp::BackgroundImage(img));
-        // self
-    }
-
-    pub fn background_color(&mut self, color: Option<Color>) -> &mut Self {
-        self.props
-            .push(StyleProp::BackgroundColor(StyleExpr::Constant(color)));
+    pub fn background_image(&mut self, img: Option<AssetPath<'static>>) -> &mut Self {
+        self.props.push(StyleProp::BackgroundImage(img));
         self
     }
 
-    pub fn border_color(&mut self, color: Option<Color>) -> &mut Self {
+    pub fn background_color(&mut self, color: impl ColorParam) -> &mut Self {
         self.props
-            .push(StyleProp::BorderColor(StyleExpr::Constant(color)));
+            .push(StyleProp::BackgroundColor(StyleExpr::Constant(
+                color.as_val(),
+            )));
         self
     }
 
-    pub fn color(&mut self, color: Option<Color>) -> &mut Self {
+    pub fn border_color(&mut self, color: impl ColorParam) -> &mut Self {
         self.props
-            .push(StyleProp::Color(StyleExpr::Constant(color)));
+            .push(StyleProp::BorderColor(StyleExpr::Constant(color.as_val())));
         self
     }
 
-    pub fn z_index(&mut self, index: Option<i32>) -> &mut Self {
+    pub fn color(&mut self, color: impl ColorParam) -> &mut Self {
         self.props
-            .push(StyleProp::ZIndex(StyleExpr::Constant(index)));
+            .push(StyleProp::Color(StyleExpr::Constant(color.as_val())));
+        self
+    }
+
+    pub fn z_index(&mut self, index: impl ZIndexParam) -> &mut Self {
+        self.props
+            .push(StyleProp::ZIndex(StyleExpr::Constant(index.as_val())));
         self
     }
 
@@ -1030,9 +1071,9 @@ impl StyleSetBuilder {
 
     // LineBreak(BreakLineOn),
 
-    pub fn outline_color(&mut self, color: Option<Color>) -> &mut Self {
+    pub fn outline_color(&mut self, color: impl ColorParam) -> &mut Self {
         self.props
-            .push(StyleProp::OutlineColor(StyleExpr::Constant(color)));
+            .push(StyleProp::OutlineColor(StyleExpr::Constant(color.as_val())));
         self
     }
 

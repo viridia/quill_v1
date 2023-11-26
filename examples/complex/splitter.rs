@@ -16,24 +16,24 @@ impl Plugin for SplitterPlugin {
 lazy_static! {
     // The splitter widget
     static ref STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#181818").unwrap()))
+        .background_color("#181818")
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
         .width(9)
         .selector(".drag", |ss| ss
-            .background_color(Some(Color::hex("#080808").unwrap()))));
+            .background_color("#080808")));
     // The decorative handle inside the splitter.
     static ref STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#282828").unwrap()))
+        .background_color("#282828")
         .display(ui::Display::Flex)
         .width(5)
         .pointer_events(PointerEvents::None)
         .height(ui::Val::Percent(30.))
         .selector(":hover > &", |ss| ss
-            .background_color(Some(Color::hex("#383838").unwrap())))
+            .background_color("#383838"))
         .selector(".drag > &", |ss| ss
-            .background_color(Some(Color::hex("#484848").unwrap()))));
+            .background_color("#484848")));
 }
 
 const CLS_DRAG: &str = "drag";

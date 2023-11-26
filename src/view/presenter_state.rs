@@ -94,10 +94,7 @@ impl<
     > AnyPresenterState for PresenterState<V, Props, F>
 {
     fn build(&mut self, vc: &mut ViewContext, entity: Entity) {
-        let mut child_context = ViewContext {
-            world: vc.world,
-            entity,
-        };
+        let mut child_context = ViewContext::new(vc.world, entity);
         let cx = Cx::new(&self.props, &mut child_context);
         self.view = Some((self.presenter)(cx));
         match self.state {
@@ -120,10 +117,7 @@ impl<
     }
 
     fn raze(&mut self, vc: &mut ViewContext, entity: Entity) {
-        let mut child_context = ViewContext {
-            world: vc.world,
-            entity,
-        };
+        let mut child_context = ViewContext::new(vc.world, entity);
         if let Some(ref view) = self.view {
             // Despawn the presenter state entity.
             if let Some(ref mut state) = self.state {
@@ -135,10 +129,7 @@ impl<
     }
 
     fn attach(&mut self, vc: &mut ViewContext, entity: Entity) {
-        let mut child_context = ViewContext {
-            world: vc.world,
-            entity,
-        };
+        let mut child_context = ViewContext::new(vc.world, entity);
         let nodes = self
             .view
             .as_ref()

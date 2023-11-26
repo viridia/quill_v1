@@ -1,7 +1,10 @@
 use bevy::asset::AssetPath;
 use bevy::ecs::system::Command;
 use bevy::prelude::*;
+use bevy::render::texture::{ImageLoaderSettings, ImageSampler};
 use bevy::text::BreakLineOn;
+use bevy::ui::widget::UiImageSize;
+use bevy::ui::ContentSize;
 // use bevy::ui::widget::UiImageSize;
 // use bevy::ui::ContentSize;
 use bevy_mod_picking::prelude::Pickable;
@@ -9,7 +12,7 @@ use bevy_mod_picking::prelude::Pickable;
 use super::style::PointerEvents;
 
 /// A computed style represents the composition of one or more `ElementStyle`s.
-#[derive(Default, Clone, PartialEq, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct ComputedStyle {
     pub style: Style,
 
@@ -26,7 +29,7 @@ pub struct ComputedStyle {
     pub outline_color: Option<Color>,
     pub outline_width: Val,
     pub outline_offset: Val,
-    pub z_index: Option<i32>,
+    pub z_index: Option<ZIndex>,
 
     // Image properties
     pub image: Option<AssetPath<'static>>,
@@ -65,6 +68,14 @@ pub struct UpdateComputedStyle {
 
 impl Command for UpdateComputedStyle {
     fn apply(self, world: &mut World) {
+        let bg_image = self.computed.image.map(|path| {
+            world
+                .get_resource::<AssetServer>()
+                .unwrap()
+                .load_with_settings(path, |s: &mut ImageLoaderSettings| {
+                    s.sampler = ImageSampler::linear()
+                })
+        });
         if let Some(mut e) = world.get_entity_mut(self.entity) {
             if let Some(mut style) = e.get_mut::<Style>() {
                 // Update the existing style
@@ -101,7 +112,7 @@ impl Command for UpdateComputedStyle {
             match e.get_mut::<BackgroundColor>() {
                 Some(mut bg_comp) => {
                     if self.computed.background_color.is_none() {
-                        if self.computed.image.is_none() {
+                        if bg_image.is_none() {
                             // Remove the background
                             e.remove::<BackgroundColor>();
                         }
@@ -118,7 +129,7 @@ impl Command for UpdateComputedStyle {
                     if !self.computed.background_color.is_none() {
                         // Insert a new background
                         e.insert(BackgroundColor(self.computed.background_color.unwrap()));
-                    } else if self.computed.image.is_some() {
+                    } else if bg_image.is_some() {
                         // Images require a background color to be set.
                         e.insert(BackgroundColor::DEFAULT);
                     }
@@ -147,19 +158,18 @@ impl Command for UpdateComputedStyle {
             }
 
             match e.get_mut::<UiImage>() {
-                Some(_img) => {
-                    match self.computed.image {
-                        Some(_src) => {
-                            todo!("Finish implementing textures");
-                            // if img.texture != src {
-                            //     img.texture = src;
-                            // }
-                            // if img.flip_x != self.computed.flip_x {
-                            //     img.flip_x = self.computed.flip_x;
-                            // }
-                            // if img.flip_y != self.computed.flip_y {
-                            //     img.flip_y = self.computed.flip_y;
-                            // }
+                Some(mut img) => {
+                    match bg_image {
+                        Some(src) => {
+                            if img.texture != src {
+                                img.texture = src;
+                            }
+                            if img.flip_x != self.computed.flip_x {
+                                img.flip_x = self.computed.flip_x;
+                            }
+                            if img.flip_y != self.computed.flip_y {
+                                img.flip_y = self.computed.flip_y;
+                            }
                         }
                         None => {
                             // Remove the image.
@@ -169,18 +179,17 @@ impl Command for UpdateComputedStyle {
                 }
 
                 None => {
-                    if let Some(_src) = self.computed.image {
+                    if let Some(src) = bg_image {
                         // Create image component
-                        todo!();
-                        // e.insert((
-                        //     UiImage {
-                        //         texture: src,
-                        //         flip_x: self.computed.flip_x,
-                        //         flip_y: self.computed.flip_y,
-                        //     },
-                        //     ContentSize::default(),
-                        //     UiImageSize::default(),
-                        // ));
+                        e.insert((
+                            UiImage {
+                                texture: src,
+                                flip_x: self.computed.flip_x,
+                                flip_y: self.computed.flip_y,
+                            },
+                            ContentSize::default(),
+                            UiImageSize::default(),
+                        ));
                     }
                 }
             }
@@ -200,6 +209,19 @@ impl Command for UpdateComputedStyle {
                         offset: self.computed.outline_offset,
                         color,
                     });
+                }
+                (None, None) => {}
+            }
+
+            match (self.computed.z_index, e.get_mut::<ZIndex>()) {
+                (Some(z), Some(_)) => {
+                    e.insert(z);
+                }
+                (None, Some(_)) => {
+                    e.remove::<ZIndex>();
+                }
+                (Some(zi), None) => {
+                    e.insert(zi);
                 }
                 (None, None) => {}
             }

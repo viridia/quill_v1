@@ -49,36 +49,33 @@ lazy_static! {
         .bottom(10)
         .right(10.)
         .border(1)
-        .border_color(Some(Color::hex("#888").unwrap()))
+        .border_color("#888")
         .display(ui::Display::Flex));
     static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#222").unwrap()))
+        .background_color("#222")
         .display(ui::Display::Flex)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
         .width(200));
     static ref STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#181818").unwrap()))
+        .background_color("#181818")
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
         .width(9)
-        .selector(".drag", |ss| ss
-            .background_color(Some(Color::hex("#080808").unwrap()))));
+        .selector(".drag", |ss| ss.background_color("#080808")));
     static ref STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#282828").unwrap()))
+        .background_color("#282828")
         .display(ui::Display::Flex)
         .width(5)
         .height(ui::Val::Percent(30.))
         .pointer_events(PointerEvents::None)
-        .selector(":hover > &", |ss| ss
-            .background_color(Some(Color::hex("#383838").unwrap())))
-        .selector(".drag > &", |ss| ss
-            .background_color(Some(Color::hex("#484848").unwrap()))));
+        .selector(":hover > &", |ss| ss.background_color("#383838"))
+        .selector(".drag > &", |ss| ss.background_color("#484848")));
     static ref STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#282828").unwrap()))
-        .border_color(Some(Color::hex("#383838").unwrap()))
+        .background_color("#282828")
+        .border_color("#383838")
         .border(1)
         .display(ui::Display::Flex)
         .justify_content(JustifyContent::Center)
@@ -86,13 +83,11 @@ lazy_static! {
         .min_height(32)
         .padding_left(8)
         .padding_right(8)
-        .selector(".pressed", |ss| ss
-            .background_color(Some(Color::hex("#404040").unwrap())))
+        .selector(".pressed", |ss| ss.background_color("#404040"))
         .selector(":hover", |ss| ss
-            .border_color(Some(Color::hex("#444").unwrap()))
-            .background_color(Some(Color::hex("#2F2F2F").unwrap())))
-        .selector(":hover.pressed", |ss| ss
-            .background_color(Some(Color::hex("#484848").unwrap()))));
+            .border_color("#444")
+            .background_color("#2F2F2F"))
+        .selector(":hover.pressed", |ss| ss.background_color("#484848")));
     static ref STYLE_VIEWPORT: StyleHandle = StyleHandle::build(|ss| ss.flex_grow(1.));
 }
 

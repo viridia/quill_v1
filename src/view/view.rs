@@ -28,6 +28,10 @@ pub struct ViewContext<'w> {
 }
 
 impl<'w> ViewContext<'w> {
+    pub(crate) fn new(world: &'w mut World, entity: Entity) -> Self {
+        Self { world, entity }
+    }
+
     /// Indicate that the shape of the display graph has changed.
     pub fn mark_changed_shape(&mut self) {
         self.world

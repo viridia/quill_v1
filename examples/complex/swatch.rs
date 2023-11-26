@@ -14,7 +14,7 @@ lazy_static! {
         .outline_offset(1.)
         .outline_width(1.)
         .selector(":hover", |ss| ss
-            .outline_color(Some(Color::hex("#fff4").unwrap()))));
+            .outline_color("#fff4")));
     // A swatch grid
     static ref STYLE_SWATCH_GRID: StyleHandle = StyleHandle::build(|ss| ss
         .display(ui::Display::Grid)

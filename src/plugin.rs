@@ -67,7 +67,7 @@ fn render_views(world: &mut World) {
             .take()
             .expect("ViewHandle::inner should be present at this point");
 
-        let mut ec = ViewContext { world, entity: e };
+        let mut ec = ViewContext::new(world, e);
         inner.build(&mut ec, e);
 
         // Now that we are done with the handle we can put it back in the world
@@ -96,7 +96,7 @@ fn render_views(world: &mut World) {
                 .inner
                 .take()
                 .expect("ViewState::handle should be present at this point");
-            let mut vc = ViewContext { world, entity: e };
+            let mut vc = ViewContext::new(world, e);
             inner.attach(&mut vc, e);
             let Some(mut view_handle) = world.get_mut::<ViewHandle>(e) else {
                 continue;

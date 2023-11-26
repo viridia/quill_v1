@@ -1,7 +1,8 @@
 //! Complex example with multiple views
-mod shapes;
+mod slider;
 mod splitter;
 mod swatch;
+mod test_scene;
 mod viewport;
 
 use bevy::{prelude::*, ui};
@@ -12,6 +13,7 @@ use bevy_mod_picking::{
 };
 use bevy_quill::prelude::*;
 use lazy_static::lazy_static;
+use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use swatch::{swatch, swatch_grid, SwatchGridProps, SwatchProps};
 use viewport::{ViewportInset, ViewportInsetElement};
@@ -21,20 +23,34 @@ fn main() {
         .init_resource::<ViewportInset>()
         .init_resource::<PanelWidth>()
         .init_resource::<ClickLog>()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .insert_resource(EditColor {
+            color: Color::Rgba {
+                red: 1.0,
+                green: 0.5,
+                blue: 0.0,
+                alpha: 1.0,
+            },
+        })
+        .add_plugins(
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(AssetPlugin {
+                    file_path: "examples/complex/assets".to_string(),
+                    ..Default::default()
+                }),
+        )
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(EventListenerPlugin::<Clicked>::default())
-        .add_plugins(QuillPlugin)
-        .add_plugins(SplitterPlugin)
-        .add_systems(Startup, (shapes::setup, setup_view_root))
+        .add_plugins((QuillPlugin, SplitterPlugin, SliderPlugin))
+        .add_systems(Startup, (test_scene::setup, setup_view_root))
         .add_event::<Clicked>()
         .add_systems(
             Update,
             (
                 bevy::window::close_on_esc,
-                shapes::rotate,
-                shapes::update_viewport_inset,
-                shapes::update_camera_viewport,
+                test_scene::rotate,
+                test_scene::update_viewport_inset,
+                test_scene::update_camera_viewport,
                 show_events,
             ),
         )
@@ -49,18 +65,18 @@ lazy_static! {
         .bottom(10)
         .right(10.)
         .border(1)
-        .border_color(Some(Color::hex("#888").unwrap()))
+        .border_color("#888")
         .display(ui::Display::Flex));
     static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#222").unwrap()))
+        .background_color("#222")
         .display(ui::Display::Flex)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
         .width(200));
     static ref STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#282828").unwrap()))
-        .border_color(Some(Color::hex("#383838").unwrap()))
+        .background_color("#282828")
+        .border_color("#383838")
         .border(1)
         .display(ui::Display::Flex)
         .justify_content(JustifyContent::Center)
@@ -68,20 +84,18 @@ lazy_static! {
         .min_height(32)
         .padding_left(8)
         .padding_right(8)
-        .selector(".pressed", |ss| ss
-            .background_color(Some(Color::hex("#404040").unwrap())))
+        .selector(".pressed", |ss| ss.background_color("#404040"))
         .selector(":hover", |ss| ss
-            .border_color(Some(Color::hex("#444").unwrap()))
-            .background_color(Some(Color::hex("#2F2F2F").unwrap())))
-        .selector(":hover.pressed", |ss| ss
-            .background_color(Some(Color::hex("#484848").unwrap()))));
+            .border_color("#444")
+            .background_color("#2F2F2F"))
+        .selector(":hover.pressed", |ss| ss.background_color("#484848")));
     static ref STYLE_VIEWPORT: StyleHandle = StyleHandle::build(|ss| ss
         .flex_grow(1.)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .justify_content(ui::JustifyContent::FlexEnd));
     static ref STYLE_LOG: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#0008").unwrap()))
+        .background_color("#0008")
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
         .align_self(ui::AlignSelf::Stretch)
@@ -137,6 +151,11 @@ pub struct PanelWidth {
     value: f32,
 }
 
+#[derive(Resource)]
+pub struct EditColor {
+    color: Color,
+}
+
 impl Default for PanelWidth {
     fn default() -> Self {
         Self { value: 160. }
@@ -152,6 +171,7 @@ fn setup_view_root(mut commands: Commands) {
 
 fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
+    // let edit_color = cx.use_resource::<EditColor>();
     // let log = cx.use_resource_mut::<ClickLog>();
     Element::new()
         .styled(STYLE_MAIN.clone())
@@ -169,6 +189,19 @@ fn ui_main(mut cx: Cx) -> impl View {
                         }
                         _ => return,
                     }
+                },
+            ),));
+            e.insert((On::<OnChange<f32>>::run(
+                move |ev: Res<ListenerInput<OnChange<f32>>>| {
+                    println!("Change event: {} {}", ev.id, ev.value);
+                    // match query.get(entity) {
+                    //     Ok((node, transform)) => {
+                    //         // Measure node width and clamp split position.
+                    //         let node_width = node.logical_rect(transform).width();
+                    //         width.value = ev.value.clamp(100., node_width - 100.);
+                    //     }
+                    //     _ => return,
+                    // }
                 },
             ),));
         })
@@ -210,6 +243,18 @@ fn ui_main(mut cx: Cx) -> impl View {
                         swatch_grid.bind(SwatchGridProps {
                             colors: &COLORS,
                             row_span: 4,
+                        }),
+                        h_slider.bind(SliderProps {
+                            id: "r",
+                            min: 0.,
+                            max: 255.,
+                            value: 128.,
+                        }),
+                        h_slider.bind(SliderProps {
+                            id: "g",
+                            min: 0.,
+                            max: 255.,
+                            value: 20.,
                         }),
                     )),
                 )),

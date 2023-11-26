@@ -205,10 +205,10 @@ lazy_static! {
         .bottom(20.)
         .right(10.)
         .border(1)
-        .border_color(Some(Color::hex("#888").unwrap()))
+        .border_color("#888")
         .display(ui::Display::Flex));
     static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::hex("#222").unwrap()))
+        .background_color("#222")
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .width(200));
