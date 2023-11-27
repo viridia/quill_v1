@@ -8,7 +8,6 @@
 * `use` hooks for components, events, etc.
 * Implement button click handler. (Right now using an event, but closure would be better).
 * Basic widgets: Button, Slider, Text Input.
-* ElementContext shouldn't need to be mutable except for world - use a refcell?
 * Support for `cursor` style property.
 * Change QuillPlugin to add bevy_mod_picking plugins if needed:
 
