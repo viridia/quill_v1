@@ -1,7 +1,7 @@
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_quill::prelude::*;
-use lazy_static::lazy_static;
+use static_init::dynamic;
 
 pub struct SplitterPlugin;
 
@@ -13,28 +13,29 @@ impl Plugin for SplitterPlugin {
 }
 
 // Style definitions for the splitter widget.
-lazy_static! {
-    // The splitter widget
-    static ref STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#181818")
+
+// The splitter widget
+#[dynamic]
+static STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#181818")
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
         .width(9)
-        .selector(".drag", |ss| ss
-            .background_color("#080808")));
-    // The decorative handle inside the splitter.
-    static ref STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#282828")
+        .selector(".drag", |ss| ss.background_color("#080808"))
+});
+
+// The decorative handle inside the splitter.
+#[dynamic]
+static STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#282828")
         .display(ui::Display::Flex)
         .width(5)
         .pointer_events(PointerEvents::None)
         .height(ui::Val::Percent(30.))
-        .selector(":hover > &", |ss| ss
-            .background_color("#383838"))
-        .selector(".drag > &", |ss| ss
-            .background_color("#484848")));
-}
+        .selector(":hover > &", |ss| ss.background_color("#383838"))
+        .selector(".drag > &", |ss| ss.background_color("#484848"))
+});
 
 const CLS_DRAG: &str = "drag";
 

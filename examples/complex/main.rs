@@ -13,9 +13,9 @@ use bevy_mod_picking::{
 };
 use bevy_quill::prelude::*;
 use button::{button, ButtonProps, Clicked};
-use lazy_static::lazy_static;
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
+use static_init::dynamic;
 use swatch::{swatch, swatch_grid, SwatchGridProps, SwatchProps};
 use viewport::{ViewportInset, ViewportInsetElement};
 
@@ -57,56 +57,56 @@ fn main() {
         .run();
 }
 
-lazy_static! {
-    static ref STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| ss
-        .position(ui::PositionType::Absolute)
+#[dynamic]
+static STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| {
+    ss.position(ui::PositionType::Absolute)
         .left(10.)
         .top(10.)
         .bottom(10)
         .right(10.)
         .border(1)
         .border_color("#888")
-        .display(ui::Display::Flex));
-    static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#222")
+        .display(ui::Display::Flex)
+});
+
+#[dynamic]
+static STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#222")
         .display(ui::Display::Flex)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
-        .width(200));
-    static ref STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#282828")
-        .border_color("#383838")
-        .border(1)
-        .display(ui::Display::Flex)
-        .justify_content(JustifyContent::Center)
-        .align_items(AlignItems::Center)
-        .min_height(32)
-        .padding_left(8)
-        .padding_right(8)
-        .selector(".pressed", |ss| ss.background_color("#404040"))
-        .selector(":hover", |ss| ss
-            .border_color("#444")
-            .background_color("#2F2F2F"))
-        .selector(":hover.pressed", |ss| ss.background_color("#484848")));
-    static ref COLOR_EDIT: StyleHandle = StyleHandle::build(|ss| ss
+        .width(200)
+});
+
+#[dynamic]
+static COLOR_EDIT: StyleHandle = StyleHandle::build(|ss| {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .gap(8)
+});
+
+#[dynamic]
+static STYLE_VIEWPORT: StyleHandle = StyleHandle::build(|ss| {
+    ss.flex_grow(1.)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
-        .gap(8));
-    static ref STYLE_VIEWPORT: StyleHandle = StyleHandle::build(|ss| ss
-        .flex_grow(1.)
-        .display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Column)
-        .justify_content(ui::JustifyContent::FlexEnd));
-    static ref STYLE_LOG: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#0008")
+        .justify_content(ui::JustifyContent::FlexEnd)
+});
+
+#[dynamic]
+static STYLE_LOG: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#0008")
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
         .align_self(ui::AlignSelf::Stretch)
         .height(ui::Val::Percent(30.))
-        .margin(8));
-    static ref STYLE_LOG_INNER: StyleHandle = StyleHandle::build(|ss| ss
-        .display(ui::Display::Flex)
+        .margin(8)
+});
+
+#[dynamic]
+static STYLE_LOG_INNER: StyleHandle = StyleHandle::build(|ss| {
+    ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .justify_content(ui::JustifyContent::FlexEnd)
         .align_self(ui::AlignSelf::Stretch)
@@ -114,39 +114,44 @@ lazy_static! {
         .flex_basis(0)
         .overflow(ui::OverflowAxis::Clip)
         .gap(3)
-        .margin(8));
-    static ref STYLE_LOG_ENTRY: StyleHandle = StyleHandle::build(|ss| ss
-        .display(ui::Display::Flex)
+        .margin(8)
+});
+
+#[dynamic]
+static STYLE_LOG_ENTRY: StyleHandle = StyleHandle::build(|ss| {
+    ss.display(ui::Display::Flex)
         .justify_content(ui::JustifyContent::SpaceBetween)
-        .align_self(ui::AlignSelf::Stretch));
-    static ref COLORS: Vec<Color> = vec![
-        Color::hex("#fff").unwrap(),
-        Color::hex("#ffc").unwrap(),
-        Color::hex("#ff8").unwrap(),
-        Color::hex("#ff4").unwrap(),
-        Color::hex("#ff0").unwrap(),
-        Color::hex("#fcf").unwrap(),
-        Color::hex("#fcc").unwrap(),
-        Color::hex("#fc8").unwrap(),
-        Color::hex("#fc4").unwrap(),
-        Color::hex("#fc0").unwrap(),
-        Color::hex("#f8f").unwrap(),
-        Color::hex("#f8c").unwrap(),
-        Color::hex("#f88").unwrap(),
-        Color::hex("#f84").unwrap(),
-        Color::hex("#f80").unwrap(),
-        Color::hex("#f4f").unwrap(),
-        Color::hex("#f4c").unwrap(),
-        Color::hex("#f48").unwrap(),
-        Color::hex("#f44").unwrap(),
-        Color::hex("#f40").unwrap(),
-        Color::hex("#f0f").unwrap(),
-        Color::hex("#f0c").unwrap(),
-        Color::hex("#f08").unwrap(),
-        Color::hex("#f04").unwrap(),
-        Color::hex("#f00").unwrap(),
-    ];
-}
+        .align_self(ui::AlignSelf::Stretch)
+});
+
+#[dynamic]
+static COLORS: Vec<Color> = vec![
+    Color::hex("#fff").unwrap(),
+    Color::hex("#ffc").unwrap(),
+    Color::hex("#ff8").unwrap(),
+    Color::hex("#ff4").unwrap(),
+    Color::hex("#ff0").unwrap(),
+    Color::hex("#fcf").unwrap(),
+    Color::hex("#fcc").unwrap(),
+    Color::hex("#fc8").unwrap(),
+    Color::hex("#fc4").unwrap(),
+    Color::hex("#fc0").unwrap(),
+    Color::hex("#f8f").unwrap(),
+    Color::hex("#f8c").unwrap(),
+    Color::hex("#f88").unwrap(),
+    Color::hex("#f84").unwrap(),
+    Color::hex("#f80").unwrap(),
+    Color::hex("#f4f").unwrap(),
+    Color::hex("#f4c").unwrap(),
+    Color::hex("#f48").unwrap(),
+    Color::hex("#f44").unwrap(),
+    Color::hex("#f40").unwrap(),
+    Color::hex("#f0f").unwrap(),
+    Color::hex("#f0c").unwrap(),
+    Color::hex("#f08").unwrap(),
+    Color::hex("#f04").unwrap(),
+    Color::hex("#f00").unwrap(),
+];
 
 #[derive(Resource)]
 pub struct PanelWidth {

@@ -7,7 +7,7 @@ use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
 };
 use bevy_quill::prelude::*;
-use lazy_static::lazy_static;
+use static_init::dynamic;
 
 fn main() {
     App::new()
@@ -20,39 +20,54 @@ fn main() {
         .run();
 }
 
-lazy_static! {
-    static ref STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| ss
-        .position(ui::PositionType::Absolute)
+#[dynamic]
+static STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| {
+    ss.position(ui::PositionType::Absolute)
         .left(10.)
         .top(10.)
         .bottom(20.)
         .right(10.)
         .border(1)
         .border_color("#888")
-        .display(ui::Display::Flex));
-    static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#222")
+        .display(ui::Display::Flex)
+});
+
+#[dynamic]
+static STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#222")
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
-        .width(200));
-    static ref STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#181818")
+        .width(200)
+});
+
+#[dynamic]
+static STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#181818")
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
-        .width(7));
-    static ref STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#282828")
+        .width(7)
+});
+
+#[dynamic]
+static STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#282828")
         .display(ui::Display::Flex)
         .width(3)
-        .height(ui::Val::Percent(30.)));
-    static ref STYLE_EVEN: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::RED))
-        .padding(UiRect::all(Val::Px(2.))));
-    static ref STYLE_ODD: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::GREEN))
-        .padding(UiRect::all(Val::Px(2.))));
-}
+        .height(ui::Val::Percent(30.))
+});
+
+#[dynamic]
+static STYLE_EVEN: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(Some(Color::RED))
+        .padding(UiRect::all(Val::Px(2.)))
+});
+
+#[dynamic]
+static STYLE_ODD: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(Some(Color::GREEN))
+        .padding(UiRect::all(Val::Px(2.)))
+});
 
 fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewHandle::new(ui_main, ()));

@@ -1,30 +1,32 @@
 use bevy::{prelude::*, ui};
 use bevy_quill::prelude::*;
-use lazy_static::lazy_static;
+use static_init::dynamic;
 
 // Style definitions for color swatch widget.
-lazy_static! {
-    // A swatch widget
-    static ref STYLE_SWATCH: StyleHandle = StyleHandle::build(|ss| ss
-        .border_color(Some(Color::BLACK))
+
+// A swatch widget
+#[dynamic]
+static STYLE_SWATCH: StyleHandle = StyleHandle::build(|ss| {
+    ss.border_color(Some(Color::BLACK))
         .border(1)
         .min_width(9)
         .min_height(16)
         .outline_color(Some(Color::NONE))
         .outline_offset(1.)
         .outline_width(1.)
-        .selector(":hover", |ss| ss
-            .outline_color("#fff4")));
-    // A swatch grid
-    static ref STYLE_SWATCH_GRID: StyleHandle = StyleHandle::build(|ss| ss
-        .display(ui::Display::Grid)
+        .selector(":hover", |ss| ss.outline_color("#fff4"))
+});
+
+// A swatch grid
+#[dynamic]
+static STYLE_SWATCH_GRID: StyleHandle = StyleHandle::build(|ss| {
+    ss.display(ui::Display::Grid)
         .grid_template_columns(vec![ui::RepeatedGridTrack::fr(5, 1.)])
         // .grid_auto_flow(ui::GridAutoFlow::Column)
         .gap(3)
         .min_width(9)
         .min_height(16)
-    );
-}
+});
 
 #[derive(Clone, PartialEq)]
 pub struct SwatchProps {

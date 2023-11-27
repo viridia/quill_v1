@@ -1,7 +1,7 @@
 use bevy::{asset::AssetPath, prelude::*, ui};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_quill::prelude::*;
-use lazy_static::lazy_static;
+use static_init::dynamic;
 
 pub struct SliderPlugin;
 
@@ -15,44 +15,54 @@ impl Plugin for SliderPlugin {
 const THUMB_SIZE: f32 = 18.;
 
 // Style definitions for slider widget.
-lazy_static! {
-    // The slider
-    static ref STYLE_SLIDER: StyleHandle = StyleHandle::build(|ss| ss
-        .min_width(THUMB_SIZE)
-        .height(THUMB_SIZE));
-    // Slider track
-    static ref STYLE_TRACK_INNER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color(Some(Color::BLACK))
+
+// The slider
+#[dynamic]
+static STYLE_SLIDER: StyleHandle =
+    StyleHandle::build(|ss| ss.min_width(THUMB_SIZE).height(THUMB_SIZE));
+
+// Slider track
+#[dynamic]
+static STYLE_TRACK_INNER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(Some(Color::BLACK))
         .position(ui::PositionType::Absolute)
         .top(ui::Val::Percent(40.))
         .bottom(ui::Val::Percent(40.))
         .left(0)
         .right(0)
-    );
-    static ref STYLE_TRACK_INNER_HLITE: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#447")
+});
+
+#[dynamic]
+static STYLE_TRACK_INNER_HLITE: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#447")
         .position(ui::PositionType::Absolute)
         .top(ui::Val::Percent(40.))
         .bottom(ui::Val::Percent(40.))
         .left(0)
-    );
-    static ref STYLE_TRACK: StyleHandle = StyleHandle::build(|ss| ss
-        .position(ui::PositionType::Absolute)
+});
+
+#[dynamic]
+static STYLE_TRACK: StyleHandle = StyleHandle::build(|ss| {
+    ss.position(ui::PositionType::Absolute)
         .top(0)
         .bottom(0)
         .left(0)
         .right(THUMB_SIZE)
-    );
-    // Slider thumb
-    static ref STYLE_THUMB: StyleHandle = StyleHandle::build(|ss| ss
-        .position(ui::PositionType::Absolute)
+});
+
+// Slider thumb
+#[dynamic]
+static STYLE_THUMB: StyleHandle = StyleHandle::build(|ss| {
+    ss.position(ui::PositionType::Absolute)
         .top(0.)
         .width(THUMB_SIZE)
         .height(THUMB_SIZE)
-    );
-    // Slider thumb fg
-    static ref STYLE_THUMB_FG: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#777")
+});
+
+// Slider thumb fg
+#[dynamic]
+static STYLE_THUMB_FG: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#777")
         .background_image(Some(AssetPath::from("disc.png")))
         .position(ui::PositionType::Absolute)
         .top(0.)
@@ -61,12 +71,13 @@ lazy_static! {
         .height(THUMB_SIZE)
         .z_index(1)
         .pointer_events(PointerEvents::None)
-        .selector(":hover > &", |ss| ss
-            .background_color("#aaa"))
-    );
-    // Slider thumb shadow
-    static ref STYLE_THUMB_SHADOW: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#0008")
+        .selector(":hover > &", |ss| ss.background_color("#aaa"))
+});
+
+// Slider thumb shadow
+#[dynamic]
+static STYLE_THUMB_SHADOW: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#0008")
         .background_image(Some(AssetPath::from("disc.png")))
         .position(ui::PositionType::Absolute)
         .top(3.)
@@ -75,8 +86,7 @@ lazy_static! {
         .height(THUMB_SIZE)
         .z_index(-1)
         .pointer_events(PointerEvents::None)
-    );
-}
+});
 
 const CLS_DRAG: &str = "drag";
 

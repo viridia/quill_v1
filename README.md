@@ -214,23 +214,24 @@ the extra closure argument, but requires that your array data implement `Clone` 
 ## Complex example
 
 ```rust
-/// Define some styles
-lazy_static! {
-    static ref STYLE_MAIN: StyleHandle = StyleHandle::build::build(|ss| ss
-        .position(ui::PositionType::Absolute)
-        .left(10.)
-        .top(10.)
-        .bottom(20.)
-        .right(10.)
-        .border(1)
-        .border_color("#888")
-        .display(ui::Display::Flex));
-    static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#222")
-        .display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Column)
-        .width(200));
-}
+/// Define some styles as immutable static
+#[dynamic]
+static STYLE_MAIN: StyleHandle = StyleHandle::build::build(|ss| ss
+    .position(ui::PositionType::Absolute)
+    .left(10.)
+    .top(10.)
+    .bottom(20.)
+    .right(10.)
+    .border(1)
+    .border_color("#888")
+    .display(ui::Display::Flex));
+
+#[dynamic]
+static STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
+    .background_color("#222")
+    .display(ui::Display::Flex)
+    .flex_direction(ui::FlexDirection::Column)
+    .width(200));
 
 /// Function to set up the view root
 fn setup_view_root(mut commands: Commands) {
@@ -267,19 +268,19 @@ fn v_splitter(mut _cx: Cx) -> impl View {
 ```
 # Styling
 
-Quill supports CSS-like styling in the form of `StyleSet`s. A `StyleSet` is a sharable object
+Quill supports CSS-like styling in the form of `StyleHandle`s. A `StyleHandle` is a sharable object
 that contains a number of style properties like `background_color`, `flex_direction` and so on.
-`StyleSet`s can be composed - that is, multiple `StyleSets`s can be applied to the same element,
+`StyleHandle`s can be composed - that is, multiple `StyleHandle`s can be applied to the same element,
 and the resulting style is computed by merging all the style properties together. There is no
 "cascade" as in CSS, styles are applied in the order they are declared.
 
-Styles must be wrapped in an `Arc` because they are designed to be shared. Most styles are global
-constants, but nothing prevents you from creating a style dynamically in your presenter function.
+`StyleHandle` internally contain an  `Arc` because they are designed to be shared. Most styles are
+global constants, but nothing prevents you from creating a style dynamically in your presenter function.
 
 Styles are applied to an element using the `.styled()` method, which accepts either a single style,
 or a tuple of styles.
 
-`StyleSet`s are typically creating using the `.build()` method, which accepts a closure that takes
+`StyleHandle`s are typically creating using the `.build()` method, which accepts a closure that takes
 a builder object. The builder methods are flexible in the type of arguments they accept: for
 example, methods such as `.margin_right()` and `.row_gap()` accept an `impl Length`, which can be
 an integer (i32), a float (f32), or a Bevy `ui::Val` object. In the case where no unit is specified,

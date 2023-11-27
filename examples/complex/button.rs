@@ -1,11 +1,11 @@
 use bevy::{prelude::*, ui};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_quill::prelude::*;
-use lazy_static::lazy_static;
+use static_init::dynamic;
 
-lazy_static! {
-    static ref STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#282828")
+#[dynamic]
+static STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#282828")
         .border_color("#383838")
         .border(1)
         .display(ui::Display::Flex)
@@ -15,11 +15,11 @@ lazy_static! {
         .padding_left(8)
         .padding_right(8)
         .selector(".pressed", |ss| ss.background_color("#404040"))
-        .selector(":hover", |ss| ss
-            .border_color("#444")
-            .background_color("#2F2F2F"))
-        .selector(":hover.pressed", |ss| ss.background_color("#484848")));
-}
+        .selector(":hover", |ss| {
+            ss.border_color("#444").background_color("#2F2F2F")
+        })
+        .selector(":hover.pressed", |ss| ss.background_color("#484848"))
+});
 
 const CLS_PRESSED: &str = "pressed";
 

@@ -17,7 +17,7 @@ use bevy_mod_picking::{
     prelude::*,
 };
 use bevy_quill::prelude::*;
-use lazy_static::lazy_static;
+use static_init::dynamic;
 
 fn main() {
     App::new()
@@ -41,40 +41,52 @@ fn main() {
         .run();
 }
 
-lazy_static! {
-    static ref STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| ss
-        .position(ui::PositionType::Absolute)
+#[dynamic]
+static STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| {
+    ss.position(ui::PositionType::Absolute)
         .left(10.)
         .top(10.)
         .bottom(10)
         .right(10.)
         .border(1)
         .border_color("#888")
-        .display(ui::Display::Flex));
-    static ref STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#222")
+        .display(ui::Display::Flex)
+});
+
+#[dynamic]
+static STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#222")
         .display(ui::Display::Flex)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
-        .width(200));
-    static ref STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#181818")
+        .width(200)
+});
+
+#[dynamic]
+static STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#181818")
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
         .width(9)
-        .selector(".drag", |ss| ss.background_color("#080808")));
-    static ref STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#282828")
+        .selector(".drag", |ss| ss.background_color("#080808"))
+});
+
+#[dynamic]
+static STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#282828")
         .display(ui::Display::Flex)
         .width(5)
         .height(ui::Val::Percent(30.))
         .pointer_events(PointerEvents::None)
         .selector(":hover > &", |ss| ss.background_color("#383838"))
-        .selector(".drag > &", |ss| ss.background_color("#484848")));
-    static ref STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| ss
-        .background_color("#282828")
+        .selector(".drag > &", |ss| ss.background_color("#484848"))
+});
+
+#[dynamic]
+static STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#282828")
         .border_color("#383838")
         .border(1)
         .display(ui::Display::Flex)
@@ -84,12 +96,14 @@ lazy_static! {
         .padding_left(8)
         .padding_right(8)
         .selector(".pressed", |ss| ss.background_color("#404040"))
-        .selector(":hover", |ss| ss
-            .border_color("#444")
-            .background_color("#2F2F2F"))
-        .selector(":hover.pressed", |ss| ss.background_color("#484848")));
-    static ref STYLE_VIEWPORT: StyleHandle = StyleHandle::build(|ss| ss.flex_grow(1.));
-}
+        .selector(":hover", |ss| {
+            ss.border_color("#444").background_color("#2F2F2F")
+        })
+        .selector(":hover.pressed", |ss| ss.background_color("#484848"))
+});
+
+#[dynamic]
+static STYLE_VIEWPORT: StyleHandle = StyleHandle::build(|ss| ss.flex_grow(1.));
 
 const DEFAULT_FOV: f32 = 0.69; // 40 degrees
 const X_EXTENT: f32 = 14.5;

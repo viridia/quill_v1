@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::utils::HashSet;
 
-use crate::{StyleHandle, View, ViewContext};
+use crate::{StyleHandle, StyleRef, View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
@@ -124,35 +124,29 @@ impl<V: View> View for ViewStyled<V> {
 
 // TODO: Turn this into a macro once it's stable.
 pub trait StyleTuple: Send + Sync {
-    fn to_vec(&self) -> Vec<StyleHandle>;
+    fn to_vec(self) -> Vec<StyleHandle>;
 }
 
 impl StyleTuple for () {
-    fn to_vec(&self) -> Vec<StyleHandle> {
+    fn to_vec(self) -> Vec<StyleHandle> {
         Vec::new()
     }
 }
 
-impl StyleTuple for StyleHandle {
-    fn to_vec(&self) -> Vec<StyleHandle> {
-        vec![self.clone()]
+impl<S0: StyleRef> StyleTuple for S0 {
+    fn to_vec(self) -> Vec<StyleHandle> {
+        vec![self.as_handle()]
     }
 }
 
-impl StyleTuple for &StyleHandle {
-    fn to_vec(&self) -> Vec<StyleHandle> {
-        vec![(*self).clone()]
+impl<S0: StyleRef> StyleTuple for (S0,) {
+    fn to_vec(self) -> Vec<StyleHandle> {
+        vec![self.0.as_handle()]
     }
 }
 
-impl StyleTuple for (StyleHandle,) {
-    fn to_vec(&self) -> Vec<StyleHandle> {
-        vec![self.0.clone()]
-    }
-}
-
-impl StyleTuple for (StyleHandle, StyleHandle) {
-    fn to_vec(&self) -> Vec<StyleHandle> {
-        vec![self.0.clone(), self.1.clone()]
+impl<S0: StyleRef, S1: StyleRef> StyleTuple for (S0, S1) {
+    fn to_vec(self) -> Vec<StyleHandle> {
+        vec![self.0.as_handle(), self.1.as_handle()]
     }
 }
