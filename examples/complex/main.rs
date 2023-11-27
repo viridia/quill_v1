@@ -210,10 +210,6 @@ fn ui_main(mut cx: Cx) -> impl View {
                         |ev: Res<ListenerInput<Clicked>>, mut log: ResMut<ClickLog>| {
                             log.0
                                 .push(format!("Button Clicked: id='{}'", ev.id).to_string());
-                            println!(
-                                "Received Clicked Button id='{}' target={:?}",
-                                ev.id, ev.target
-                            );
                         },
                     ));
                 })

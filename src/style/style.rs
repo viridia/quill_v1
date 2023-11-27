@@ -55,6 +55,13 @@ impl StyleHandle {
     }
 }
 
+impl PartialEq for StyleHandle {
+    fn eq(&self, other: &Self) -> bool {
+        // Reference-equality is all we need.
+        Arc::as_ptr(&self.0) == Arc::as_ptr(&other.0)
+    }
+}
+
 /// Trait that adds syntactic sugar for making lists of references to style handles.
 #[doc(hidden)]
 pub trait StyleRef: Send + Sync {

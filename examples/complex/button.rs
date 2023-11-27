@@ -46,7 +46,6 @@ pub fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
                 On::<Pointer<Click>>::run(
                     move |ev: Res<ListenerInput<Pointer<Click>>>,
                           mut writer: EventWriter<Clicked>| {
-                        println!("Sending Clicked id='{}' target={:?}", id, ev.target);
                         writer.send(Clicked {
                             target: ev.target,
                             id,
