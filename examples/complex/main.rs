@@ -220,7 +220,10 @@ fn ui_main(mut cx: Cx) -> impl View {
                     }),
                     button.bind(ButtonProps {
                         id: "load",
-                        children: "Load",
+                        children: ViewParam::new(Fragment::new((
+                            "Load",
+                            swatch.bind(SwatchProps { color: Color::RED }),
+                        ))),
                     }),
                     button.bind(ButtonProps {
                         id: "quit",
