@@ -9,6 +9,7 @@ use super::{cx::Cx, View};
 /// A ViewHandle holds a type-erased reference to a presenter function and its props and state.
 #[derive(Component)]
 pub struct ViewHandle {
+    /// A reference to the type-erased presenter state.
     pub inner: Option<Box<dyn AnyPresenterState>>,
 }
 

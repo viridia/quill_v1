@@ -9,6 +9,7 @@ use crate::node_span::NodeSpan;
 pub struct Element {}
 
 impl Element {
+    /// Construct a new, empty `Element`.
     pub fn new() -> Self {
         Self {}
     }

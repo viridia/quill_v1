@@ -17,6 +17,7 @@ impl<V: View + 'static> IndexedListItem<V> {
     }
 }
 
+#[doc(hidden)]
 pub struct ForIndex<
     Item: Sync + Send + Clone,
     V: View + 'static,

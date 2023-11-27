@@ -10,8 +10,9 @@ use super::local::{LocalData, TrackedLocals};
 /// properties (passed from the parent presenter), plus other context information needed
 /// in building the view state graph.
 pub struct Cx<'w, 'p, Props = ()> {
+    /// The properties that were passed to the presenter from it's parent.
     pub props: &'p Props,
-    pub vc: &'p mut ViewContext<'w>,
+    pub(crate) vc: &'p mut ViewContext<'w>,
     local_index: Cell<usize>,
 }
 

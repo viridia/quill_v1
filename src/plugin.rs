@@ -8,6 +8,7 @@ use crate::{
     ElementClasses, ElementStyles, SelectorMatcher, TrackedLocals, ViewContext, ViewHandle,
 };
 
+/// Plugin which initializes the Quill library.
 pub struct QuillPlugin;
 
 impl Plugin for QuillPlugin {

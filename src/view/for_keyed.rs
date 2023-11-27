@@ -26,6 +26,7 @@ impl<Key: Sync + Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
     }
 }
 
+#[doc(hidden)]
 pub struct ForKeyed<
     Item: Sync + Send + Clone,
     Key: Sync + Send + PartialEq,

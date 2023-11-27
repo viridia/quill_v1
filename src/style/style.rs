@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use std::sync::Arc;
 
 use bevy::{
@@ -16,6 +18,7 @@ use super::{
     style_expr::StyleExpr,
 };
 
+/// A sharable reference to a collection of UI style properties.
 #[derive(Clone)]
 pub struct StyleHandle(pub Arc<StyleSet>);
 
@@ -53,6 +56,7 @@ impl StyleHandle {
 }
 
 /// Trait that adds syntactic sugar for making lists of references to style handles.
+#[doc(hidden)]
 pub trait StyleRef: Send + Sync {
     fn as_handle(self) -> StyleHandle;
 }
@@ -78,6 +82,8 @@ pub enum PointerEvents {
     All,
 }
 
+/// The set of all style attributes. This is represented as a list of enums rather than
+/// a map so that attributes can be both strongly typed and represented sparsely.
 #[derive(Debug, Clone)]
 pub enum StyleProp {
     BackgroundImage(Option<AssetPath<'static>>),

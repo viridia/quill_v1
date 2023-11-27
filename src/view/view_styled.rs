@@ -7,6 +7,7 @@ use impl_trait_for_tuples::*;
 /// List of style objects which are attached to a given UiNode.
 #[derive(Component, Default)]
 pub struct ElementStyles {
+    /// The collection of styles associated with this element.
     pub styles: Vec<StyleHandle>,
 
     // How far up the hierarchy the selectors need to search
@@ -22,10 +23,12 @@ pub struct ElementStyles {
 pub struct ElementClasses(pub HashSet<String>);
 
 impl ElementClasses {
+    /// Add a classname to this element.
     pub fn add_class(&mut self, cls: &str) {
         self.0.insert(cls.to_string());
     }
 
+    /// Remove a classname from this element.
     pub fn remove_class(&mut self, cls: &str) {
         self.0.remove(cls);
     }

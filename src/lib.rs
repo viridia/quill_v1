@@ -1,3 +1,8 @@
+//! **Quill** is a UI framework for the Bevy game engine. It's meant to provide a simple API for
+//! constructing reactive user interfaces, similar to frameworks like React and Solid, but built on
+//! a foundation of Bevy ECS state management.
+
+#![warn(missing_docs)]
 mod cursor;
 mod node_span;
 mod plugin;
@@ -6,12 +11,10 @@ mod view;
 
 pub use cursor::Cursor;
 pub use node_span::NodeSpan;
-pub use plugin::QuillPlugin;
-pub use style::*;
+#[doc(inline)]
+pub use prelude::*;
 
-pub use view::*;
-
-// Define the prelude module
+/// Common imports
 pub mod prelude {
     pub use crate::plugin::QuillPlugin;
     pub use crate::style::*;

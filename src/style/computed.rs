@@ -13,6 +13,7 @@ use super::style::PointerEvents;
 
 /// A computed style represents the composition of one or more `ElementStyle`s.
 #[derive(Default, Clone, Debug)]
+#[doc(hidden)]
 pub struct ComputedStyle {
     pub style: Style,
 

@@ -1,3 +1,4 @@
+/// The value of a style attribute, which can be either a constant or a variable.
 #[derive(Debug, Clone)]
 pub enum StyleExpr<T> {
     /// An expression that has already been cast to the correct type.
@@ -10,6 +11,9 @@ impl<T> StyleExpr<T>
 where
     T: Copy,
 {
+    /// Return the value of this style attribute in the current context. If the expression
+    /// is a constant, then it merely returns it verbatim. If the expression is a style variable,
+    /// however, it will search the containing scopes for a definition of that variable.
     // TODO: Add parameters for ancestor list so we can evaluate vars and classes.
     pub fn eval(&self) -> Result<T, StyleError> {
         match self {

@@ -49,19 +49,21 @@ impl<'w> ViewContext<'w> {
         }
     }
 
-    pub fn entity(&self, entity: Entity) -> EntityRef {
+    pub(crate) fn entity(&self, entity: Entity) -> EntityRef {
         self.world.entity(entity)
     }
 
-    pub fn entity_mut(&mut self, entity: Entity) -> EntityWorldMut {
+    pub(crate) fn entity_mut(&mut self, entity: Entity) -> EntityWorldMut {
         self.world.entity_mut(entity)
     }
 }
 
+/// An object which generates one or more display nodes. Output of a presenter function
 pub trait View: Send + Sync
 where
     Self: Sized,
 {
+    /// The external state for this View.
     type State: Send + Sync;
 
     /// Return the span of UiNodes produced by this View.
@@ -305,6 +307,7 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
 }
 
 /// Binds a presenter to properties and implements a view
+#[doc(hidden)]
 pub struct Bind<
     V: View,
     Props: Send + Sync + Clone,
@@ -387,12 +390,16 @@ impl<
     }
 }
 
+/// A trait that allows methods to be added to presenter function references.
 pub trait PresenterFn<
     V: View,
     Props: Send + Sync + Clone,
     F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
 >
 {
+    /// Used to invoke a presenter from within a presenter. This binds a set of properties
+    /// to the child presenter, and constructs a new `ViewHandle`/`PresenterState`. The
+    /// resulting is a `View` which references this handle.
     fn bind(self, props: Props) -> Bind<V, Props, F>;
 }
 

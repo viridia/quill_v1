@@ -10,6 +10,7 @@ pub enum IfState<Pos, Neg> {
     False(Neg),
 }
 
+/// A conditional view which renders one of two children depending on the condition expression.
 pub struct If<Pos: View, Neg: View> {
     test: bool,
     pos: Pos,
@@ -17,6 +18,7 @@ pub struct If<Pos: View, Neg: View> {
 }
 
 impl<Pos: View, Neg: View> If<Pos, Neg> {
+    /// Construct a new If View.
     pub fn new(test: bool, pos: Pos, neg: Neg) -> Self {
         Self { test, pos, neg }
     }

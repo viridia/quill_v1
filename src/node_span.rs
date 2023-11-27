@@ -4,14 +4,14 @@ use bevy::prelude::*;
 /// rendered output of a `View`. This gets flattened before attaching to the parent UiNode.
 #[derive(Debug, Clone)]
 pub enum NodeSpan {
-    // Means that nothing was rendered. This can represent either an initial state
-    // before the first render, or a conditional render operation.
+    /// Means that nothing was rendered. This can represent either an initial state
+    /// before the first render, or a conditional render operation.
     Empty,
 
-    // Template rendered a single node
+    /// Template rendered a single node
     Node(Entity),
 
-    // Template rendered a fragment or a list of nodes.
+    /// Template rendered a fragment or a list of nodes.
     Fragment(Box<[NodeSpan]>),
 }
 

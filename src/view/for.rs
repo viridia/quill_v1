@@ -1,5 +1,9 @@
 use super::{for_index::ForIndex, for_keyed::ForKeyed, View};
 
+/// A namespace that contains constructor functions for various kinds of for-loops:
+/// * `For::each()`
+/// * `For::keyed()`
+/// * `For::index()`
 pub struct For;
 
 impl For {

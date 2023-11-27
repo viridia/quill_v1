@@ -10,6 +10,7 @@ use std::{
 use bevy::ecs::component::Component;
 
 #[derive(Clone)]
+#[doc(hidden)]
 pub struct LocalData<T: Send + Sync + 'static> {
     changed: Arc<AtomicBool>,
     data: Arc<Mutex<dyn Any + Send + Sync + 'static>>,
@@ -53,6 +54,7 @@ pub struct TrackedLocals {
     locals: Vec<Arc<Mutex<dyn Any + Send + Sync>>>,
 }
 
+#[doc(hidden)]
 impl TrackedLocals {
     pub fn get<T: Send + Sync + Clone>(
         &mut self,

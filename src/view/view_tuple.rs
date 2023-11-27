@@ -5,7 +5,9 @@ use impl_trait_for_tuples::*;
 // ViewTuple
 
 // TODO: Turn this into a macro once it's stable.
+#[doc(hidden)]
 pub trait ViewTuple: Send + Sync {
+    /// Aggregate View::State for all tuple members.
     type State: Send + Sync;
 
     /// Return the number of child views.
