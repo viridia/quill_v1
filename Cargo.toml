@@ -15,6 +15,7 @@ categories = ["gui", "game-development"]
 [dependencies]
 bevy = "0.12.0"
 bevy_mod_picking = "0.17.0"
+impl-trait-for-tuples = "0.2.2"
 static_init = "1.0.3"
 winnow = "0.5.19"
 

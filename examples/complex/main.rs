@@ -274,26 +274,24 @@ fn color_edit(mut cx: Cx) -> impl View {
                 colors: &COLORS,
                 row_span: 4,
             }),
-            Fragment::new((
-                h_slider.bind(SliderProps {
-                    id: "r",
-                    min: 0.,
-                    max: 255.,
-                    value: edit_color.color.r() * 255.0,
-                }),
-                h_slider.bind(SliderProps {
-                    id: "g",
-                    min: 0.,
-                    max: 255.,
-                    value: edit_color.color.g() * 255.0,
-                }),
-                h_slider.bind(SliderProps {
-                    id: "b",
-                    min: 0.,
-                    max: 255.,
-                    value: edit_color.color.b() * 255.0,
-                }),
-            )),
+            h_slider.bind(SliderProps {
+                id: "r",
+                min: 0.,
+                max: 255.,
+                value: edit_color.color.r() * 255.0,
+            }),
+            h_slider.bind(SliderProps {
+                id: "g",
+                min: 0.,
+                max: 255.,
+                value: edit_color.color.g() * 255.0,
+            }),
+            h_slider.bind(SliderProps {
+                id: "b",
+                min: 0.,
+                max: 255.,
+                value: edit_color.color.b() * 255.0,
+            }),
         ))
 }
 

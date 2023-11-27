@@ -1,9 +1,8 @@
+use crate::node_span::NodeSpan;
+use crate::{StyleHandle, StyleRef, View, ViewContext};
 use bevy::prelude::*;
 use bevy::utils::HashSet;
-
-use crate::{StyleHandle, StyleRef, View, ViewContext};
-
-use crate::node_span::NodeSpan;
+use impl_trait_for_tuples::*;
 
 /// List of style objects which are attached to a given UiNode.
 #[derive(Component, Default)]
@@ -139,14 +138,11 @@ impl<S0: StyleRef> StyleTuple for S0 {
     }
 }
 
-impl<S0: StyleRef> StyleTuple for (S0,) {
-    fn to_vec(self) -> Vec<StyleHandle> {
-        vec![self.0.as_handle()]
-    }
-}
+#[impl_for_tuples(1, 16)]
+impl StyleTuple for Tuple {
+    for_tuples!( where #( Tuple: StyleRef )* );
 
-impl<S0: StyleRef, S1: StyleRef> StyleTuple for (S0, S1) {
     fn to_vec(self) -> Vec<StyleHandle> {
-        vec![self.0.as_handle(), self.1.as_handle()]
+        Vec::from([for_tuples!( #( self.Tuple.as_handle() ),* )])
     }
 }
