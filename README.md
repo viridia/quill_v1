@@ -35,6 +35,112 @@ cargo run --example complex
 
 Check out the demo video [here](https://youtu.be/NXabt3NrKMg).
 
+## Examples usages
+
+### A basic UI widget
+
+The only requirements on a presenter is that it take a `Cx` context as its first argument, and return an `impl View` as its result.
+
+```rust
+// A presenter function
+fn counter(mut cx: Cx<u8>) -> impl View {
+    // Access data in a resource
+    let counter = cx.use_resource::<Counter>();
+    Element::new().children((
+        format!("The count is: {}", counter.count),
+    ))
+}
+```
+
+### Conditional rendering with `If`
+
+The `If` view takes a conditional expression, and two child views, one which is rendered when the condition is true, the other when the condition is false.
+
+```rust
+fn counter(mut cx: Cx<u8>) -> impl View {
+    let counter = cx.use_resource::<Counter>();
+    Element::new().children((
+        "The count is: ",
+        If::new(counter.count & 1 == 0, " [even]", " [odd]"),
+    ))
+}
+```
+
+### Rendering multiple items with `For`
+
+`For::each()` takes a list of items, and a callback which renders a `View` for each item:
+
+```rust
+fn event_log(mut cx: Cx) -> impl View {
+    let log = cx.use_resource::<ClickLog>();
+    Element::new()
+        .children(For::each(&log.0, |item| {
+            Element::new()
+                .styled(STYLE_LOG_ENTRY.clone())
+                .children((item.to_owned(), "00:00:00"))
+        })),
+}
+```
+
+There is also `For::index()` and `For::keyed()`.
+
+### Invoking child presenters
+
+If a presenter takes no properties, then you can just use the name of the function directly.
+
+For presenters which take properties, most of the time this will be a struct - but it doesn't have to be. Use the `.bind()` method to associate
+a presenter with a set of property values.
+
+```rust
+fn root_presenter(mut _cx: Cx) -> impl View {
+    Element::new().children((no_args, with_args.bind("Fred")))
+}
+
+fn no_args(mut cx: Cx) -> impl View {
+    "I have no args"
+}
+
+fn with_args(mut cx: Cx<&str>) -> impl View {
+    format!("I have one arg: {}", name)
+}
+```
+
+### Modifying the generated UI nodes
+
+The `.with()` method takes a callback which allows you to directly modify the Bevy UI node:
+
+```rust
+fn event_log(mut cx: Cx) -> impl View {
+    let log = cx.use_resource::<ClickLog>();
+    Element::new()
+        .with(|entity, world| {
+            // Do stuff with the entity
+        })),
+}
+```
+
+`.with()` is called whenever the view is updated. If you only need to modify the element when it is first created, use `.once()`.
+
+There's also a shortcut method that lets you insert an ECS component:
+
+```rust
+Element::new().insert(ViewportInsetElement {}),
+```
+
+### Returning multiple nodes
+
+Normally a `View` renders a single UI node. If you want to return multiple nodes, use a `Fragment`:
+
+```rust
+fn multi(mut cx: Cx) -> impl View {
+    Fragment::new((
+        "Hello, ",
+        "World!"
+    ))
+}
+```
+The children of the `Fragment` will be inserted inline in place of the `Fragment` node.
+
 ## Architecture and Rendering Lifecycle
 
 A Quill UI is made up of individual elements called `Views`. If you are familiar with web frameworks
