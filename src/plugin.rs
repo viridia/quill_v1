@@ -2,6 +2,7 @@ use bevy::{prelude::*, utils::HashSet};
 use bevy_mod_picking::focus::{HoverMap, PreviousHoverMap};
 
 use crate::{
+    animate_bg_colors, animate_border_colors, animate_transforms,
     presenter_state::{PresenterGraphChanged, PresenterStateChanged},
     style::{ComputedStyle, UpdateComputedStyle},
     view::resource::TrackedResources,
@@ -13,7 +14,17 @@ pub struct QuillPlugin;
 
 impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (render_views, update_styles).chain());
+        app.add_systems(
+            Update,
+            (
+                render_views,
+                update_styles,
+                animate_transforms,
+                animate_bg_colors,
+                animate_border_colors,
+            )
+                .chain(),
+        );
     }
 }
 

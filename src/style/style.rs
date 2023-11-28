@@ -6,7 +6,7 @@ use bevy::{
     asset::AssetPath,
     ecs::entity::Entity,
     log::error,
-    math::IVec2,
+    math::{IVec2, Vec3},
     prelude::Color,
     ui::{self, ZIndex},
 };
@@ -15,7 +15,7 @@ use crate::Cursor;
 
 use super::{
     computed::ComputedStyle, selector::Selector, selector_matcher::SelectorMatcher,
-    style_expr::StyleExpr,
+    style_expr::StyleExpr, transition::Transition,
 };
 
 /// A sharable reference to a collection of UI style properties.
@@ -183,6 +183,16 @@ pub enum StyleProp {
     Cursor(StyleExpr<Cursor>),
     CursorImage(StyleExpr<AssetPath<'static>>),
     CursorOffset(StyleExpr<IVec2>),
+
+    // Transforms
+    Scale(StyleExpr<f32>),
+    ScaleX(StyleExpr<f32>),
+    ScaleY(StyleExpr<f32>),
+    Rotation(StyleExpr<f32>),
+    Translation(StyleExpr<Vec3>),
+
+    // Transitions
+    Transition(Vec<Transition>),
 }
 
 type SelectorList = Vec<(Box<Selector>, Vec<StyleProp>)>;
@@ -607,6 +617,36 @@ impl StyleSet {
                 StyleProp::Cursor(_) => todo!(),
                 StyleProp::CursorImage(_) => todo!(),
                 StyleProp::CursorOffset(_) => todo!(),
+
+                StyleProp::Scale(expr) => {
+                    if let Ok(scale) = expr.eval() {
+                        computed.scale_x = Some(scale);
+                        computed.scale_y = Some(scale);
+                    }
+                }
+                StyleProp::ScaleX(expr) => {
+                    if let Ok(scale) = expr.eval() {
+                        computed.scale_x = Some(scale);
+                    }
+                }
+                StyleProp::ScaleY(expr) => {
+                    if let Ok(scale) = expr.eval() {
+                        computed.scale_y = Some(scale);
+                    }
+                }
+                StyleProp::Rotation(expr) => {
+                    if let Ok(rot) = expr.eval() {
+                        computed.rotation = Some(rot);
+                        computed.scale_y = Some(rot);
+                    }
+                }
+                StyleProp::Translation(expr) => {
+                    if let Ok(trans) = expr.eval() {
+                        computed.translation = Some(trans);
+                    }
+                }
+
+                StyleProp::Transition(trans) => computed.transitions.clone_from(trans),
             }
         }
     }
@@ -1125,6 +1165,41 @@ impl StyleSetBuilder {
     pub fn pointer_events(&mut self, pe: PointerEvents) -> &mut Self {
         self.props
             .push(StyleProp::PointerEvents(StyleExpr::Constant(pe)));
+        self
+    }
+
+    pub fn scale_x(&mut self, scale: f32) -> &mut Self {
+        self.props
+            .push(StyleProp::ScaleX(StyleExpr::Constant(scale)));
+        self
+    }
+
+    pub fn scale_y(&mut self, scale: f32) -> &mut Self {
+        self.props
+            .push(StyleProp::ScaleY(StyleExpr::Constant(scale)));
+        self
+    }
+
+    pub fn scale(&mut self, scale: f32) -> &mut Self {
+        self.props
+            .push(StyleProp::Scale(StyleExpr::Constant(scale)));
+        self
+    }
+
+    pub fn rotation(&mut self, rot: f32) -> &mut Self {
+        self.props
+            .push(StyleProp::Rotation(StyleExpr::Constant(rot)));
+        self
+    }
+
+    pub fn translation(&mut self, trans: Vec3) -> &mut Self {
+        self.props
+            .push(StyleProp::Translation(StyleExpr::Constant(trans)));
+        self
+    }
+
+    pub fn transition(&mut self, transition: &Vec<Transition>) -> &mut Self {
+        self.props.push(StyleProp::Transition(transition.clone()));
         self
     }
 

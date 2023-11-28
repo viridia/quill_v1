@@ -10,6 +10,10 @@ use bevy::ui::ContentSize;
 use bevy_mod_picking::prelude::Pickable;
 
 use super::style::PointerEvents;
+use super::transition::{
+    AnimatedBackgroundColor, AnimatedBorderColor, AnimatedTransform, Transition,
+    TransitionProperty, TransitionState,
+};
 
 /// A computed style represents the composition of one or more `ElementStyle`s.
 #[derive(Default, Clone, Debug)]
@@ -32,6 +36,12 @@ pub struct ComputedStyle {
     pub outline_offset: Val,
     pub z_index: Option<ZIndex>,
 
+    // Transform properties
+    pub scale_x: Option<f32>,
+    pub scale_y: Option<f32>,
+    pub rotation: Option<f32>,
+    pub translation: Option<Vec3>,
+
     // Image properties
     pub image: Option<AssetPath<'static>>,
     pub flip_x: bool,
@@ -39,6 +49,9 @@ pub struct ComputedStyle {
 
     // Picking properties
     pub pickable: Option<PointerEvents>,
+
+    // Transitiions
+    pub transitions: Vec<Transition>,
 }
 
 impl ComputedStyle {
@@ -69,6 +82,19 @@ pub struct UpdateComputedStyle {
 
 impl Command for UpdateComputedStyle {
     fn apply(self, world: &mut World) {
+        let mut is_animated_bg_color = false;
+        let mut is_animated_border_color = false;
+        let mut is_animated_transform = false;
+
+        self.computed
+            .transitions
+            .iter()
+            .for_each(|tr| match tr.property {
+                TransitionProperty::Transform => is_animated_transform = true,
+                TransitionProperty::BackgroundColor => is_animated_bg_color = true,
+                TransitionProperty::BorderColor => is_animated_border_color = true,
+            });
+
         let bg_image = self.computed.image.map(|path| {
             world
                 .get_resource::<AssetServer>()
@@ -110,50 +136,66 @@ impl Command for UpdateComputedStyle {
                 None => {}
             }
 
-            match e.get_mut::<BackgroundColor>() {
-                Some(mut bg_comp) => {
-                    if self.computed.background_color.is_none() {
-                        if bg_image.is_none() {
-                            // Remove the background
-                            e.remove::<BackgroundColor>();
-                        }
-                    } else {
-                        let color = self.computed.background_color.unwrap();
-                        // Mutate the background
-                        if bg_comp.0 != color {
-                            bg_comp.0 = color
+            if is_animated_bg_color {
+                match e.get_mut::<AnimatedBackgroundColor>() {
+                    Some(_) => todo!(),
+                    None => todo!(),
+                }
+            } else {
+                e.remove::<AnimatedBackgroundColor>();
+                match e.get_mut::<BackgroundColor>() {
+                    Some(mut bg_comp) => {
+                        if self.computed.background_color.is_none() {
+                            if bg_image.is_none() {
+                                // Remove the background
+                                e.remove::<BackgroundColor>();
+                            }
+                        } else {
+                            let color = self.computed.background_color.unwrap();
+                            // Mutate the background
+                            if bg_comp.0 != color {
+                                bg_comp.0 = color
+                            }
                         }
                     }
-                }
 
-                None => {
-                    if !self.computed.background_color.is_none() {
-                        // Insert a new background
-                        e.insert(BackgroundColor(self.computed.background_color.unwrap()));
-                    } else if bg_image.is_some() {
-                        // Images require a background color to be set.
-                        e.insert(BackgroundColor::DEFAULT);
+                    None => {
+                        if !self.computed.background_color.is_none() {
+                            // Insert a new background
+                            e.insert(BackgroundColor(self.computed.background_color.unwrap()));
+                        } else if bg_image.is_some() {
+                            // Images require a background color to be set.
+                            e.insert(BackgroundColor::DEFAULT);
+                        }
                     }
                 }
             }
 
-            match e.get_mut::<BorderColor>() {
-                Some(mut bc_comp) => {
-                    if self.computed.border_color.is_none() {
-                        // Remove the border color
-                        e.remove::<BorderColor>();
-                    } else {
-                        let color = self.computed.border_color.unwrap();
-                        if bc_comp.0 != color {
-                            bc_comp.0 = color
+            if is_animated_border_color {
+                match e.get_mut::<AnimatedBorderColor>() {
+                    Some(_) => todo!(),
+                    None => todo!(),
+                }
+            } else {
+                e.remove::<AnimatedBorderColor>();
+                match e.get_mut::<BorderColor>() {
+                    Some(mut bc_comp) => {
+                        if self.computed.border_color.is_none() {
+                            // Remove the border color
+                            e.remove::<BorderColor>();
+                        } else {
+                            let color = self.computed.border_color.unwrap();
+                            if bc_comp.0 != color {
+                                bc_comp.0 = color
+                            }
                         }
                     }
-                }
 
-                None => {
-                    if !self.computed.border_color.is_none() {
-                        // Insert a new background color
-                        e.insert(BorderColor(self.computed.border_color.unwrap()));
+                    None => {
+                        if !self.computed.border_color.is_none() {
+                            // Insert a new background color
+                            e.insert(BorderColor(self.computed.border_color.unwrap()));
+                        }
                     }
                 }
             }
@@ -242,6 +284,62 @@ impl Command for UpdateComputedStyle {
                     });
                 }
                 (None, None) => {}
+            }
+
+            let mut transform = Transform::default();
+            transform.translation = self.computed.translation.unwrap_or(transform.translation);
+            transform.scale.x = self.computed.scale_x.unwrap_or(1.);
+            transform.scale.y = self.computed.scale_y.unwrap_or(1.);
+            transform.rotate_z(self.computed.rotation.unwrap_or(0.));
+            if is_animated_transform {
+                let prev_transform = e.get_mut::<Transform>().unwrap().clone();
+                let transition = self
+                    .computed
+                    .transitions
+                    .iter()
+                    .find(|t| t.property == TransitionProperty::Transform)
+                    .unwrap();
+                match e.get_mut::<AnimatedTransform>() {
+                    Some(at) => {
+                        if at.target.translation != transform.translation
+                            || at.target.scale != transform.scale
+                            || at.target.rotation != transform.rotation
+                        {
+                            e.insert(AnimatedTransform {
+                                state: TransitionState {
+                                    transition: transition.clone(),
+                                    clock: 0.,
+                                },
+                                origin: prev_transform,
+                                target: transform,
+                            });
+                        }
+                    }
+                    None => {
+                        e.insert(AnimatedTransform {
+                            state: TransitionState {
+                                transition: transition.clone(),
+                                clock: 0.,
+                            },
+                            origin: prev_transform,
+                            target: transform,
+                        });
+                    }
+                }
+            } else {
+                match e.get_mut::<Transform>() {
+                    Some(tr) => {
+                        if tr.translation != transform.translation
+                            || tr.scale != transform.scale
+                            || tr.rotation != transform.rotation
+                        {
+                            e.insert(transform);
+                        }
+                    }
+                    None => {
+                        panic!("Element has no transform!")
+                    }
+                }
             }
         }
     }

@@ -14,9 +14,17 @@ static STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| {
         .min_height(32)
         .padding_left(8)
         .padding_right(8)
+        .transition(&vec![Transition {
+            property: TransitionProperty::Transform,
+            duration: 0.3,
+            timing: timing::EASE_IN_OUT,
+            ..default()
+        }])
         .selector(".pressed", |ss| ss.background_color("#404040"))
         .selector(":hover", |ss| {
-            ss.border_color("#444").background_color("#2F2F2F")
+            ss.border_color("#444")
+                .background_color("#2F2F2F")
+                .scale(1.2)
         })
         .selector(":hover.pressed", |ss| ss.background_color("#484848"))
 });
