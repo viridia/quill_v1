@@ -179,6 +179,8 @@ pub fn animate_transforms(
         let t = at.state.transition.timing.eval(at.state.clock);
         if t != t_old {
             trans.scale = at.origin.scale.lerp(at.target.scale, t);
+            trans.translation = at.origin.translation.lerp(at.target.translation, t);
+            trans.rotation = at.origin.rotation.lerp(at.target.rotation, t);
         }
     }
 }
