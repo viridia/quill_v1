@@ -13,9 +13,9 @@ pub struct SelectorMatcher<'w, 's, 'h> {
             Entity,
             Ref<'static, ElementStyles>,
             Ref<'static, ElementClasses>,
-            Option<&'static Parent>,
         ),
     >,
+    parent_query: &'h Query<'w, 's, &'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
     hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
 }
 
@@ -28,19 +28,31 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
                 Entity,
                 Ref<'static, ElementStyles>,
                 Ref<'static, ElementClasses>,
-                Option<&'static Parent>,
             ),
         >,
+        parent_query: &'h Query<'w, 's, &'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
         hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
     ) -> Self {
-        Self { query, hover_map }
+        Self {
+            query,
+            parent_query,
+            hover_map,
+        }
     }
 
     /// True if the given entity is in the hover map for PointerId::Mouse. This is a separate
     /// method because we need to be able to test hover status apart from selector matching.
     pub(crate) fn is_hovering(&self, e: &Entity) -> bool {
         match self.hover_map.get(&PointerId::Mouse) {
-            Some(map) => map.contains_key(e),
+            Some(map) => map.iter().any(|(mut ha, _)| loop {
+                if ha == e {
+                    return true;
+                }
+                match self.parent_query.get(*ha) {
+                    Ok(parent) => ha = parent,
+                    _ => return false,
+                }
+            }),
             None => false,
         }
     }
@@ -51,15 +63,13 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
         match selector {
             Selector::Accept => true,
             Selector::Class(cls, next) => match self.query.get(*entity) {
-                Ok((_, _, classes, _)) => {
-                    classes.0.contains(cls) && self.selector_match(next, entity)
-                }
+                Ok((_, _, classes)) => classes.0.contains(cls) && self.selector_match(next, entity),
                 Err(_) => false,
             },
             Selector::Hover(next) => self.is_hovering(&entity) && self.selector_match(next, entity),
             Selector::Current(next) => self.selector_match(next, entity),
-            Selector::Parent(next) => match self.query.get(*entity) {
-                Ok((_, _, _, Some(parent))) => self.selector_match(next, &parent.get()),
+            Selector::Parent(next) => match self.parent_query.get(*entity) {
+                Ok(parent) => self.selector_match(next, &parent.get()),
                 _ => false,
             },
             Selector::Either(opts) => opts.iter().any(|next| self.selector_match(next, entity)),

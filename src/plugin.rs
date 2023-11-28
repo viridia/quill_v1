@@ -124,14 +124,14 @@ fn update_styles(
         Entity,
         Ref<'static, ElementStyles>,
         Ref<'static, ElementClasses>,
-        Option<&'static Parent>,
     )>,
+    parent_query: Query<&'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
     hover_map: Res<HoverMap>,
     hover_map_prev: Res<PreviousHoverMap>,
 ) {
-    let matcher = SelectorMatcher::new(&query, &hover_map.0);
-    let matcher_prev = SelectorMatcher::new(&query, &hover_map_prev.0);
-    for (entity, styles, _, _) in query.iter() {
+    let matcher = SelectorMatcher::new(&query, &parent_query, &hover_map.0);
+    let matcher_prev = SelectorMatcher::new(&query, &parent_query, &hover_map_prev.0);
+    for (entity, styles, _) in query.iter() {
         let mut changed = styles.is_changed();
         if !changed && styles.selector_depth > 0 {
             // Search ancestors to see if any have changed.
@@ -139,7 +139,7 @@ fn update_styles(
             let mut e = entity;
             for _ in 0..styles.selector_depth {
                 match query.get(e) {
-                    Ok((_, _, a_classes, a_parent)) => {
+                    Ok((_, _, a_classes)) => {
                         if styles.uses_hover
                             && matcher.is_hovering(&e) != matcher_prev.is_hovering(&e)
                         {
@@ -148,10 +148,11 @@ fn update_styles(
                         if a_classes.is_changed() {
                             changed = true;
                             break;
-                        } else if a_parent.is_none() {
-                            break;
                         } else {
-                            e = a_parent.unwrap().get();
+                            match parent_query.get(e) {
+                                Ok(parent) => e = **parent,
+                                _ => break,
+                            }
                         }
                     }
                     Err(_) => {
