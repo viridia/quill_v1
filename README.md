@@ -101,7 +101,7 @@ fn no_args(mut cx: Cx) -> impl View {
 }
 
 fn with_args(mut cx: Cx<&str>) -> impl View {
-    format!("I have one arg: {}", name)
+    format!("I have one arg: {}", cx.props.name)
 }
 ```
 
@@ -140,6 +140,31 @@ fn multi(mut cx: Cx) -> impl View {
 }
 ```
 The children of the `Fragment` will be inserted inline in place of the `Fragment` node.
+
+### Local state
+
+You can declare a local state variable with `cx.use_local()`. The argument is a closure which returns the initial value. The result is an object which has `.get()` and `.set()` methods. `use_local()` produces a reactive data source, which means that whenever the value is changed, it will trigger a re-render of the presenter.
+
+```rust
+fn local_test(mut cx: Cx<&str>) -> impl View {
+    let name = *cx.props;
+    let counter = cx.use_local::<i32>(|| 0);
+    Element::new()
+        .children((
+            format!("The count is: {}: {}", name, counter.get()),
+        ))
+        .once(move |entity, world| {
+            // Increment the counter when we click
+            let mut e = world.entity_mut(entity);
+            let mut counter = counter.clone();
+            e.insert(On::<Pointer<Click>>::run(
+                move |_ev: Res<ListenerInput<Pointer<Click>>>| {
+                    counter.set(counter.get() + 1);
+                },
+            ));
+        })
+}
+```
 
 ## Architecture and Rendering Lifecycle
 
