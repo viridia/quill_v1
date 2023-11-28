@@ -71,22 +71,12 @@ fn render_views(world: &mut World) {
 
     // phase 2
     for e in v {
-        let Some(mut view_handle) = world.get_mut::<ViewHandle>(e) else {
+        let Some(view_handle) = world.get_mut::<ViewHandle>(e) else {
             continue;
         };
-        let mut inner = view_handle
-            .inner
-            .take()
-            .expect("ViewHandle::inner should be present at this point");
-
+        let inner = view_handle.inner.clone();
         let mut ec = ViewContext::new(world, e);
-        inner.build(&mut ec, e);
-
-        // Now that we are done with the handle we can put it back in the world
-        let Some(mut view_handle) = world.get_mut::<ViewHandle>(e) else {
-            continue;
-        };
-        view_handle.inner = Some(inner);
+        inner.lock().unwrap().build(&mut ec, e);
     }
 
     // phase 3
@@ -101,19 +91,12 @@ fn render_views(world: &mut World) {
             // println!("PresenterGraphChanged {:?}", e);
             let mut ent = world.entity_mut(e);
             ent.remove::<PresenterGraphChanged>();
-            let Some(mut view_handle) = world.get_mut::<ViewHandle>(e) else {
+            let Some(view_handle) = world.get_mut::<ViewHandle>(e) else {
                 continue;
             };
-            let mut inner = view_handle
-                .inner
-                .take()
-                .expect("ViewState::handle should be present at this point");
+            let inner = view_handle.inner.clone();
             let mut vc = ViewContext::new(world, e);
-            inner.attach(&mut vc, e);
-            let Some(mut view_handle) = world.get_mut::<ViewHandle>(e) else {
-                continue;
-            };
-            view_handle.inner = Some(inner);
+            inner.lock().unwrap().attach(&mut vc, e);
         }
     }
 }

@@ -5,7 +5,7 @@ use crate::{View, ViewContext};
 use crate::node_span::NodeSpan;
 
 /// An implementtion of View that allows a callback to modify the generated elements.
-pub struct ViewWith<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + Sync> {
+pub struct ViewWith<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send> {
     /// Inner view that we're going to modify
     pub(crate) inner: V,
 
@@ -17,7 +17,7 @@ pub struct ViewWith<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + 
     pub(crate) once: bool,
 }
 
-impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + Sync> ViewWith<V, F> {
+impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send> ViewWith<V, F> {
     fn with_entity(callback: &F, nodes: &NodeSpan, vc: &mut World) {
         match nodes {
             NodeSpan::Empty => (),
@@ -32,7 +32,7 @@ impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + Sync> ViewWith<
     }
 }
 
-impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send + Sync> View for ViewWith<V, F> {
+impl<V: View, F: Fn(Entity, &mut World) -> () + 'static + Send> View for ViewWith<V, F> {
     type State = V::State;
 
     fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {

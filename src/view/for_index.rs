@@ -18,19 +18,15 @@ impl<V: View + 'static> IndexedListItem<V> {
 }
 
 #[doc(hidden)]
-pub struct ForIndex<
-    Item: Sync + Send + Clone,
-    V: View + 'static,
-    F: Fn(&Item, usize) -> V + Sync + Send,
-> where
+pub struct ForIndex<Item: Send + Clone, V: View + 'static, F: Fn(&Item, usize) -> V + Send>
+where
     V::State: Clone,
 {
     items: Vec<Item>,
     each: F,
 }
 
-impl<Item: Sync + Send + Clone, V: View + 'static, F: Fn(&Item, usize) -> V + Sync + Send>
-    ForIndex<Item, V, F>
+impl<Item: Send + Clone, V: View + 'static, F: Fn(&Item, usize) -> V + Send> ForIndex<Item, V, F>
 where
     V::State: Clone,
 {
@@ -42,7 +38,7 @@ where
     }
 }
 
-impl<Item: Sync + Send + Clone, V: View + 'static, F: Fn(&Item, usize) -> V + Sync + Send> View
+impl<Item: Send + Clone, V: View + 'static, F: Fn(&Item, usize) -> V + Send> View
     for ForIndex<Item, V, F>
 where
     V::State: Clone,

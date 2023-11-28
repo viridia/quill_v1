@@ -64,7 +64,7 @@ impl PartialEq for StyleHandle {
 
 /// Trait that adds syntactic sugar for making lists of references to style handles.
 #[doc(hidden)]
-pub trait StyleRef: Send + Sync {
+pub trait StyleRef: Send {
     fn as_handle(self) -> StyleHandle;
 }
 

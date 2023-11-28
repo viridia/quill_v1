@@ -4,13 +4,13 @@ use crate::{view::lcs::lcs, View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
-pub struct KeyedListItem<Key: Sync + Send + PartialEq, V: View + 'static> {
+pub struct KeyedListItem<Key: Send + PartialEq, V: View + 'static> {
     view: Option<V>,
     state: Option<V::State>,
     key: Key,
 }
 
-impl<Key: Sync + Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
+impl<Key: Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
     fn nodes(&self, vc: &ViewContext) -> NodeSpan {
         self.view
             .as_ref()
@@ -28,11 +28,11 @@ impl<Key: Sync + Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
 
 #[doc(hidden)]
 pub struct ForKeyed<
-    Item: Sync + Send + Clone,
-    Key: Sync + Send + PartialEq,
+    Item: Send + Clone,
+    Key: Send + PartialEq,
     V: View + 'static,
-    K: Fn(&Item) -> Key + Sync + Send,
-    F: Fn(&Item) -> V + Sync + Send,
+    K: Fn(&Item) -> Key + Send,
+    F: Fn(&Item) -> V + Send,
 > where
     V::State: Clone,
 {
@@ -43,11 +43,11 @@ pub struct ForKeyed<
 }
 
 impl<
-        Item: Sync + Send + Clone,
-        Key: Sync + Send + PartialEq,
+        Item: Send + Clone,
+        Key: Send + PartialEq,
         V: View + 'static,
-        K: Fn(&Item) -> Key + Sync + Send,
-        F: Fn(&Item) -> V + Sync + Send,
+        K: Fn(&Item) -> Key + Send,
+        F: Fn(&Item) -> V + Send,
     > ForKeyed<Item, Key, V, K, F>
 where
     V::State: Clone,
@@ -155,11 +155,11 @@ where
 }
 
 impl<
-        Item: Sync + Send + Clone,
-        Key: Sync + Send + PartialEq,
+        Item: Send + Clone,
+        Key: Send + PartialEq,
         V: View + 'static,
-        K: Fn(&Item) -> Key + Sync + Send,
-        F: Fn(&Item) -> V + Sync + Send,
+        K: Fn(&Item) -> Key + Send,
+        F: Fn(&Item) -> V + Send,
     > View for ForKeyed<Item, Key, V, K, F>
 where
     V::State: Clone,

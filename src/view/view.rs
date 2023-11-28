@@ -59,12 +59,12 @@ impl<'w> ViewContext<'w> {
 }
 
 /// An object which generates one or more display nodes. Output of a presenter function
-pub trait View: Send + Sync
+pub trait View: Send
 where
     Self: Sized,
 {
     /// The external state for this View.
-    type State: Send + Sync;
+    type State: Send;
 
     /// Return the span of UiNodes produced by this View.
     fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan;
@@ -103,7 +103,7 @@ where
 
     /// Sets up a callback which is called for each output UiNode. Typically used to manipulate
     /// components on the entity. This is called each time the view is rebuilt.
-    fn with<F: Fn(Entity, &mut World) -> () + Send + Sync>(self, callback: F) -> ViewWith<Self, F> {
+    fn with<F: Fn(Entity, &mut World) -> () + Send>(self, callback: F) -> ViewWith<Self, F> {
         ViewWith {
             inner: self,
             callback,
@@ -113,7 +113,7 @@ where
 
     /// Sets up a callback which is called for each output UiNode, but only when the node is first
     /// created.
-    fn once<F: Fn(Entity, &mut World) -> () + Send + Sync>(self, callback: F) -> ViewWith<Self, F> {
+    fn once<F: Fn(Entity, &mut World) -> () + Send>(self, callback: F) -> ViewWith<Self, F> {
         ViewWith {
             inner: self,
             callback,
@@ -256,7 +256,7 @@ impl View for &'static str {
 }
 
 /// View which renders a bare presenter with no arguments
-impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View for F {
+impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Copy + 'static> View for F {
     // State holds the PresenterState entity.
     type State = Entity;
 
@@ -266,11 +266,7 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
         let Some(ref handle) = entt.get::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
-        let inner = handle
-            .inner
-            .as_ref()
-            .expect("ViewState::handle should be present at this point");
-        inner.nodes()
+        handle.inner.lock().unwrap().nodes()
     }
 
     fn build(&self, parent_ecx: &mut ViewContext) -> Self::State {
@@ -291,15 +287,12 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
 
     fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
         let mut entt = vc.entity_mut(*state);
-        let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
+        let Some(handle) = entt.get_mut::<ViewHandle>() else {
             return;
         };
-        let mut inner = handle
-            .inner
-            .take()
-            .expect("ViewState::handle should be present at this point");
+        let inner = handle.inner.clone();
         // Raze the contents of the child ViewState.
-        inner.raze(vc, *state);
+        inner.lock().unwrap().raze(vc, *state);
         // Despawn the ViewHandle.
         vc.entity_mut(*state).remove_parent();
         vc.entity_mut(*state).despawn();
@@ -308,21 +301,12 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Sync + Copy + 'static> View 
 
 /// Binds a presenter to properties and implements a view
 #[doc(hidden)]
-pub struct Bind<
-    V: View,
-    Props: Send + Sync + Clone,
-    F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
-> {
+pub struct Bind<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy + 'static> {
     presenter: F,
     props: Props,
 }
 
-impl<
-        V: View,
-        Props: Send + Sync + Clone,
-        F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
-    > Bind<V, Props, F>
-{
+impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy + 'static> Bind<V, Props, F> {
     pub fn new(presenter: F, props: Props) -> Self {
         Self { presenter, props }
     }
@@ -330,8 +314,8 @@ impl<
 
 impl<
         V: View + 'static,
-        Props: Send + Sync + Clone + PartialEq + 'static,
-        F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
+        Props: Send + Clone + PartialEq + 'static,
+        F: FnMut(Cx<Props>) -> V + Send + Copy + 'static,
     > View for Bind<V, Props, F>
 {
     // State holds the PresenterState entity.
@@ -343,11 +327,7 @@ impl<
         let Some(ref handle) = entt.get::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
-        let inner = handle
-            .inner
-            .as_ref()
-            .expect("ViewState::handle should be present at this point");
-        inner.nodes()
+        handle.inner.lock().unwrap().nodes()
     }
 
     fn build(&self, parent_ecx: &mut ViewContext) -> Self::State {
@@ -375,15 +355,12 @@ impl<
 
     fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
         let mut entt = vc.entity_mut(*state);
-        let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
+        let Some(handle) = entt.get_mut::<ViewHandle>() else {
             return;
         };
-        let mut inner = handle
-            .inner
-            .take()
-            .expect("ViewState::handle should be present at this point");
+        let inner = handle.inner.clone();
         // Raze the contents of the child ViewState.
-        inner.raze(vc, *state);
+        inner.lock().unwrap().raze(vc, *state);
         // Despawn the ViewHandle.
         vc.entity_mut(*state).remove_parent();
         vc.entity_mut(*state).despawn();
@@ -391,23 +368,15 @@ impl<
 }
 
 /// A trait that allows methods to be added to presenter function references.
-pub trait PresenterFn<
-    V: View,
-    Props: Send + Sync + Clone,
-    F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
->
-{
+pub trait PresenterFn<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy + 'static> {
     /// Used to invoke a presenter from within a presenter. This binds a set of properties
     /// to the child presenter, and constructs a new `ViewHandle`/`PresenterState`. The
     /// resulting is a `View` which references this handle.
     fn bind(self, props: Props) -> Bind<V, Props, F>;
 }
 
-impl<
-        V: View,
-        Props: Send + Sync + Clone,
-        F: FnMut(Cx<Props>) -> V + Send + Sync + Copy + 'static,
-    > PresenterFn<V, Props, F> for F
+impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy + 'static>
+    PresenterFn<V, Props, F> for F
 {
     fn bind(self, props: Props) -> Bind<V, Props, Self> {
         Bind::new(self, props)

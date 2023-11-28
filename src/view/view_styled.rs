@@ -125,7 +125,7 @@ impl<V: View> View for ViewStyled<V> {
 // StyleTuple - a variable-length tuple of styles.
 
 // TODO: Turn this into a macro once it's stable.
-pub trait StyleTuple: Send + Sync {
+pub trait StyleTuple: Send {
     fn to_vec(self) -> Vec<StyleHandle>;
 }
 

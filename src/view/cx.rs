@@ -41,7 +41,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
 
     /// Return a local state variable. Calling this function also adds the state variable as
     /// a dependency of the current presenter invocation.
-    pub fn use_local<T: Send + Sync + Clone>(&mut self, init: impl FnOnce() -> T) -> LocalData<T> {
+    pub fn use_local<T: Send + Clone>(&mut self, init: impl FnOnce() -> T) -> LocalData<T> {
         let index = self.local_index.get();
         self.local_index.set(index + 1);
         if let Some(mut tracked) = self.vc.world.get_mut::<TrackedLocals>(self.vc.entity) {
