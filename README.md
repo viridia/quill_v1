@@ -166,6 +166,45 @@ fn local_test(mut cx: Cx<&str>) -> impl View {
 }
 ```
 
+### Styling
+
+Here's an example of a widget which changes its border color when hovered:
+
+```rust
+use bevy::{prelude::*, ui};
+use bevy_quill::prelude::*;
+use static_init::dynamic;
+
+#[dynamic]
+static STYLE_HOVERABLE: StyleHandle = StyleHandle::build(|ss| {
+    ss.border_color("#383838")
+        .border(1)
+        .selector(":hover", |ss| {
+            ss.border_color("#444")
+        })
+});
+
+pub fn hoverable(cx: Cx) -> impl View {
+    Element::new()
+        .styled(STYLE_HOVERABLE.clone())
+        .children(cx.props.children.clone())
+}
+```
+
+An element can have multiple styles. Styles are applied in order, first-come, first-serve - there is no CSS "cascade".
+
+Conditional styles can be added via selectors. It supports a limited subset of CSS syntax (basically the parts of CSS that don't require backtracking):
+
+* `:hover`
+* `.classname`
+* `>` (parent combinator, e.g. `:hover > &`
+* `&` (current element)
+* ',' (logical-or)
+
+Note that selectors only support styling the *current* node - that is, the node that the style handle is attached to. Selectors can't affect child nodes - they need to have their own styles.
+
+So for example, `".bg:hover > &"` is a valid selector expression, but `"&:hover > .bg"` is not valid. The `&` must always be on the last term. The reason for this is performance - Quill only supports those features of CSS that are lightning-fast.
+
 ## Architecture and Rendering Lifecycle
 
 A Quill UI is made up of individual elements called `Views`. If you are familiar with web frameworks
