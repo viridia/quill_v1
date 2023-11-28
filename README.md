@@ -61,7 +61,7 @@ fn counter(mut cx: Cx<u8>) -> impl View {
     let counter = cx.use_resource::<Counter>();
     Element::new().children((
         "The count is: ",
-        If::new(counter.count & 1 == 0, " [even]", " [odd]"),
+        If::new(counter.count & 1 == 0, "even", "odd"),
     ))
 }
 ```
