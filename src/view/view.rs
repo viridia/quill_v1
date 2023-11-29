@@ -201,7 +201,7 @@ impl View for String {
 }
 
 /// View which renders a string slice.
-impl View for &'static str {
+impl View for &str {
     type State = Entity;
 
     fn nodes(&self, _vc: &ViewContext, state: &Self::State) -> NodeSpan {
@@ -301,12 +301,12 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Copy + 'static> View for F {
 
 /// Binds a presenter to properties and implements a view
 #[doc(hidden)]
-pub struct Bind<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy + 'static> {
+pub struct Bind<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> {
     presenter: F,
     props: Props,
 }
 
-impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy + 'static> Bind<V, Props, F> {
+impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> Bind<V, Props, F> {
     pub fn new(presenter: F, props: Props) -> Self {
         Self { presenter, props }
     }
@@ -368,16 +368,14 @@ impl<
 }
 
 /// A trait that allows methods to be added to presenter function references.
-pub trait PresenterFn<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy + 'static> {
+pub trait PresenterFn<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> {
     /// Used to invoke a presenter from within a presenter. This binds a set of properties
     /// to the child presenter, and constructs a new `ViewHandle`/`PresenterState`. The
     /// resulting is a `View` which references this handle.
     fn bind(self, props: Props) -> Bind<V, Props, F>;
 }
 
-impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy + 'static>
-    PresenterFn<V, Props, F> for F
-{
+impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> PresenterFn<V, Props, F> for F {
     fn bind(self, props: Props) -> Bind<V, Props, Self> {
         Bind::new(self, props)
     }

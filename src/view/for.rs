@@ -11,7 +11,7 @@ impl For {
     /// array element; its arguments are the item and the array index, and its result is a View.
     /// During rebuild, the elements are overwritten based on their current array index, so the
     /// order of child views never changes.
-    pub fn index<Item: Send + Clone, V: View + 'static, F: Fn(&Item, usize) -> V + Send>(
+    pub fn index<Item: Send + Clone, V: View, F: Fn(&Item, usize) -> V + Send>(
         items: &[Item],
         each: F,
     ) -> impl View
@@ -28,7 +28,7 @@ impl For {
     pub fn keyed<
         Item: Send + Clone,
         Key: Send + PartialEq,
-        V: View + 'static,
+        V: View,
         K: Fn(&Item) -> Key + Send,
         F: Fn(&Item) -> V + Send,
     >(
@@ -46,7 +46,7 @@ impl For {
     /// array element; its argument is the item, which must be equals-comparable, and it's result
     /// is a View. During rebuild, the list of child views may be re-ordered based on a comparison
     /// of the items from the previous build.
-    pub fn each<Item: Send + Clone + PartialEq, V: View + 'static, F: Fn(&Item) -> V + Send>(
+    pub fn each<Item: Send + Clone + PartialEq, V: View, F: Fn(&Item) -> V + Send>(
         items: &[Item],
         each: F,
     ) -> impl View

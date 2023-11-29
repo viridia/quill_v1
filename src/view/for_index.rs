@@ -2,12 +2,12 @@ use crate::{View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
-pub struct IndexedListItem<V: View + 'static> {
+pub struct IndexedListItem<V: View> {
     view: Option<V>,
     state: V::State,
 }
 
-impl<V: View + 'static> IndexedListItem<V> {
+impl<V: View> IndexedListItem<V> {
     fn nodes(&self, vc: &ViewContext) -> NodeSpan {
         self.view.as_ref().unwrap().nodes(vc, &self.state)
     }
@@ -18,7 +18,7 @@ impl<V: View + 'static> IndexedListItem<V> {
 }
 
 #[doc(hidden)]
-pub struct ForIndex<Item: Send + Clone, V: View + 'static, F: Fn(&Item, usize) -> V + Send>
+pub struct ForIndex<Item: Send + Clone, V: View, F: Fn(&Item, usize) -> V + Send>
 where
     V::State: Clone,
 {
@@ -26,7 +26,7 @@ where
     each: F,
 }
 
-impl<Item: Send + Clone, V: View + 'static, F: Fn(&Item, usize) -> V + Send> ForIndex<Item, V, F>
+impl<Item: Send + Clone, V: View, F: Fn(&Item, usize) -> V + Send> ForIndex<Item, V, F>
 where
     V::State: Clone,
 {
@@ -38,8 +38,7 @@ where
     }
 }
 
-impl<Item: Send + Clone, V: View + 'static, F: Fn(&Item, usize) -> V + Send> View
-    for ForIndex<Item, V, F>
+impl<Item: Send + Clone, V: View, F: Fn(&Item, usize) -> V + Send> View for ForIndex<Item, V, F>
 where
     V::State: Clone,
 {

@@ -4,13 +4,13 @@ use crate::{view::lcs::lcs, View, ViewContext};
 
 use crate::node_span::NodeSpan;
 
-pub struct KeyedListItem<Key: Send + PartialEq, V: View + 'static> {
+pub struct KeyedListItem<Key: Send + PartialEq, V: View> {
     view: Option<V>,
     state: Option<V::State>,
     key: Key,
 }
 
-impl<Key: Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
+impl<Key: Send + PartialEq, V: View> KeyedListItem<Key, V> {
     fn nodes(&self, vc: &ViewContext) -> NodeSpan {
         self.view
             .as_ref()
@@ -30,7 +30,7 @@ impl<Key: Send + PartialEq, V: View + 'static> KeyedListItem<Key, V> {
 pub struct ForKeyed<
     Item: Send + Clone,
     Key: Send + PartialEq,
-    V: View + 'static,
+    V: View,
     K: Fn(&Item) -> Key + Send,
     F: Fn(&Item) -> V + Send,
 > where
@@ -45,7 +45,7 @@ pub struct ForKeyed<
 impl<
         Item: Send + Clone,
         Key: Send + PartialEq,
-        V: View + 'static,
+        V: View,
         K: Fn(&Item) -> Key + Send,
         F: Fn(&Item) -> V + Send,
     > ForKeyed<Item, Key, V, K, F>
@@ -157,7 +157,7 @@ where
 impl<
         Item: Send + Clone,
         Key: Send + PartialEq,
-        V: View + 'static,
+        V: View,
         K: Fn(&Item) -> Key + Send,
         F: Fn(&Item) -> V + Send,
     > View for ForKeyed<Item, Key, V, K, F>

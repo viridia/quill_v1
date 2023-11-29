@@ -13,13 +13,13 @@ use bevy::ecs::component::Component;
 #[doc(hidden)]
 pub struct LocalData<T: Send + 'static> {
     changed: Arc<AtomicBool>,
-    data: Arc<Mutex<dyn Any + Send + 'static>>,
+    data: Arc<Mutex<dyn Any + Send>>,
     marker: PhantomData<T>,
 }
 
 // TODO: I'd like to do Borrow, Deref, DerefMut etc., but this seems impossible given the mutex.
 
-impl<T: Send + Clone + PartialEq + 'static> LocalData<T> {
+impl<T: Send + Clone + PartialEq> LocalData<T> {
     /// Get the value of the Local
     pub fn get(&self) -> T {
         let lock = self.data.lock().unwrap();
