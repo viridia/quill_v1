@@ -12,8 +12,8 @@ static STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| {
         .justify_content(JustifyContent::Center)
         .align_items(AlignItems::Center)
         .min_height(32)
-        .padding_left(8)
-        .padding_right(8)
+        .padding_left(12)
+        .padding_right(12)
         .transition(&vec![Transition {
             property: TransitionProperty::Transform,
             duration: 0.3,

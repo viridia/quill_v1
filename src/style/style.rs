@@ -744,6 +744,12 @@ impl UiRectParam for i32 {
     }
 }
 
+impl<H: LengthParam, V: LengthParam> UiRectParam for (H, V) {
+    fn as_uirect(self) -> ui::UiRect {
+        ui::UiRect::axes(self.0.as_val(), self.1.as_val())
+    }
+}
+
 pub struct StyleSetBuilder {
     props: Vec<StyleProp>,
     selectors: SelectorList,

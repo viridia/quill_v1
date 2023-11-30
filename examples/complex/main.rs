@@ -1,5 +1,6 @@
 //! Complex example with multiple views
 mod button;
+mod dialog;
 mod slider;
 mod splitter;
 mod swatch;
@@ -13,6 +14,7 @@ use bevy_mod_picking::{
 };
 use bevy_quill::prelude::*;
 use button::{button, ButtonProps, Clicked};
+use dialog::{dialog, enter_exit_state_machine, DemoDialogOpen, DemoDialogTransitionTimer};
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use static_init::dynamic;
@@ -24,6 +26,8 @@ fn main() {
         .init_resource::<ViewportInset>()
         .init_resource::<PanelWidth>()
         .init_resource::<ClickLog>()
+        .init_resource::<DemoDialogOpen>()
+        .init_resource::<DemoDialogTransitionTimer>()
         .insert_resource(EditColor {
             color: Color::Rgba {
                 red: 1.0,
@@ -52,6 +56,7 @@ fn main() {
                 test_scene::rotate,
                 test_scene::update_viewport_inset,
                 test_scene::update_camera_viewport,
+                enter_exit_state_machine,
             ),
         )
         .run();
@@ -207,7 +212,12 @@ fn ui_main(mut cx: Cx) -> impl View {
                 .once(|entity, world| {
                     let mut e = world.entity_mut(entity);
                     e.insert(On::<Clicked>::run(
-                        |ev: Res<ListenerInput<Clicked>>, mut log: ResMut<ClickLog>| {
+                        |ev: Res<ListenerInput<Clicked>>,
+                         mut log: ResMut<ClickLog>,
+                         mut dlog: ResMut<DemoDialogOpen>| {
+                            if ev.id == "save" {
+                                dlog.open = true
+                            }
                             log.0
                                 .push(format!("Button Clicked: id='{}'", ev.id).to_string());
                         },
@@ -239,6 +249,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                 .styled(STYLE_VIEWPORT.clone())
                 .insert(ViewportInsetElement {})
                 .children(event_log),
+            dialog,
         ))
 }
 

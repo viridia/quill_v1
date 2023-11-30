@@ -35,9 +35,9 @@ impl<V: View, A: ViewTuple> View for ViewChildren<V, A> {
 
     fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
         let nodes = self.inner.assemble(vc, &mut state.0);
+        let children = self.items.assemble_spans(vc, &mut state.1);
         if let NodeSpan::Node(parent) = nodes {
             // Attach child view outputs to parent.
-            let children = self.items.assemble_spans(vc, &mut state.1);
             let mut flat: Vec<Entity> = Vec::with_capacity(children.count());
             children.flatten(&mut flat);
 
@@ -51,7 +51,7 @@ impl<V: View, A: ViewTuple> View for ViewChildren<V, A> {
                 // No children, unconditional replace
                 em.replace_children(&flat);
             }
-        } else {
+        } else if nodes != NodeSpan::Empty {
             panic!("Children can only be parented to a single node");
         }
         nodes

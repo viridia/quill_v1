@@ -321,7 +321,7 @@ impl Command for UpdateComputedStyle {
                                 transition: transition.clone(),
                                 clock: 0.,
                             },
-                            origin: prev_transform,
+                            origin: transform,
                             target: transform,
                         });
                     }

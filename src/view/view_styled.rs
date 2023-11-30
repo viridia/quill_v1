@@ -1,5 +1,5 @@
 use crate::node_span::NodeSpan;
-use crate::{StyleHandle, StyleRef, View, ViewContext};
+use crate::{ElementClasses, StyleHandle, StyleRef, View, ViewContext};
 use bevy::prelude::*;
 use bevy::utils::HashSet;
 use impl_trait_for_tuples::*;
@@ -16,22 +16,6 @@ pub struct ElementStyles {
     // Whether any selectors use the :hover pseudo-class
     pub(crate) uses_hover: bool,
     // TODO: Inherited
-}
-
-/// List of style objects which are attached to a given UiNode.
-#[derive(Component, Default)]
-pub struct ElementClasses(pub HashSet<String>);
-
-impl ElementClasses {
-    /// Add a classname to this element.
-    pub fn add_class(&mut self, cls: &str) {
-        self.0.insert(cls.to_string());
-    }
-
-    /// Remove a classname from this element.
-    pub fn remove_class(&mut self, cls: &str) {
-        self.0.remove(cls);
-    }
 }
 
 // A wrapper view which applies styles to the output of an inner view.
@@ -68,17 +52,19 @@ impl<V: View> ViewStyled<V> {
                         sc.uses_hover = uses_hover;
                     }
                     None => {
-                        em.insert((
-                            ElementStyles {
-                                styles: self.styles.clone(),
-                                selector_depth,
-                                uses_hover,
-                            },
-                            ElementClasses(HashSet::new()),
-                        ));
+                        em.insert((ElementStyles {
+                            styles: self.styles.clone(),
+                            selector_depth,
+                            uses_hover,
+                        },));
                     }
                 }
+
+                if em.get_mut::<ElementClasses>().is_none() {
+                    em.insert((ElementClasses(HashSet::new()),));
+                }
             }
+
             NodeSpan::Fragment(ref nodes) => {
                 for node in nodes.iter() {
                     // Recurse
@@ -124,7 +110,6 @@ impl<V: View> View for ViewStyled<V> {
 
 // StyleTuple - a variable-length tuple of styles.
 
-// TODO: Turn this into a macro once it's stable.
 pub trait StyleTuple: Send {
     fn to_vec(self) -> Vec<StyleHandle>;
 }
