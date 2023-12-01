@@ -48,8 +48,7 @@ pub fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;
     Element::new()
-        .once(move |entity, world| {
-            let mut e = world.entity_mut(entity);
+        .once(move |mut e| {
             e.insert((
                 On::<Pointer<Click>>::run(
                     move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {

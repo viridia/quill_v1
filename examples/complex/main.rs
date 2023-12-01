@@ -197,13 +197,13 @@ fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
     Element::new()
         .styled(STYLE_MAIN.clone())
-        .once(move |entity, world| {
-            let mut e = world.entity_mut(entity);
+        .once(move |mut e| {
+            let id = e.id();
             e.insert((On::<SplitterDragged>::run(
                 move |ev: Listener<SplitterDragged>,
                       mut width: ResMut<PanelWidth>,
                       query: Query<(&Node, &GlobalTransform)>| {
-                    match query.get(entity) {
+                    match query.get(id) {
                         Ok((node, transform)) => {
                             // Measure node width and clamp split position.
                             let node_width = node.logical_rect(transform).width();
@@ -220,8 +220,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                     STYLE_ASIDE.clone(),
                     StyleHandle::build(|b| b.width(width.value.floor())),
                 ))
-                .once(move |entity, world| {
-                    let mut e = world.entity_mut(entity);
+                .once(move |mut e| {
                     let mut open_2 = open_1.clone();
                     e.insert(On::<Clicked>::run(
                         move |ev: Listener<Clicked>, mut log: ResMut<ClickLog>| {
@@ -270,8 +269,7 @@ fn color_edit(mut cx: Cx) -> impl View {
     let edit_color = cx.use_resource::<EditColor>();
     Element::new()
         .styled(COLOR_EDIT.clone())
-        .once(|entity, world| {
-            let mut e = world.entity_mut(entity);
+        .once(|mut e| {
             e.insert((On::<OnChange<f32>>::run(
                 move |ev: Listener<OnChange<f32>>, mut color: ResMut<EditColor>| match ev.id {
                     "r" => {

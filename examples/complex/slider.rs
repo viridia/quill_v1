@@ -132,8 +132,8 @@ pub fn h_slider(mut cx: Cx<SliderProps>) -> impl View {
     .clamp(0., 1.);
     Element::new()
         .styled(STYLE_SLIDER.clone())
-        .with(move |entity, world| {
-            let mut e = world.entity_mut(entity);
+        .with(move |mut e| {
+            let eid = e.id();
             let mut drag_offset_1 = drag_offset.clone();
             let drag_offset_2 = drag_offset.clone();
             // Horrible: we need to clone the state reference 3 times because 3 handlers.
@@ -163,7 +163,7 @@ pub fn h_slider(mut cx: Cx<SliderProps>) -> impl View {
                           query: Query<(&Node, &GlobalTransform)>,
                           mut writer: EventWriter<OnChange<f32>>| {
                         if is_dragging_3.get() {
-                            match query.get(entity) {
+                            match query.get(eid) {
                                 Ok((node, transform)) => {
                                     // Measure node width and slider value.
                                     let slider_width =

@@ -122,12 +122,14 @@ pub fn dialog(mut cx: Cx<DemoDialogProps>) -> impl View {
                                 "Beta Tester",
                                 "Gamma Ray",
                                 "Delta Sleep",
+                                "Epsilon Eridani",
+                                "Zeta Function",
+                                "Eta Conversion",
                             )),
                         ),
                         Element::new()
                             .styled(STYLE_DIALOG_FOOTER.clone())
-                            .once(move |entity, world| {
-                                let mut e = world.entity_mut(entity);
+                            .once(move |mut e| {
                                 let target = target;
                                 e.insert(On::<Clicked>::run(move |_ev: Listener<Clicked>,
                                     mut writer: EventWriter<RequestClose>| {

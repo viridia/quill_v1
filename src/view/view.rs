@@ -122,7 +122,7 @@ where
 
     /// Sets up a callback which is called for each output UiNode. Typically used to manipulate
     /// components on the entity. This is called each time the view is rebuilt.
-    fn with<F: Fn(Entity, &mut World) -> () + Send>(self, callback: F) -> ViewWith<Self, F> {
+    fn with<F: Fn(EntityWorldMut) -> () + Send>(self, callback: F) -> ViewWith<Self, F> {
         ViewWith {
             inner: self,
             callback,
@@ -132,7 +132,7 @@ where
 
     /// Sets up a callback which is called for each output UiNode, but only when the node is first
     /// created.
-    fn once<F: Fn(Entity, &mut World) -> () + Send>(self, callback: F) -> ViewWith<Self, F> {
+    fn once<F: Fn(EntityWorldMut) -> () + Send>(self, callback: F) -> ViewWith<Self, F> {
         ViewWith {
             inner: self,
             callback,

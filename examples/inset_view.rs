@@ -168,8 +168,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                     children: "Quit",
                 }),
             ))
-            .once(|entity, world| {
-                let mut e = world.entity_mut(entity);
+            .once(|mut e| {
                 e.insert((On::<Clicked>::run(|ev: Listener<Clicked>| {
                     println!("Clicked {}", ev.id);
                 }),));
@@ -184,8 +183,7 @@ fn ui_main(mut cx: Cx) -> impl View {
 fn v_splitter(_cx: Cx) -> impl View {
     Element::new()
         .children(Element::new().styled(STYLE_VSPLITTER_INNER.clone()))
-        .once(|entity, world| {
-            let mut e = world.entity_mut(entity);
+        .once(|mut e| {
             e.insert((
                 On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
                     classes.add_class(CLS_DRAG)
@@ -227,8 +225,7 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
     let id = cx.props.id;
     Element::new()
         .children(cx.props.children.clone())
-        .once(move |entity, world| {
-            let mut e = world.entity_mut(entity);
+        .once(move |mut e| {
             e.insert((
                 On::<Pointer<Click>>::run(
                     move |events: Listener<Pointer<Click>>, mut ev: EventWriter<Clicked>| {

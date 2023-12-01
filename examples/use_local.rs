@@ -38,8 +38,7 @@ fn nested(mut cx: Cx<&str>) -> impl View {
             format!("{}: {}", name, counter.get()),
             If::new(counter.get() & 1 == 0, even, odd),
         ))
-        .once(move |entity, world| {
-            let mut e = world.entity_mut(entity);
+        .once(move |mut e| {
             let mut counter = counter.clone();
             e.insert(On::<Pointer<Click>>::run(
                 move |_ev: Listener<Pointer<Click>>| {

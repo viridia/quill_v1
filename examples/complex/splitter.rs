@@ -65,8 +65,7 @@ pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
     let id = cx.props.id;
     let current_offset = cx.props.value;
     Element::new()
-        .with(move |entity, world| {
-            let mut e = world.entity_mut(entity);
+        .with(move |mut e| {
             let mut drag_offset_1 = drag_offset.clone();
             let drag_offset_2 = drag_offset.clone();
 
