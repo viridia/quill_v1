@@ -39,6 +39,24 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         self.vc.world.resource_mut::<T>()
     }
 
+    /// Return a reference to the Component `C` on the given entity.
+    pub fn use_component<C: Component>(&mut self, entity: Entity) -> Option<&C> {
+        self.vc.add_tracked_component::<C>(entity);
+        self.vc.world.entity(entity).get::<C>()
+    }
+
+    /// Return a reference to the Component `C` on the entity that contains the current
+    /// presenter invocation.
+    pub fn use_view_component<C: Component>(&mut self) -> Option<&C> {
+        self.vc.add_tracked_component::<C>(self.vc.entity);
+        self.vc.world.entity(self.vc.entity).get::<C>()
+    }
+
+    /// Return a reference to the entity that holds the current presenter invocation.
+    pub fn use_view_entity_mut(&mut self) -> EntityWorldMut<'_> {
+        self.vc.world.entity_mut(self.vc.entity)
+    }
+
     /// Return a local state variable. Calling this function also adds the state variable as
     /// a dependency of the current presenter invocation.
     pub fn use_local<T: Send + Clone>(&mut self, init: impl FnOnce() -> T) -> LocalData<T> {

@@ -205,6 +205,15 @@ Note that selectors only support styling the *current* node - that is, the node 
 
 So for example, `".bg:hover > &"` is a valid selector expression, but `"&:hover > .bg"` is not valid. The `&` must always be on the last term. The reason for this is performance - Quill only supports those features of CSS that are lightning-fast.
 
+### Adding new hooks
+
+In the example source file [./examples/complex/enter_exit.rs](./examples/complex/enter_exit.rs)
+you'll find an example of how to add a custom hook method to the presenter context `Cx`.
+
+The example implements (among other things) a `cx.use_enter_exit()` method, which creates
+a state machine that is helpful for implementing animated open/close transitions. These kinds
+of transitions are often seen in modal dialogs, popup menus, and so on.
+
 ## Architecture and Rendering Lifecycle
 
 A Quill UI is made up of individual elements called `Views`. If you are familiar with web frameworks

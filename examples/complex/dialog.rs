@@ -1,9 +1,13 @@
+use super::enter_exit::EnterExitApi;
 use bevy::{prelude::*, ui};
-use bevy_mod_picking::prelude::{ListenerInput, On};
+use bevy_mod_picking::prelude::{EntityEvent, ListenerInput, On};
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
-use crate::button::{button, ButtonProps, Clicked};
+use crate::{
+    button::{button, ButtonProps, Clicked},
+    enter_exit::EnterExitState,
+};
 
 // Dialog background overlay
 #[dynamic]
@@ -45,7 +49,7 @@ static STYLE_DIALOG: StyleHandle = StyleHandle::build(|ss| {
 static STYLE_DIALOG_HEADER: StyleHandle = StyleHandle::build(|ss| {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
-        .justify_content(ui::JustifyContent::FlexStart)
+        .justify_content(ui::JustifyContent::SpaceBetween)
         .border_color("#0008")
         .border_bottom(1)
         .padding((12, 6))
@@ -84,92 +88,54 @@ static STYLE_LIST: StyleHandle = StyleHandle::build(|ss| {
         .padding(6)
 });
 
-/// Tracks an enter / exit transition.
-#[derive(Default)]
-pub enum EnterExitState {
-    /// One-frame delay at start of entering.
-    EnterStart,
-
-    /// Opening animation.
-    Entering,
-
-    /// Fully open
-    Entered,
-
-    /// One frame delay at start of exiting
-    ExitStart,
-
-    // Closing animation
-    Exiting,
-
-    /// Fully closed
-    #[default]
-    Exited,
-}
-
-#[derive(Resource, Default)]
-pub struct DemoDialogOpen {
+#[derive(PartialEq, Clone)]
+pub struct DemoDialogProps {
     pub open: bool,
-    pub state: EnterExitState,
+    pub target: Entity,
 }
 
-#[derive(Resource, Default)]
-pub struct DemoDialogTransitionTimer {
-    pub timer: f32,
+#[derive(Clone, Event, EntityEvent)]
+pub struct RequestClose {
+    #[target]
+    pub target: Entity,
+    pub id: &'static str,
 }
 
-impl DemoDialogOpen {
-    pub fn is_shown(&self) -> bool {
-        // Shown when any state except 'exited' so we can do opening/closing animation.
-        match self.state {
-            EnterExitState::Exited => false,
-            _ => true,
-        }
-    }
-
-    pub fn class_name(&self) -> &str {
-        match self.state {
-            EnterExitState::EnterStart => "enter-start",
-            EnterExitState::Entering => "entering",
-            EnterExitState::Entered => "entered",
-            EnterExitState::ExitStart => "exit-start",
-            EnterExitState::Exiting => "exiting",
-            EnterExitState::Exited => "exited",
-        }
-    }
-}
-
-// Color swatch
-pub fn dialog(mut cx: Cx) -> impl View {
-    let dialog_state = cx.use_resource::<DemoDialogOpen>();
+pub fn dialog(mut cx: Cx<DemoDialogProps>) -> impl View {
+    let open = cx.props.open;
+    let target = cx.props.target;
+    let state = cx.use_enter_exit(open);
     If::new(
-        dialog_state.is_shown(),
+        state != EnterExitState::Exited,
         Portal::new().children(
             Element::new()
                 .styled(STYLE_DIALOG_OVERLAY.clone())
-                .class_names(dialog_state.class_name())
+                .class_names(state.as_class_name())
                 .children(
                     Element::new().styled(STYLE_DIALOG.clone()).children((
                         Element::new()
                             .styled(STYLE_DIALOG_HEADER.clone())
-                            .children("A Modal Dialog"),
+                            .children(("A Modal Dialog", "[x]")),
                         Element::new().styled(STYLE_DIALOG_BODY.clone()).children(
                             Element::new().styled(STYLE_LIST.clone()).children((
                                 "Alpha Male",
                                 "Beta Tester",
                                 "Gamma Ray",
+                                "Delta Sleep",
                             )),
                         ),
                         Element::new()
                             .styled(STYLE_DIALOG_FOOTER.clone())
-                            .once(|entity, world| {
+                            .once(move |entity, world| {
                                 let mut e = world.entity_mut(entity);
-                                e.insert(On::<Clicked>::run(
-                                    |_ev: Res<ListenerInput<Clicked>>,
-                                     mut dlog: ResMut<DemoDialogOpen>| {
-                                        dlog.open = false
-                                    },
-                                ));
+                                let target = target;
+                                e.insert(On::<Clicked>::run(move |_ev: Res<ListenerInput<Clicked>>,
+                                    mut writer: EventWriter<RequestClose>| {
+                                        writer.send(RequestClose {
+                                            target,
+                                            id: "demo_dialog",
+                                        });
+                                }));
                             })
                             .children((
                                 button.bind(ButtonProps {
@@ -186,59 +152,4 @@ pub fn dialog(mut cx: Cx) -> impl View {
         ),
         (),
     )
-}
-
-pub fn enter_exit_state_machine(
-    mut ee: ResMut<DemoDialogOpen>,
-    mut tt: ResMut<DemoDialogTransitionTimer>,
-    time: Res<Time>,
-) {
-    match ee.state {
-        EnterExitState::EnterStart => {
-            if ee.open {
-                ee.state = EnterExitState::Entering;
-                tt.timer = 0.;
-            } else {
-                ee.state = EnterExitState::ExitStart;
-            }
-        }
-        EnterExitState::Entering => {
-            if ee.open {
-                tt.timer += time.delta_seconds();
-                if tt.timer > 0.3 {
-                    ee.state = EnterExitState::Entered;
-                }
-            } else {
-                ee.state = EnterExitState::ExitStart;
-            }
-        }
-        EnterExitState::Entered => {
-            if !ee.open {
-                ee.state = EnterExitState::ExitStart;
-            }
-        }
-        EnterExitState::ExitStart => {
-            if !ee.open {
-                ee.state = EnterExitState::Exiting;
-                tt.timer = 0.;
-            } else {
-                ee.state = EnterExitState::EnterStart;
-            }
-        }
-        EnterExitState::Exiting => {
-            if ee.open {
-                ee.state = EnterExitState::EnterStart;
-            } else {
-                tt.timer += time.delta_seconds();
-                if tt.timer > 0.3 {
-                    ee.state = EnterExitState::Exited;
-                }
-            }
-        }
-        EnterExitState::Exited => {
-            if ee.open {
-                ee.state = EnterExitState::EnterStart;
-            }
-        }
-    }
 }

@@ -217,7 +217,7 @@ struct ButtonProps<V: View> {
 
 #[derive(Clone, Event, EntityEvent)]
 struct Clicked {
-    #[target] // Marks the field of the event that specifies the target entity
+    #[target]
     target: Entity,
     id: &'static str,
 }

@@ -31,3 +31,9 @@ where
 pub struct TrackedResources {
     pub data: Vec<Box<dyn AnyResource>>,
 }
+
+impl TrackedResources {
+    pub(crate) fn add_resource<T: Resource>(&mut self) {
+        self.data.push(Box::new(AnyRes::<T>::new()));
+    }
+}

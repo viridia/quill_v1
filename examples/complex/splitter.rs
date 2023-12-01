@@ -47,7 +47,7 @@ pub struct SplitterProps {
 
 #[derive(Clone, Event, EntityEvent)]
 pub struct SplitterDragged {
-    #[target] // Marks the field of the event that specifies the target entity
+    #[target]
     pub target: Entity,
     pub id: &'static str,
     pub value: f32,

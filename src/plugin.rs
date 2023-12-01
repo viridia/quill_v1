@@ -5,7 +5,8 @@ use crate::{
     animate_bg_colors, animate_border_colors, animate_transforms,
     presenter_state::{PresenterGraphChanged, PresenterStateChanged},
     style::{ComputedStyle, UpdateComputedStyle},
-    view::resource::TrackedResources,
+    tracked_components::TrackedComponents,
+    tracked_resources::TrackedResources,
     ElementClasses, ElementStyles, SelectorMatcher, TrackedLocals, ViewContext, ViewHandle,
 };
 
@@ -28,27 +29,42 @@ impl Plugin for QuillPlugin {
     }
 }
 
+const MAX_DIVERGENCE_CT: usize = 30;
+
 // Updating views needs to be split in 3 phases for borrowing issues
 // Phase 1: Identify which ViewRoot Entity needs to re-render
 // Phase 2: Use Option::take() to remove the ViewRoot::handle from the World. Use the taken handle
 //          and call AnyViewState::build() on it. Since the handle isn't part of the World we can
 //          freely pass a mutable reference to the World.
 fn render_views(world: &mut World) {
-    // phase 1
+    let mut divergence_ct: usize = 0;
+    let mut prev_change_ct: usize = 0;
+    let last_run = world.last_change_tick();
+    let this_run = world.change_tick();
+
     let mut v = HashSet::new();
 
     // Scan changed resources
-    let mut q = world.query::<(Entity, &TrackedResources)>();
+    let mut q = world.query::<(Entity, &mut TrackedResources)>();
     for (e, tracked_resources) in q.iter(world) {
         if tracked_resources.data.iter().any(|x| x.is_changed(world)) {
             v.insert(e);
         }
     }
 
-    // Scan changed locals
-    let mut q = world.query::<(Entity, &mut TrackedLocals)>();
-    for (e, tracked_locals) in q.iter_mut(world) {
-        if TrackedLocals::cas(&tracked_locals) {
+    // Scan changed components
+    let mut q = world.query::<(Entity, &mut TrackedComponents)>();
+    for (e, tracked_components) in q.iter(world) {
+        if tracked_components.data.iter().any(|(e, cid)| {
+            world
+                .get_entity(*e)
+                .map(|ent| {
+                    ent.get_change_ticks_by_id(*cid)
+                        .map(|ct| ct.is_changed(last_run, this_run))
+                        .unwrap_or(false)
+                })
+                .unwrap_or(false)
+        }) {
             v.insert(e);
         }
     }
@@ -59,24 +75,61 @@ fn render_views(world: &mut World) {
         v.insert(e);
     }
 
-    // force build every view that just got spawned
-    let mut qf = world.query_filtered::<Entity, (With<ViewHandle>, With<PresenterStateChanged>)>();
-    for e in qf.iter_mut(world) {
-        v.insert(e);
-    }
+    loop {
+        // This is inside a loop because rendering may trigger further changes.
 
-    for e in v.iter() {
-        world.entity_mut(*e).remove::<PresenterStateChanged>();
-    }
+        // Scan changed locals
+        let mut q = world.query::<(Entity, &mut TrackedLocals)>();
+        for (e, tracked_locals) in q.iter_mut(world) {
+            if TrackedLocals::cas(&tracked_locals) {
+                v.insert(e);
+            }
+        }
 
-    // phase 2
-    for e in v {
-        let Some(view_handle) = world.get_mut::<ViewHandle>(e) else {
-            continue;
-        };
-        let inner = view_handle.inner.clone();
-        let mut ec = ViewContext::new(world, e);
-        inner.lock().unwrap().build(&mut ec, e);
+        // force build every view that just got spawned
+        let mut qf =
+            world.query_filtered::<Entity, (With<ViewHandle>, With<PresenterStateChanged>)>();
+        for e in qf.iter_mut(world) {
+            v.insert(e);
+        }
+
+        for e in v.iter() {
+            world.entity_mut(*e).remove::<PresenterStateChanged>();
+        }
+
+        // Most of the time changes will converge, that is, the number of changed presenters
+        // decreases each time through the loop. A "divergence" is when that fails to happen.
+        // We tolerate a maximum number of divergences before giving up.
+        let change_ct = v.len();
+        if change_ct >= prev_change_ct {
+            divergence_ct += 1;
+            if divergence_ct > MAX_DIVERGENCE_CT {
+                panic!("Reactions failed to converge, num changes: {}", change_ct);
+            }
+        }
+        prev_change_ct = change_ct;
+
+        // phase 2
+        if change_ct > 0 {
+            for e in v.drain() {
+                // Clear tracking lists for presenters to be re-rendered.
+                if let Some(mut tracked_resources) = world.get_mut::<TrackedResources>(e) {
+                    tracked_resources.data.clear();
+                }
+                if let Some(mut tracked_components) = world.get_mut::<TrackedComponents>(e) {
+                    tracked_components.data.clear();
+                }
+
+                let Some(view_handle) = world.get_mut::<ViewHandle>(e) else {
+                    continue;
+                };
+                let inner = view_handle.inner.clone();
+                let mut ec = ViewContext::new(world, e);
+                inner.lock().unwrap().build(&mut ec, e);
+            }
+        } else {
+            break;
+        }
     }
 
     // phase 3

@@ -4,9 +4,8 @@ use bevy::{
 };
 
 use crate::{
-    presenter_state::PresenterGraphChanged,
-    resource::{AnyRes, TrackedResources},
-    Cx, ViewHandle, ViewTuple,
+    presenter_state::PresenterGraphChanged, tracked_components::TrackedComponents,
+    tracked_resources::TrackedResources, Cx, ViewHandle, ViewTuple,
 };
 
 use crate::node_span::NodeSpan;
@@ -42,10 +41,24 @@ impl<'w> ViewContext<'w> {
 
     pub(crate) fn add_tracked_resource<T: Resource>(&mut self) {
         if let Some(mut tracked) = self.world.get_mut::<TrackedResources>(self.entity) {
-            tracked.data.push(Box::new(AnyRes::<T>::new()));
+            tracked.add_resource::<T>();
         } else {
             let mut tracked = TrackedResources::default();
-            tracked.data.push(Box::new(AnyRes::<T>::new()));
+            tracked.add_resource::<T>();
+            self.world.entity_mut(self.entity).insert(tracked);
+        }
+    }
+
+    pub(crate) fn add_tracked_component<C: Component>(&mut self, entity: Entity) {
+        let id = self
+            .world
+            .component_id::<C>()
+            .expect("Unregistered component type");
+        if let Some(mut tracked) = self.world.get_mut::<TrackedComponents>(self.entity) {
+            tracked.add_component(entity, id);
+        } else {
+            let mut tracked = TrackedComponents::default();
+            tracked.add_component(entity, id);
             self.world.entity_mut(self.entity).insert(tracked);
         }
     }

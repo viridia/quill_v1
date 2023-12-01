@@ -17,6 +17,13 @@ pub struct LocalData<T: Send + 'static> {
     marker: PhantomData<T>,
 }
 
+impl<T: Send + 'static> PartialEq for LocalData<T> {
+    fn eq(&self, other: &Self) -> bool {
+        (self.changed.as_ref() as *const _ == other.changed.as_ref() as *const _)
+            && (self.data.as_ref() as *const _ == other.data.as_ref() as *const _)
+    }
+}
+
 // TODO: I'd like to do Borrow, Deref, DerefMut etc., but this seems impossible given the mutex.
 
 impl<T: Send + Clone + PartialEq> LocalData<T> {

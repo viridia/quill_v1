@@ -39,7 +39,7 @@ pub struct ButtonProps<V: View> {
 
 #[derive(Clone, Event, EntityEvent)]
 pub struct Clicked {
-    #[target] // Marks the field of the event that specifies the target entity
+    #[target]
     pub target: Entity,
     pub id: &'static str,
 }

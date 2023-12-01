@@ -1,6 +1,7 @@
 //! Complex example with multiple views
 mod button;
 mod dialog;
+mod enter_exit;
 mod slider;
 mod splitter;
 mod swatch;
@@ -14,7 +15,8 @@ use bevy_mod_picking::{
 };
 use bevy_quill::prelude::*;
 use button::{button, ButtonProps, Clicked};
-use dialog::{dialog, enter_exit_state_machine, DemoDialogOpen, DemoDialogTransitionTimer};
+use dialog::{dialog, RequestClose};
+use enter_exit::EnterExitPlugin;
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use static_init::dynamic;
@@ -26,8 +28,6 @@ fn main() {
         .init_resource::<ViewportInset>()
         .init_resource::<PanelWidth>()
         .init_resource::<ClickLog>()
-        .init_resource::<DemoDialogOpen>()
-        .init_resource::<DemoDialogTransitionTimer>()
         .insert_resource(EditColor {
             color: Color::Rgba {
                 red: 1.0,
@@ -46,9 +46,11 @@ fn main() {
         )
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(EventListenerPlugin::<Clicked>::default())
-        .add_plugins((QuillPlugin, SplitterPlugin, SliderPlugin))
+        .add_plugins(EventListenerPlugin::<RequestClose>::default())
+        .add_plugins((QuillPlugin, SplitterPlugin, SliderPlugin, EnterExitPlugin))
         .add_systems(Startup, (test_scene::setup, setup_view_root))
         .add_event::<Clicked>()
+        .add_event::<RequestClose>()
         .add_systems(
             Update,
             (
@@ -56,7 +58,6 @@ fn main() {
                 test_scene::rotate,
                 test_scene::update_viewport_inset,
                 test_scene::update_camera_viewport,
-                enter_exit_state_machine,
             ),
         )
         .run();
@@ -182,11 +183,18 @@ fn setup_view_root(mut commands: Commands) {
 }
 
 fn ui_main(mut cx: Cx) -> impl View {
+    let target = cx.use_view_entity_mut().id();
+    let open = cx.use_local(|| false);
+    let open_1 = open.clone();
+    let mut open_2 = open.clone();
+    let open_3 = open.clone();
+    cx.use_view_entity_mut().insert(On::<RequestClose>::run(
+        move |_ev: Res<ListenerInput<RequestClose>>| open_2.set(false),
+    ));
     let width = cx.use_resource::<PanelWidth>();
-    // let log = cx.use_resource_mut::<ClickLog>();
     Element::new()
         .styled(STYLE_MAIN.clone())
-        .once(|entity, world| {
+        .once(move |entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((On::<SplitterDragged>::run(
                 move |ev: Res<ListenerInput<SplitterDragged>>,
@@ -209,14 +217,13 @@ fn ui_main(mut cx: Cx) -> impl View {
                     STYLE_ASIDE.clone(),
                     StyleHandle::build(|b| b.width(width.value.floor())),
                 ))
-                .once(|entity, world| {
+                .once(move |entity, world| {
                     let mut e = world.entity_mut(entity);
+                    let mut open_2 = open_1.clone();
                     e.insert(On::<Clicked>::run(
-                        |ev: Res<ListenerInput<Clicked>>,
-                         mut log: ResMut<ClickLog>,
-                         mut dlog: ResMut<DemoDialogOpen>| {
+                        move |ev: Res<ListenerInput<Clicked>>, mut log: ResMut<ClickLog>| {
                             if ev.id == "save" {
-                                dlog.open = true
+                                open_2.set(true)
                             }
                             log.0
                                 .push(format!("Button Clicked: id='{}'", ev.id).to_string());
@@ -249,7 +256,10 @@ fn ui_main(mut cx: Cx) -> impl View {
                 .styled(STYLE_VIEWPORT.clone())
                 .insert(ViewportInsetElement {})
                 .children(event_log),
-            dialog,
+            dialog.bind(dialog::DemoDialogProps {
+                open: open_3.get(),
+                target,
+            }),
         ))
 }
 
