@@ -52,8 +52,7 @@ pub fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
             let mut e = world.entity_mut(entity);
             e.insert((
                 On::<Pointer<Click>>::run(
-                    move |ev: Res<ListenerInput<Pointer<Click>>>,
-                          mut writer: EventWriter<Clicked>| {
+                    move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
                         writer.send(Clicked {
                             target: ev.target,
                             id,

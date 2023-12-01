@@ -77,4 +77,9 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
             tracked.get::<T>(index, init)
         }
     }
+
+    // / Return an object which can be used to send a message to the current presenter.
+    // pub fn use_callback<In, Marker>(&mut self, sys: impl IntoSystem<In, (), Marker>) {
+    //     todo!()
+    // }
 }

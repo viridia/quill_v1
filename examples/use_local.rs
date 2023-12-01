@@ -42,7 +42,7 @@ fn nested(mut cx: Cx<&str>) -> impl View {
             let mut e = world.entity_mut(entity);
             let mut counter = counter.clone();
             e.insert(On::<Pointer<Click>>::run(
-                move |_ev: Res<ListenerInput<Pointer<Click>>>| {
+                move |_ev: Listener<Pointer<Click>>| {
                     counter.set(counter.get() + 1);
                 },
             ));

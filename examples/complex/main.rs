@@ -189,15 +189,18 @@ fn ui_main(mut cx: Cx) -> impl View {
     let mut open_2 = open.clone();
     let open_3 = open.clone();
     cx.use_view_entity_mut().insert(On::<RequestClose>::run(
-        move |_ev: Res<ListenerInput<RequestClose>>| open_2.set(false),
+        move |_ev: Listener<RequestClose>| open_2.set(false),
     ));
+    // cx.use_callback::<bool>(|| {
+    //     println!("Called back");
+    // });
     let width = cx.use_resource::<PanelWidth>();
     Element::new()
         .styled(STYLE_MAIN.clone())
         .once(move |entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((On::<SplitterDragged>::run(
-                move |ev: Res<ListenerInput<SplitterDragged>>,
+                move |ev: Listener<SplitterDragged>,
                       mut width: ResMut<PanelWidth>,
                       query: Query<(&Node, &GlobalTransform)>| {
                     match query.get(entity) {
@@ -221,7 +224,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                     let mut e = world.entity_mut(entity);
                     let mut open_2 = open_1.clone();
                     e.insert(On::<Clicked>::run(
-                        move |ev: Res<ListenerInput<Clicked>>, mut log: ResMut<ClickLog>| {
+                        move |ev: Listener<Clicked>, mut log: ResMut<ClickLog>| {
                             if ev.id == "save" {
                                 open_2.set(true)
                             }
@@ -270,9 +273,7 @@ fn color_edit(mut cx: Cx) -> impl View {
         .once(|entity, world| {
             let mut e = world.entity_mut(entity);
             e.insert((On::<OnChange<f32>>::run(
-                move |ev: Res<ListenerInput<OnChange<f32>>>, mut color: ResMut<EditColor>| match ev
-                    .id
-                {
+                move |ev: Listener<OnChange<f32>>, mut color: ResMut<EditColor>| match ev.id {
                     "r" => {
                         color.as_mut().color.set_r(ev.value / 255.0);
                     }

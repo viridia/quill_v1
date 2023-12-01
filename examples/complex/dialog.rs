@@ -1,6 +1,6 @@
 use super::enter_exit::EnterExitApi;
 use bevy::{prelude::*, ui};
-use bevy_mod_picking::prelude::{EntityEvent, ListenerInput, On};
+use bevy_mod_picking::prelude::{EntityEvent, Listener, On};
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
@@ -129,7 +129,7 @@ pub fn dialog(mut cx: Cx<DemoDialogProps>) -> impl View {
                             .once(move |entity, world| {
                                 let mut e = world.entity_mut(entity);
                                 let target = target;
-                                e.insert(On::<Clicked>::run(move |_ev: Res<ListenerInput<Clicked>>,
+                                e.insert(On::<Clicked>::run(move |_ev: Listener<Clicked>,
                                     mut writer: EventWriter<RequestClose>| {
                                         writer.send(RequestClose {
                                             target,

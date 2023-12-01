@@ -76,7 +76,7 @@ pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
             let is_dragging_3 = is_dragging.clone();
             e.insert((
                 On::<Pointer<DragStart>>::run(
-                    move |ev: Res<ListenerInput<Pointer<DragStart>>>,
+                    move |ev: Listener<Pointer<DragStart>>,
                           mut query: Query<&mut ElementClasses>| {
                         // println!("Start drag offset: {}", current_offset);
                         // Save initial value to use as drag offset.
@@ -94,8 +94,7 @@ pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
                     },
                 ),
                 On::<Pointer<Drag>>::run(
-                    move |ev: Res<ListenerInput<Pointer<Drag>>>,
-                          mut writer: EventWriter<SplitterDragged>| {
+                    move |ev: Listener<Pointer<Drag>>, mut writer: EventWriter<SplitterDragged>| {
                         if is_dragging_3.get() {
                             writer.send(SplitterDragged {
                                 target: ev.target,

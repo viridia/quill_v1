@@ -170,7 +170,7 @@ fn ui_main(mut cx: Cx) -> impl View {
             ))
             .once(|entity, world| {
                 let mut e = world.entity_mut(entity);
-                e.insert((On::<Clicked>::run(|ev: Res<ListenerInput<Clicked>>| {
+                e.insert((On::<Clicked>::run(|ev: Listener<Clicked>| {
                     println!("Clicked {}", ev.id);
                 }),));
             }),
@@ -231,8 +231,7 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
             let mut e = world.entity_mut(entity);
             e.insert((
                 On::<Pointer<Click>>::run(
-                    move |events: Res<ListenerInput<Pointer<Click>>>,
-                          mut ev: EventWriter<Clicked>| {
+                    move |events: Listener<Pointer<Click>>, mut ev: EventWriter<Clicked>| {
                         ev.send(Clicked {
                             target: events.target,
                             id,

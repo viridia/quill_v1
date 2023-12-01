@@ -142,7 +142,7 @@ pub fn h_slider(mut cx: Cx<SliderProps>) -> impl View {
             let is_dragging_3 = is_dragging.clone();
             e.insert((
                 On::<Pointer<DragStart>>::run(
-                    move |ev: Res<ListenerInput<Pointer<DragStart>>>,
+                    move |ev: Listener<Pointer<DragStart>>,
                           mut query: Query<&mut ElementClasses>| {
                         // Save initial value to use as drag offset.
                         drag_offset_1.set(value);
@@ -159,7 +159,7 @@ pub fn h_slider(mut cx: Cx<SliderProps>) -> impl View {
                     },
                 ),
                 On::<Pointer<Drag>>::run(
-                    move |ev: Res<ListenerInput<Pointer<Drag>>>,
+                    move |ev: Listener<Pointer<Drag>>,
                           query: Query<(&Node, &GlobalTransform)>,
                           mut writer: EventWriter<OnChange<f32>>| {
                         if is_dragging_3.get() {
