@@ -1,6 +1,8 @@
 use bevy::{
+    ecs::system::SystemParam,
     prelude::*,
     text::{Text, TextStyle},
+    utils::all_tuples,
 };
 
 use crate::{
@@ -278,7 +280,10 @@ impl View for &str {
 }
 
 /// View which renders a bare presenter with no arguments
-impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Copy + 'static> View for F {
+impl<V: View + 'static, F: PresenterFn<fn(Cx<()>) -> V, Props = ()>> View for F
+where
+    F: Fn(Cx<()>) -> V,
+{
     // State holds the PresenterState entity.
     type State = Entity;
 
@@ -323,23 +328,18 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Copy + 'static> View for F {
 
 /// Binds a presenter to properties and implements a view
 #[doc(hidden)]
-pub struct Bind<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> {
+pub struct Bind<Marker: 'static, F: PresenterFn<Marker>> {
     presenter: F,
-    props: Props,
+    props: F::Props,
 }
 
-impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> Bind<V, Props, F> {
-    pub fn new(presenter: F, props: Props) -> Self {
+impl<Marker, F: PresenterFn<Marker>> Bind<Marker, F> {
+    pub fn new(presenter: F, props: F::Props) -> Self {
         Self { presenter, props }
     }
 }
 
-impl<
-        V: View + 'static,
-        Props: Send + Clone + PartialEq + 'static,
-        F: FnMut(Cx<Props>) -> V + Send + Copy + 'static,
-    > View for Bind<V, Props, F>
-{
+impl<Marker, F: PresenterFn<Marker>> View for Bind<Marker, F> {
     // State holds the PresenterState entity.
     type State = Entity;
 
@@ -389,16 +389,87 @@ impl<
     }
 }
 
-/// A trait that allows methods to be added to presenter function references.
-pub trait PresenterFn<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> {
-    /// Used to invoke a presenter from within a presenter. This binds a set of properties
-    /// to the child presenter, and constructs a new `ViewHandle`/`PresenterState`. The
-    /// resulting is a `View` which references this handle.
-    fn bind(self, props: Props) -> Bind<V, Props, F>;
+pub type PresenterParamItem<'w, 's, P> = <P as SystemParam>::Item<'w, 's>;
+
+pub trait PresenterParam: SystemParam {
+    type State: Send + Sync + 'static;
+    type Item<'w, 's>: PresenterParam<State = <Self as PresenterParam>::State>;
+
+    fn add_tracking(vc: &mut ViewContext);
 }
 
-impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> PresenterFn<V, Props, F> for F {
-    fn bind(self, props: Props) -> Bind<V, Props, Self> {
-        Bind::new(self, props)
+macro_rules! impl_presenter_param_tuple {
+    ($($param: ident),*) => {
+        #[allow(non_snake_case)]
+        impl<$($param: PresenterParam),*> PresenterParam for ($($param,)*) {
+            type State = ($(<$param as PresenterParam>::State,)*);
+            type Item<'w, 's> = ($(<$param as PresenterParam>::Item::<'w, 's>,)*);
+
+            fn add_tracking(_vc: &mut ViewContext) {
+                $($param::add_tracking(_vc);)*
+            }
+        }
+    };
+}
+
+all_tuples!(impl_presenter_param_tuple, 0, 16, P);
+
+pub trait PresenterFn<Marker: 'static>: Sized + Send + Sync + Copy + 'static {
+    type Props: Send + Clone + PartialEq;
+    type View: View;
+    type Param: PresenterParam;
+
+    fn bind(self, props: Self::Props) -> Bind<Marker, Self>;
+
+    fn build(
+        &mut self,
+        cx: Cx<Self::Props>,
+        param_value: PresenterParamItem<Self::Param>,
+    ) -> Self::View;
+}
+
+macro_rules! impl_view_function {
+    ($($param: ident),*) => {
+        #[allow(non_snake_case)]
+        impl<V: View, P: Send + Clone + PartialEq + 'static, Func: Send + Sync + Copy + 'static, $($param: PresenterParam + 'static),*> PresenterFn<fn(Cx<P>, $($param,)*) -> V> for Func
+        where
+        for <'a> &'a mut Func:
+                FnMut(Cx<P>, $($param),*) -> V +
+                FnMut(Cx<P>, $(PresenterParamItem<$param>),*) -> V, V: 'static
+        {
+            type Props = P;
+            type View = V;
+            type Param = ($($param,)*);
+
+            #[inline]
+            fn bind(self, props: P) -> Bind<fn(Cx<P>, $($param,)*) -> V, Self> {
+                Bind::new(self, props)
+            }
+
+            #[inline]
+            fn build(&mut self, cx: Cx<P>, param_value: PresenterParamItem< ($($param,)*)>) -> V {
+                #[allow(clippy::too_many_arguments)]
+                fn call_inner<P, V, $($param,)*>(
+                    mut f: impl FnMut(Cx<P>, $($param,)*) -> V,
+                    cx: Cx<P>,
+                    $($param: $param,)*
+                ) -> V {
+                    f(cx, $($param,)*)
+                }
+                let ($($param,)*) = param_value;
+                call_inner(self, cx, $($param),*)
+            }
+        }
+    };
+}
+
+all_tuples!(impl_view_function, 0, 16, F);
+
+impl<'a, R: Resource> PresenterParam for Res<'a, R> {
+    type Item<'w, 's> = <Self as SystemParam>::Item<'w, 's>;
+    type State = <Self as SystemParam>::State;
+
+    fn add_tracking(vc: &mut ViewContext) {
+        vc.add_tracked_resource::<R>()
     }
 }
