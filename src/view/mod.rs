@@ -7,6 +7,7 @@ mod fragment;
 mod r#if;
 mod lcs;
 mod local;
+pub(crate) mod not_system_meta;
 mod portal;
 pub(crate) mod presenter_state;
 pub(crate) mod tracked_components;
