@@ -63,6 +63,14 @@ where
 
     /// Uses the sequence of key values to match the previous array items with the updated
     /// array items. Matching items are patched, other items are inserted or deleted.
+    ///
+    /// # Arguments
+    ///
+    /// * `vc` - `ViewContext` used to build individual elements.
+    /// * `prev_state` - Array of view state elements from previous update.
+    /// * `prev_range` - The range of elements we are comparing in `prev_state`.
+    /// * `next_state` - Array of view state elements to be built.
+    /// * `next_range` - The range of elements we are comparing in `next_state`.
     fn build_recursive(
         &self,
         vc: &mut ViewContext,
@@ -71,12 +79,36 @@ where
         next_state: &mut [KeyedListItem<Key, V>],
         next_range: Range<usize>,
     ) {
-        // Look for longest common subsequence
+        // Look for longest common subsequence.
+        // prev_start and next_start are *relative to the slice*.
         let (prev_start, next_start, lcs_length) = lcs(
             &prev_state[prev_range.clone()],
             &next_state[next_range.clone()],
             |a, b| a.key == b.key,
         );
+
+        // If there was nothing in common
+        if lcs_length == 0 {
+            // Raze old elements
+            for i in prev_range {
+                let prev = &mut prev_state[i];
+                if let Some(ref view) = prev.view {
+                    view.raze(vc, prev.state.as_mut().unwrap());
+                }
+            }
+            // Build new elements
+            for i in next_range {
+                let next = &mut next_state[i];
+                let view = (self.each)(&self.items[i]);
+                next.state = Some(view.build(vc));
+                next.view = Some(view);
+            }
+            return;
+        }
+
+        // Adjust prev_start and next_start to be relative to the entire state array.
+        let prev_start = prev_start + prev_range.start;
+        let next_start = next_start + next_range.start;
 
         // Stuff that precedes the LCS.
         if prev_start > prev_range.start {
@@ -112,12 +144,11 @@ where
         for i in 0..lcs_length {
             let prev = &mut prev_state[prev_start + i];
             let next = &mut next_state[next_start + i];
+            // Take the old state, update with new View for this element.
             next.state = prev.state.take();
-            next.view = Some((self.each)(&self.items[next_start + i]));
-            prev.view
-                .as_ref()
-                .unwrap()
-                .update(vc, next.state.as_mut().unwrap());
+            let v = (self.each)(&self.items[next_start + i]);
+            v.update(vc, next.state.as_mut().unwrap());
+            next.view = Some(v);
         }
 
         // Stuff that follows the LCS.
@@ -209,7 +240,7 @@ where
 
         self.build_recursive(vc, state, 0..prev_len, &mut next_state, 0..next_len);
         for j in 0..next_len {
-            assert!(next_state[j].state.is_some(), "Emoty state: {}", j);
+            assert!(next_state[j].state.is_some(), "Empty state: {}", j);
         }
         std::mem::swap(state, &mut next_state);
     }
@@ -226,5 +257,92 @@ where
                 view.raze(vc, child_state.state.as_mut().unwrap());
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use bevy::ecs::world::World;
+
+    use super::*;
+
+    #[test]
+    fn test_update() {
+        let mut world = World::new();
+        let entity = world.spawn_empty().id();
+        let mut vc = ViewContext {
+            world: &mut world,
+            entity,
+        };
+
+        // Initial render
+        let view = ForKeyed::new(&[1, 2, 3], |item| *item, |item| format!("{}", item));
+        let mut state = view.build(&mut vc);
+        assert_eq!(state.len(), 3);
+        assert_eq!(state[0].key, 1);
+        assert!(state[0].state.is_some());
+        assert_eq!(state[1].key, 2);
+        assert!(state[1].state.is_some());
+        assert_eq!(state[2].key, 3);
+        assert!(state[2].state.is_some());
+        let e1 = state[0].state;
+
+        // Insert at start
+        let view = ForKeyed::new(&[0, 1, 2, 3], |item| *item, |item| format!("{}", item));
+        view.update(&mut vc, &mut state);
+        assert_eq!(state.len(), 4);
+        assert_eq!(state[0].key, 0);
+        assert_eq!(state[3].key, 3);
+        assert_eq!(state[1].state, e1, "Should be same entity");
+
+        // Delete at start
+        let view = ForKeyed::new(&[1, 2, 3], |item| *item, |item| format!("{}", item));
+        view.update(&mut vc, &mut state);
+        assert_eq!(state.len(), 3);
+        assert_eq!(state[0].key, 1);
+        assert_eq!(state[2].key, 3);
+        assert_eq!(state[0].state, e1, "Should be same entity");
+
+        // Insert at end
+        let view = ForKeyed::new(&[1, 2, 3, 4], |item| *item, |item| format!("{}", item));
+        view.update(&mut vc, &mut state);
+        assert_eq!(state.len(), 4);
+        assert_eq!(state[0].key, 1);
+        assert_eq!(state[3].key, 4);
+        assert_eq!(state[0].state, e1, "Should be same entity");
+
+        // Delete at end
+        let view = ForKeyed::new(&[1, 2, 3], |item| *item, |item| format!("{}", item));
+        view.update(&mut vc, &mut state);
+        assert_eq!(state.len(), 3);
+        assert_eq!(state[0].key, 1);
+        assert_eq!(state[2].key, 3);
+        assert_eq!(state[0].state, e1, "Should be same entity");
+
+        // Delete in middle
+        let view = ForKeyed::new(&[1, 3], |item| *item, |item| format!("{}", item));
+        view.update(&mut vc, &mut state);
+        assert_eq!(state.len(), 2);
+        assert_eq!(state[0].key, 1);
+        assert_eq!(state[1].key, 3);
+        assert_eq!(state[0].state, e1, "Should be same entity");
+
+        // Insert in middle
+        let view = ForKeyed::new(&[1, 2, 3], |item| *item, |item| format!("{}", item));
+        view.update(&mut vc, &mut state);
+        assert_eq!(state.len(), 3);
+        assert_eq!(state[0].key, 1);
+        assert_eq!(state[1].key, 2);
+        assert_eq!(state[2].key, 3);
+        assert_eq!(state[0].state, e1, "Should be same entity");
+
+        // Replace in the middle
+        let view = ForKeyed::new(&[1, 5, 3], |item| *item, |item| format!("{}", item));
+        view.update(&mut vc, &mut state);
+        assert_eq!(state.len(), 3);
+        assert_eq!(state[0].key, 1);
+        assert_eq!(state[1].key, 5);
+        assert_eq!(state[2].key, 3);
+        assert_eq!(state[0].state, e1, "Should be same entity");
     }
 }
