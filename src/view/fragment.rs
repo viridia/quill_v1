@@ -8,7 +8,7 @@ pub struct Fragment<A: ViewTuple> {
 }
 
 impl<A: ViewTuple> Fragment<A> {
-    /// Construct a new `Fragment` from a tuple of views.
+    /// Construct a new [`Fragment`] from a tuple of views.
     pub fn new(items: A) -> Self {
         Self { items }
     }

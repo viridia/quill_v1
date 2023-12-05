@@ -58,7 +58,7 @@ pub struct EnterExitTimer {
     pub timer: f32,
 }
 
-/// Trait which adds `use_enter_exit` to `Cx`.
+/// Trait which adds `use_enter_exit` to [`Cx`].
 pub trait EnterExitApi {
     fn use_enter_exit(&mut self, open: bool) -> EnterExitState;
 }

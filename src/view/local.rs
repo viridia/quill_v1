@@ -54,7 +54,7 @@ impl<T: Send + Clone + PartialEq> LocalData<T> {
     }
 }
 
-/// Tracks local vars used by each View tree entity.
+/// Tracks local vars used by each presenter invocation.
 #[derive(Component, Default)]
 pub struct TrackedLocals {
     changed: Arc<AtomicBool>,

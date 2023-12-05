@@ -63,6 +63,17 @@ impl<'w> ViewContext<'w> {
         }
     }
 
+    /// Return a modified [`ViewContext`] for a different entity.
+    pub(crate) fn for_entity<'k>(&'k mut self, entity: Entity) -> ViewContext<'k>
+    where
+        'w: 'k,
+    {
+        ViewContext {
+            world: &mut *self.world,
+            entity,
+        }
+    }
+
     pub(crate) fn entity(&self, entity: Entity) -> EntityRef {
         self.world.entity(entity)
     }

@@ -66,7 +66,7 @@ where
     ///
     /// # Arguments
     ///
-    /// * `vc` - `ViewContext` used to build individual elements.
+    /// * `vc` - [`ViewContext`] used to build individual elements.
     /// * `prev_state` - Array of view state elements from previous update.
     /// * `prev_range` - The range of elements we are comparing in `prev_state`.
     /// * `next_state` - Array of view state elements to be built.

@@ -93,7 +93,7 @@ impl<V: View, Props: Send + Clone + PartialEq + 'static, F: FnMut(Cx<Props>) -> 
     AnyPresenterState for PresenterState<V, Props, F>
 {
     fn build(&mut self, vc: &mut ViewContext, entity: Entity) {
-        let mut child_context = ViewContext::new(vc.world, entity);
+        let mut child_context = vc.for_entity(entity);
         let cx = Cx::new(&self.props, &mut child_context);
         self.view = Some((self.presenter)(cx));
         match self.state {
@@ -116,7 +116,7 @@ impl<V: View, Props: Send + Clone + PartialEq + 'static, F: FnMut(Cx<Props>) -> 
     }
 
     fn raze(&mut self, vc: &mut ViewContext, entity: Entity) {
-        let mut child_context = ViewContext::new(vc.world, entity);
+        let mut child_context = vc.for_entity(entity);
         if let Some(ref view) = self.view {
             // Despawn the presenter state entity.
             if let Some(ref mut state) = self.state {
@@ -128,7 +128,7 @@ impl<V: View, Props: Send + Clone + PartialEq + 'static, F: FnMut(Cx<Props>) -> 
     }
 
     fn attach(&mut self, vc: &mut ViewContext, entity: Entity) {
-        let mut child_context = ViewContext::new(vc.world, entity);
+        let mut child_context = vc.for_entity(entity);
         let nodes = self
             .view
             .as_ref()
@@ -138,9 +138,7 @@ impl<V: View, Props: Send + Clone + PartialEq + 'static, F: FnMut(Cx<Props>) -> 
             self.nodes = nodes;
             // Parent needs to rebuild children
             if let Some(parent) = vc.entity(vc.entity).get::<Parent>() {
-                vc.world
-                    .entity_mut(parent.get())
-                    .insert(PresenterGraphChanged);
+                vc.entity_mut(parent.get()).insert(PresenterGraphChanged);
             }
         }
     }

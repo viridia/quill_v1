@@ -5,8 +5,6 @@ use bevy::render::texture::{ImageLoaderSettings, ImageSampler};
 use bevy::text::BreakLineOn;
 use bevy::ui::widget::UiImageSize;
 use bevy::ui::ContentSize;
-// use bevy::ui::widget::UiImageSize;
-// use bevy::ui::ContentSize;
 use bevy_mod_picking::prelude::Pickable;
 
 use super::style::PointerEvents;
