@@ -27,7 +27,7 @@ fn root_presenter(mut _cx: Cx) -> impl View {
     Element::new().children(("Root Presenter: ", nested.bind("Fred")))
 }
 
-fn nested(mut cx: Cx<&str>) -> impl View {
+fn nested(cx: Cx<&str>) -> impl View {
     let name = *cx.props;
     let counter = cx.use_resource::<Counter>();
     Element::new().children((

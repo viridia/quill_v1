@@ -265,7 +265,7 @@ fn ui_main(mut cx: Cx) -> impl View {
         ))
 }
 
-fn color_edit(mut cx: Cx) -> impl View {
+fn color_edit(cx: Cx) -> impl View {
     let edit_color = cx.use_resource::<EditColor>();
     Element::new()
         .styled(COLOR_EDIT.clone())
@@ -314,7 +314,7 @@ fn color_edit(mut cx: Cx) -> impl View {
         ))
 }
 
-fn event_log(mut cx: Cx) -> impl View {
+fn event_log(cx: Cx) -> impl View {
     let log = cx.use_resource::<ClickLog>();
     Element::new().styled(STYLE_LOG.clone()).children(
         Element::new()

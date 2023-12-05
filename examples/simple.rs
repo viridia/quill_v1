@@ -34,7 +34,7 @@ fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewHandle::new(root_presenter, 1));
 }
 
-fn root_presenter(mut cx: Cx<u8>) -> impl View {
+fn root_presenter(cx: Cx<u8>) -> impl View {
     let counter = cx.use_resource::<Counter>();
     Element::new().children((
         "Root Presenter: ",

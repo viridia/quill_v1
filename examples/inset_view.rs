@@ -146,7 +146,7 @@ fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewHandle::new(ui_main, ()));
 }
 
-fn ui_main(mut cx: Cx) -> impl View {
+fn ui_main(cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
     Element::new().styled(STYLE_MAIN.clone()).children((
         Element::new()

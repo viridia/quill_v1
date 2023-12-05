@@ -26,14 +26,11 @@ where
     }
 }
 
+/// List of resources used by a presenter.
+pub(crate) type TrackedResourceList = Vec<Box<dyn AnyResource>>;
+
 /// Tracks resources used by each View tree entity
 #[derive(Component, Default)]
 pub struct TrackedResources {
-    pub data: Vec<Box<dyn AnyResource>>,
-}
-
-impl TrackedResources {
-    pub(crate) fn add_resource<T: Resource>(&mut self) {
-        self.data.push(Box::new(AnyRes::<T>::new()));
-    }
+    pub data: TrackedResourceList,
 }

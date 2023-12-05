@@ -1,10 +1,18 @@
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 
-use bevy::prelude::*;
+use bevy::{ecs::component::ComponentId, prelude::*, utils::HashSet};
 
-use crate::ViewContext;
+use crate::{
+    tracked_resources::{AnyRes, TrackedResourceList},
+    ViewContext,
+};
 
 use super::local::{LocalData, TrackedLocals};
+
+pub struct TrackingContext {
+    pub(crate) resources: TrackedResourceList,
+    pub(crate) components: HashSet<(Entity, ComponentId)>,
+}
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's
 /// properties (passed from the parent presenter), plus other context information needed
@@ -14,41 +22,49 @@ pub struct Cx<'w, 'p, Props = ()> {
     pub props: &'p Props,
     pub(crate) vc: &'p mut ViewContext<'w>,
     local_index: Cell<usize>,
+
+    /// Set of resoruces referenced by the presenter.
+    pub(crate) tracking: RefCell<&'p mut TrackingContext>,
 }
 
 impl<'w, 'p, Props> Cx<'w, 'p, Props> {
-    pub(crate) fn new(props: &'p Props, vc: &'p mut ViewContext<'w>) -> Self {
+    pub(crate) fn new(
+        props: &'p Props,
+        vc: &'p mut ViewContext<'w>,
+        tracking: &'p mut TrackingContext,
+    ) -> Self {
         Self {
             props,
             vc,
             local_index: Cell::new(0),
+            tracking: RefCell::new(tracking),
         }
     }
 
     /// Return a reference to the resource of the given type. Calling this function
     /// adds the resource as a dependency of the current presenter invocation.
-    pub fn use_resource<T: Resource>(&mut self) -> &T {
-        self.vc.add_tracked_resource::<T>();
+    pub fn use_resource<T: Resource>(&self) -> &T {
+        self.add_tracked_resource::<T>();
         self.vc.world.resource::<T>()
     }
 
     /// Return a mutable reference to the resource of the given type. Calling this function
     /// adds the resource as a dependency of the current presenter invocation.
     pub fn use_resource_mut<T: Resource>(&mut self) -> Mut<T> {
-        self.vc.add_tracked_resource::<T>();
+        self.add_tracked_resource::<T>();
         self.vc.world.resource_mut::<T>()
     }
 
     /// Return a reference to the Component `C` on the given entity.
-    pub fn use_component<C: Component>(&mut self, entity: Entity) -> Option<&C> {
-        self.vc.add_tracked_component::<C>(entity);
+    pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+        self.add_tracked_component::<C>(entity);
         self.vc.world.entity(entity).get::<C>()
     }
 
     /// Return a reference to the Component `C` on the entity that contains the current
     /// presenter invocation.
-    pub fn use_view_component<C: Component>(&mut self) -> Option<&C> {
-        self.vc.add_tracked_component::<C>(self.vc.entity);
+    pub fn use_view_component<C: Component>(&self) -> Option<&C> {
+        self.add_tracked_component::<C>(self.vc.entity);
         self.vc.world.entity(self.vc.entity).get::<C>()
     }
 
@@ -82,4 +98,20 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     // pub fn use_callback<In, Marker>(&mut self, sys: impl IntoSystem<In, (), Marker>) {
     //     todo!()
     // }
+
+    fn add_tracked_resource<T: Resource>(&self) {
+        self.tracking
+            .borrow_mut()
+            .resources
+            .push(Box::new(AnyRes::<T>::new()));
+    }
+
+    fn add_tracked_component<C: Component>(&self, entity: Entity) {
+        let cid = self
+            .vc
+            .world
+            .component_id::<C>()
+            .expect("Unregistered component type");
+        self.tracking.borrow_mut().components.insert((entity, cid));
+    }
 }

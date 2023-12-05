@@ -12,8 +12,8 @@ pub struct TrackedComponents {
     pub data: HashSet<(Entity, ComponentId)>,
 }
 
-impl TrackedComponents {
-    pub(crate) fn add_component(&mut self, entity: Entity, cid: ComponentId) {
-        self.data.insert((entity, cid));
-    }
-}
+// impl TrackedComponents {
+//     pub(crate) fn add_component(&mut self, entity: Entity, cid: ComponentId) {
+//         self.data.insert((entity, cid));
+//     }
+// }

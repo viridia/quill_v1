@@ -26,7 +26,7 @@ fn setup_view_root(mut commands: Commands) {
 
 const SUITS: &[&str] = &["hearts", "spades", "clubs", "diamonds"];
 
-fn root_presenter(mut cx: Cx) -> impl View {
+fn root_presenter(cx: Cx) -> impl View {
     let items = cx.use_resource::<List>();
     Element::new().children((
         "Suits: ",

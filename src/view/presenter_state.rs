@@ -3,11 +3,17 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashSet};
 
-use crate::{NodeSpan, PresenterFn, ViewContext};
+use crate::{
+    tracked_components::TrackedComponents, tracked_resources::TrackedResources, NodeSpan,
+    PresenterFn, ViewContext,
+};
 
-use super::{cx::Cx, View};
+use super::{
+    cx::{Cx, TrackingContext},
+    View,
+};
 
 /// A ViewHandle holds a type-erased reference to a presenter function and its props and state.
 #[derive(Component)]
@@ -86,7 +92,11 @@ pub trait AnyPresenterState: Send {
 impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker, F> {
     fn build(&mut self, vc: &mut ViewContext, entity: Entity) {
         let mut child_context = vc.for_entity(entity);
-        let cx = Cx::new(&self.props, &mut child_context);
+        let mut tracking = TrackingContext {
+            resources: Vec::new(),
+            components: HashSet::new(),
+        };
+        let cx = Cx::new(&self.props, &mut child_context, &mut tracking);
         self.view = Some(self.presenter.call(cx));
         match self.state {
             Some(ref mut state) => {
@@ -105,6 +115,23 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
                 }
             }
         };
+
+        let mut entt = vc.world.entity_mut(entity);
+        if tracking.resources.len() > 0 {
+            entt.insert(TrackedResources {
+                data: tracking.resources,
+            });
+        } else {
+            entt.remove::<TrackedResources>();
+        }
+
+        if tracking.components.len() > 0 {
+            entt.insert(TrackedComponents {
+                data: tracking.components,
+            });
+        } else {
+            entt.remove::<TrackedComponents>();
+        }
     }
 
     fn raze(&mut self, vc: &mut ViewContext, entity: Entity) {
