@@ -183,7 +183,7 @@ fn setup_view_root(mut commands: Commands) {
 }
 
 fn ui_main(mut cx: Cx) -> impl View {
-    let target = cx.use_view_entity_mut().id();
+    let target = cx.use_view_entity().id();
     let open = cx.use_local(|| false);
     let open_1 = open.clone();
     let mut open_2 = open.clone();

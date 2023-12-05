@@ -6,14 +6,11 @@ use std::{
 use bevy::{prelude::*, utils::HashSet};
 
 use crate::{
-    tracked_components::TrackedComponents, tracked_resources::TrackedResources, NodeSpan,
-    PresenterFn, ViewContext,
+    tracked_resources::TrackedResources, tracking::TrackedComponents, NodeSpan, PresenterFn,
+    TrackingContext, ViewContext,
 };
 
-use super::{
-    cx::{Cx, TrackingContext},
-    View,
-};
+use super::{cx::Cx, View};
 
 /// A ViewHandle holds a type-erased reference to a presenter function and its props and state.
 #[derive(Component)]
@@ -95,6 +92,7 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         let mut tracking = TrackingContext {
             resources: Vec::new(),
             components: HashSet::new(),
+            local_index: 0,
         };
         let cx = Cx::new(&self.props, &mut child_context, &mut tracking);
         self.view = Some(self.presenter.call(cx));

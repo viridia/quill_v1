@@ -5,8 +5,8 @@ use crate::{
     animate_bg_colors, animate_border_colors, animate_transforms,
     presenter_state::{PresenterGraphChanged, PresenterStateChanged},
     style::{ComputedStyle, UpdateComputedStyle},
-    tracked_components::TrackedComponents,
     tracked_resources::TrackedResources,
+    tracking::TrackedComponents,
     ElementClasses, ElementStyles, SelectorMatcher, TrackedLocals, ViewContext, ViewHandle,
 };
 

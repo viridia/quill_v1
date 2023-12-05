@@ -1,18 +1,10 @@
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 
-use bevy::{ecs::component::ComponentId, prelude::*, utils::HashSet};
+use bevy::prelude::*;
 
-use crate::{
-    tracked_resources::{AnyRes, TrackedResourceList},
-    ViewContext,
-};
+use crate::{tracked_resources::AnyRes, TrackingContext, ViewContext};
 
 use super::local::{LocalData, TrackedLocals};
-
-pub struct TrackingContext {
-    pub(crate) resources: TrackedResourceList,
-    pub(crate) components: HashSet<(Entity, ComponentId)>,
-}
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's
 /// properties (passed from the parent presenter), plus other context information needed
@@ -21,9 +13,7 @@ pub struct Cx<'w, 'p, Props = ()> {
     /// The properties that were passed to the presenter from it's parent.
     pub props: &'p Props,
     pub(crate) vc: &'p mut ViewContext<'w>,
-    local_index: Cell<usize>,
-
-    /// Set of resoruces referenced by the presenter.
+    /// Set of reactive resources referenced by the presenter.
     pub(crate) tracking: RefCell<&'p mut TrackingContext>,
 }
 
@@ -36,7 +26,6 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         Self {
             props,
             vc,
-            local_index: Cell::new(0),
             tracking: RefCell::new(tracking),
         }
     }
@@ -69,6 +58,11 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     }
 
     /// Return a reference to the entity that holds the current presenter invocation.
+    pub fn use_view_entity(&self) -> EntityRef<'_> {
+        self.vc.world.entity(self.vc.entity)
+    }
+
+    /// Return a mutable reference to the entity that holds the current presenter invocation.
     pub fn use_view_entity_mut(&mut self) -> EntityWorldMut<'_> {
         self.vc.world.entity_mut(self.vc.entity)
     }
@@ -76,8 +70,9 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// Return a local state variable. Calling this function also adds the state variable as
     /// a dependency of the current presenter invocation.
     pub fn use_local<T: Send + Clone>(&mut self, init: impl FnOnce() -> T) -> LocalData<T> {
-        let index = self.local_index.get();
-        self.local_index.set(index + 1);
+        let mut tracking = self.tracking.borrow_mut();
+        let index = tracking.local_index;
+        tracking.local_index = index + 1;
         if let Some(mut tracked) = self.vc.world.get_mut::<TrackedLocals>(self.vc.entity) {
             tracked.get::<T>(index, init)
         } else {
