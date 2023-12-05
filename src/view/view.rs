@@ -289,7 +289,10 @@ impl View for &str {
 }
 
 /// View which renders a bare presenter with no arguments
-impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Copy + 'static> View for F {
+impl<V: View + 'static, F: PresenterFn<fn(Cx<()>) -> V, Props = ()>> View for F
+where
+    F: Fn(Cx<()>) -> V + Send,
+{
     // State holds the PresenterState entity.
     type State = Entity;
 
@@ -334,23 +337,18 @@ impl<V: View + 'static, F: Fn(Cx<()>) -> V + Send + Copy + 'static> View for F {
 
 /// Binds a presenter to properties and implements a view
 #[doc(hidden)]
-pub struct Bind<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> {
+pub struct Bind<Marker: 'static, F: PresenterFn<Marker>> {
     presenter: F,
-    props: Props,
+    props: F::Props,
 }
 
-impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> Bind<V, Props, F> {
-    pub fn new(presenter: F, props: Props) -> Self {
+impl<Marker, F: PresenterFn<Marker>> Bind<Marker, F> {
+    pub fn new(presenter: F, props: F::Props) -> Self {
         Self { presenter, props }
     }
 }
 
-impl<
-        V: View + 'static,
-        Props: Send + Clone + PartialEq + 'static,
-        F: FnMut(Cx<Props>) -> V + Send + Copy + 'static,
-    > View for Bind<V, Props, F>
-{
+impl<Marker, F: PresenterFn<Marker>> View for Bind<Marker, F> {
     // State holds the PresenterState entity.
     type State = Entity;
 
@@ -401,15 +399,47 @@ impl<
 }
 
 /// A trait that allows methods to be added to presenter function references.
-pub trait PresenterFn<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> {
+pub trait PresenterFn<Marker: 'static>: Sized + Send + Copy + 'static {
+    /// The type of properties expected by this presenter.
+    type Props: Send + Clone + PartialEq;
+
+    /// The type of view produced by this presenter.
+    type View: View;
+    // type Param: PresenterParam;
+
     /// Used to invoke a presenter from within a presenter. This binds a set of properties
-    /// to the child presenter, and constructs a new `ViewHandle`/`PresenterState`. The
-    /// resulting is a `View` which references this handle.
-    fn bind(self, props: Props) -> Bind<V, Props, F>;
+    /// to the child presenter, and constructs a new [`ViewHandle`] containing a [`PresenterState`].
+    /// The result is a [`View`] which references this handle.
+    fn bind(self, props: Self::Props) -> Bind<Marker, Self>;
+
+    /// Method which calls the presenter, creating the [`View`].
+    fn call(
+        &mut self,
+        cx: Cx<Self::Props>,
+        // param_value: PresenterParamItem<Self::Param>,
+    ) -> Self::View;
 }
 
-impl<V: View, Props: Send + Clone, F: FnMut(Cx<Props>) -> V + Copy> PresenterFn<V, Props, F> for F {
-    fn bind(self, props: Props) -> Bind<V, Props, Self> {
+impl<
+        V: View,
+        P: Send + Clone + PartialEq + 'static,
+        F: FnMut(Cx<P>) -> V + Copy + Send + 'static,
+    > PresenterFn<fn(Cx<P>) -> V> for F
+where
+    V: 'static,
+{
+    type Props = P;
+    type View = V;
+
+    fn bind(self, props: Self::Props) -> Bind<fn(Cx<P>) -> V, Self> {
         Bind::new(self, props)
+    }
+
+    fn call(
+        &mut self,
+        cx: Cx<Self::Props>,
+        // param_value: PresenterParamItem<Self::Param>,
+    ) -> Self::View {
+        self(cx)
     }
 }
