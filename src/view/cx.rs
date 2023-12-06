@@ -1,10 +1,10 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, marker::PhantomData};
 
 use bevy::prelude::*;
 
 use crate::{tracked_resources::TrackedResource, TrackingContext, ViewContext};
 
-use super::local::{LocalData, TrackedLocals};
+use super::atom::{AtomCell, AtomHandle, AtomMethods};
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's
 /// properties (passed from the parent presenter), plus other context information needed
@@ -67,26 +67,67 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         self.vc.world.entity_mut(self.vc.entity)
     }
 
-    /// Return a local state variable. Calling this function also adds the state variable as
-    /// a dependency of the current presenter invocation.
-    pub fn use_local<T: Send + Clone>(&mut self, init: impl FnOnce() -> T) -> LocalData<T> {
+    /// Create an [`AtomHandle`]. This can be used to read and write the content of an atom.
+    /// The handle is owned by the current context, and will be deleted when the presenter
+    /// invocation is razed.
+    pub fn create_atom<T: Clone + Sync + Send + 'static>(&mut self) -> AtomHandle<T> {
         let mut tracking = self.tracking.borrow_mut();
-        let index = tracking.local_index;
-        tracking.local_index = index + 1;
-        if let Some(mut tracked) = self.vc.world.get_mut::<TrackedLocals>(self.vc.entity) {
-            tracked.get::<T>(index, init)
+        let index = tracking.next_atom_index;
+        tracking.next_atom_index = index + 1;
+        if index < tracking.atom_handles.len() {
+            return AtomHandle {
+                id: tracking.atom_handles[index],
+                marker: PhantomData,
+            };
+        } else if index == tracking.atom_handles.len() {
+            let handle = self.vc.world.create_atom::<T>();
+            tracking.atom_handles.push(handle.id);
+            return handle;
         } else {
-            self.vc
-                .world
-                .entity_mut(self.vc.entity)
-                .insert(TrackedLocals::default());
-            let mut tracked = self
-                .vc
-                .world
-                .get_mut::<TrackedLocals>(self.vc.entity)
-                .unwrap();
-            tracked.get::<T>(index, init)
+            panic!("Invalid atom handle index");
         }
+    }
+
+    /// Create an [`AtomHandle`] with an initial value.
+    /// The handle is owned by the current context, and will be deleted when the presenter
+    /// invocation is razed.
+    pub fn create_atom_init<T: Clone + Sync + Send + 'static>(
+        &mut self,
+        init: impl FnOnce() -> T,
+    ) -> AtomHandle<T> {
+        let handle = self.create_atom::<T>();
+        let mut entt = self.vc.world.entity_mut(handle.id);
+        match entt.get_mut::<AtomCell>() {
+            Some(_) => {}
+            None => {
+                entt.insert(AtomCell(Box::new(init())));
+            }
+        }
+        handle
+    }
+
+    /// Read the value of an atom. This adds the atom to the tracking list for this
+    /// presenter, so that it will re-render when the atom changes.
+    pub fn read_atom<T: Clone + Sync + Send + 'static>(&self, handle: AtomHandle<T>) -> T {
+        let cid = self
+            .vc
+            .world
+            .component_id::<AtomCell>()
+            .expect("Unregistered component type");
+        self.tracking
+            .borrow_mut()
+            .components
+            .insert((handle.id, cid));
+        self.vc.world.get_atom(handle)
+    }
+
+    /// Write the value of an atom. Panics if the atom handle is invalid.
+    pub fn write_atom<T: Clone + Sync + Send + 'static>(
+        &mut self,
+        handle: AtomHandle<T>,
+        value: T,
+    ) {
+        self.vc.world.set_atom(handle, value);
     }
 
     // / Return an object which can be used to send a message to the current presenter.

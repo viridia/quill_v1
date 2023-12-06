@@ -17,7 +17,7 @@ fn main() {
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(QuillPlugin)
         .add_systems(Startup, (setup, setup_view_root))
-        .add_systems(Update, (bevy::window::close_on_esc, update_counter))
+        .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
 
@@ -31,18 +31,17 @@ fn root_presenter(mut _cx: Cx) -> impl View {
 
 fn nested(mut cx: Cx<&str>) -> impl View {
     let name = *cx.props;
-    let counter = cx.use_local::<i32>(|| 0);
+    let counter = cx.create_atom_init::<i32>(|| 0);
     Element::new()
         .children((
             "Nested Presenter: ",
-            format!("{}: {}", name, counter.get()),
-            If::new(counter.get() & 1 == 0, even, odd),
+            format!("{}: {}", name, cx.read_atom(counter)),
+            If::new(cx.read_atom(counter) & 1 == 0, even, odd),
         ))
         .once(move |mut e| {
-            let mut counter = counter.clone();
             e.insert(On::<Pointer<Click>>::run(
-                move |_ev: Listener<Pointer<Click>>| {
-                    counter.set(counter.get() + 1);
+                move |_ev: Listener<Pointer<Click>>, mut atoms: AtomStore| {
+                    atoms.update(counter, |n| n + 1)
                 },
             ));
         })
@@ -60,12 +59,6 @@ fn odd(mut _cx: Cx) -> impl View {
 pub struct Counter {
     pub count: u32,
     pub foo: usize,
-}
-
-fn update_counter(mut counter: ResMut<Counter>, key: Res<Input<KeyCode>>) {
-    if key.pressed(KeyCode::Space) {
-        counter.count += 1;
-    }
 }
 
 fn setup(

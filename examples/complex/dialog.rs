@@ -124,7 +124,7 @@ pub fn dialog(mut cx: Cx<DemoDialogProps>) -> impl View {
                                 "Delta Sleep",
                                 "Epsilon Eridani",
                                 "Zeta Function",
-                                "Eta Conversion",
+                                "Eta Oin Shrdlu",
                             )),
                         ),
                         Element::new()

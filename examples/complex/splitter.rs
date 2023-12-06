@@ -55,50 +55,50 @@ pub struct SplitterDragged {
 
 // Vertical splitter bar which can be dragged
 pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
-    let drag_offset = cx.use_local::<f32>(|| 0.);
+    let drag_offset = cx.create_atom_init::<f32>(|| 0.);
 
     // This is needed because bevy_eventlistener sometimes sends events out of order,
     // so that we get Drag before DragStart.
-    let is_dragging = cx.use_local::<bool>(|| false);
+    let is_dragging = cx.create_atom_init::<bool>(|| false);
 
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;
     let current_offset = cx.props.value;
     Element::new()
         .with(move |mut e| {
-            let mut drag_offset_1 = drag_offset.clone();
-            let drag_offset_2 = drag_offset.clone();
-
-            // Horrible: we need to clone the state reference 3 times because 3 handlers.
-            let mut is_dragging_1 = is_dragging.clone();
-            let mut is_dragging_2 = is_dragging.clone();
-            let is_dragging_3 = is_dragging.clone();
             e.insert((
                 On::<Pointer<DragStart>>::run(
                     move |ev: Listener<Pointer<DragStart>>,
+                          mut atoms: AtomStore,
                           mut query: Query<&mut ElementClasses>| {
                         // println!("Start drag offset: {}", current_offset);
                         // Save initial value to use as drag offset.
-                        drag_offset_1.set(current_offset);
-                        is_dragging_1.set(true);
+                        atoms.set(drag_offset, current_offset);
+                        atoms.set(is_dragging, true);
                         if let Ok(mut classes) = query.get_mut(ev.target) {
                             classes.add_class(CLS_DRAG)
                         }
                     },
                 ),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(
-                    move |_, classes| {
-                        classes.remove_class(CLS_DRAG);
-                        is_dragging_2.set(true);
+                On::<Pointer<DragEnd>>::run(
+                    move |ev: Listener<Pointer<DragEnd>>,
+                          mut atoms: AtomStore,
+                          mut query: Query<&mut ElementClasses>| {
+                        if let Ok(mut classes) = query.get_mut(ev.target) {
+                            classes.remove_class(CLS_DRAG)
+                        }
+                        atoms.set(is_dragging, false);
                     },
                 ),
                 On::<Pointer<Drag>>::run(
-                    move |ev: Listener<Pointer<Drag>>, mut writer: EventWriter<SplitterDragged>| {
-                        if is_dragging_3.get() {
+                    move |ev: Listener<Pointer<Drag>>,
+                          mut writer: EventWriter<SplitterDragged>,
+                          atoms: AtomStore| {
+                        if atoms.get(is_dragging) {
                             writer.send(SplitterDragged {
                                 target: ev.target,
                                 id,
-                                value: ev.distance.x + drag_offset_2.get(),
+                                value: ev.distance.x + atoms.get(drag_offset),
                             });
                         }
                     },

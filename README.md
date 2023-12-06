@@ -141,25 +141,56 @@ fn multi(mut cx: Cx) -> impl View {
 ```
 The children of the `Fragment` will be inserted inline in place of the `Fragment` node.
 
-### Local state
+### Atoms: Local state
 
-You can declare a local state variable with `cx.use_local()`. The argument is a closure which returns the initial value. The result is an object which has `.get()` and `.set()` methods. `use_local()` produces a reactive data source, which means that whenever the value is changed, it will trigger a re-render of the presenter.
+It's common in UI code where a parent widget will have to keep track of some local state.
+Often this state needs to be accessible by both the rendering code (the presenter) and the event
+handlers. "Atoms" are a way to manage local state in a reactive way.
+
+An `AtomHandle` is an identifier which can be used to get or set the value of an atom. You
+can create a handle in one of several ways:
+
+* `World::create_atom::<T>()` - returns a new atom handle from the World.
+* `Cx::create_atom::<T>()` - returns a new atom handle from the current presenter context.
+* `Cx::create_atom_init::<T>(init: fn() -> T)` - returns a new atom handle from the current presenter context and initializes it.
+
+Handles created from `Cx` are automatically deleted when the presenter state is despawned.
+Handles created on the world are not; you are responsible for deleting them.
+
+Handles implement Copy and Clone, and can be captured by closures or passed as props to children.
+
+There are several ways to access data in an atom. In `Cx`, there are get and set methods:
+
+* `Cx::get_atom(handle)`
+* `Cx::set_atom(handle, value)`
+
+These functions are reactive: getting the value of an atom automatically adds the atom to the
+current reaction tracking list, so the presenter will be re-run when the atom changes.
+
+Another way to access atom values is via `AtomStore`, which is an injectable value:
+
+* `AtomStore::get(handle)`
+* `AtomStore::set(handle, value)`
+* `AtomStore::update(handle, update_fn)`
+
+`AtomStore` is intended to be used in non-reactive systems and event handlers, that is, functions
+which don't have tracking contexts. Calling `.get()` does not track the atom. However, calling
+`.set()` will trigger reactions in any other tracking contexts that depend on the atom.
 
 ```rust
 fn local_test(mut cx: Cx<&str>) -> impl View {
     let name = *cx.props;
-    let counter = cx.use_local::<i32>(|| 0);
+    let counter = cx.create_atom::<i32>(|| 0);
     Element::new()
         .children((
-            format!("The count is: {}: {}", name, counter.get()),
+            format!("The count is: {}: {}", name, cx.read_atom(counter)),
         ))
         .once(move |entity, world| {
             // Increment the counter when we click
             let mut e = world.entity_mut(entity);
-            let mut counter = counter.clone();
             e.insert(On::<Pointer<Click>>::run(
-                move |_ev: Listener<Pointer<Click>>| {
-                    counter.set(counter.get() + 1);
+                move |_ev: Listener<Pointer<Click>>, atoms: AtomStore| {
+                    atoms.update(counter, |value| value + 1);
                 },
             ));
         })

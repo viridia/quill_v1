@@ -1,3 +1,4 @@
+mod atom;
 mod cx;
 mod element;
 mod r#for;
@@ -6,7 +7,6 @@ mod for_keyed;
 mod fragment;
 mod r#if;
 mod lcs;
-mod local;
 mod portal;
 pub(crate) mod presenter_state;
 pub(crate) mod tracked_resources;
@@ -20,13 +20,12 @@ mod view_styled;
 mod view_tuple;
 mod view_with;
 
+pub use atom::*;
 pub use cx::Cx;
 pub use element::Element;
 pub use for_index::ForIndex;
 pub use for_keyed::ForKeyed;
 pub use fragment::Fragment;
-pub use local::LocalData;
-pub use local::TrackedLocals;
 pub use portal::Portal;
 pub use presenter_state::ViewHandle;
 pub use r#for::For;

@@ -7,7 +7,7 @@ use crate::{
     style::{ComputedStyle, UpdateComputedStyle},
     tracked_resources::TrackedResources,
     tracking::TrackedComponents,
-    ElementClasses, ElementStyles, SelectorMatcher, TrackedLocals, ViewContext, ViewHandle,
+    ElementClasses, ElementStyles, SelectorMatcher, ViewContext, ViewHandle,
 };
 
 /// Plugin which initializes the Quill library.
@@ -78,15 +78,7 @@ fn render_views(world: &mut World) {
     loop {
         // This is inside a loop because rendering may trigger further changes.
 
-        // Scan changed locals
-        let mut q = world.query::<(Entity, &mut TrackedLocals)>();
-        for (e, tracked_locals) in q.iter_mut(world) {
-            if TrackedLocals::cas(&tracked_locals) {
-                v.insert(e);
-            }
-        }
-
-        // force build every view that just got spawned
+        // This means that either a presenter was just added, or its props got modified by a parent.
         let mut qf =
             world.query_filtered::<Entity, (With<ViewHandle>, With<PresenterStateChanged>)>();
         for e in qf.iter_mut(world) {

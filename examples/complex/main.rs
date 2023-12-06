@@ -184,16 +184,10 @@ fn setup_view_root(mut commands: Commands) {
 
 fn ui_main(mut cx: Cx) -> impl View {
     let target = cx.use_view_entity().id();
-    let open = cx.use_local(|| false);
-    let open_1 = open.clone();
-    let mut open_2 = open.clone();
-    let open_3 = open.clone();
+    let open = cx.create_atom_init(|| false);
     cx.use_view_entity_mut().insert(On::<RequestClose>::run(
-        move |_ev: Listener<RequestClose>| open_2.set(false),
+        move |_ev: Listener<RequestClose>, mut atoms: AtomStore| atoms.set(open, false),
     ));
-    // cx.use_callback::<bool>(|| {
-    //     println!("Called back");
-    // });
     let width = cx.use_resource::<PanelWidth>();
     Element::new()
         .styled(STYLE_MAIN.clone())
@@ -221,11 +215,12 @@ fn ui_main(mut cx: Cx) -> impl View {
                     StyleHandle::build(|b| b.width(width.value.floor())),
                 ))
                 .once(move |mut e| {
-                    let mut open_2 = open_1.clone();
                     e.insert(On::<Clicked>::run(
-                        move |ev: Listener<Clicked>, mut log: ResMut<ClickLog>| {
+                        move |ev: Listener<Clicked>,
+                              mut atoms: AtomStore,
+                              mut log: ResMut<ClickLog>| {
                             if ev.id == "save" {
-                                open_2.set(true)
+                                atoms.set(open, true);
                             }
                             log.0
                                 .push(format!("Button Clicked: id='{}'", ev.id).to_string());
@@ -259,7 +254,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                 .insert(ViewportInsetElement {})
                 .children(event_log),
             dialog.bind(dialog::DemoDialogProps {
-                open: open_3.get(),
+                open: cx.read_atom(open),
                 target,
             }),
         ))
