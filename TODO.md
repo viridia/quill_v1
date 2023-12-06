@@ -12,10 +12,20 @@
 
     .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
 
-Notes on animation:
+```rust
+struct AtomHandle<T> {
+    marker: PhantomData<T>
+    id: ComponentId,
+}
 
-First, we need our traditional transition states: Entering, Entered, Exiting, Exited. These
-need to be stored in a local.
+let atom = world.create_atom::<T>();
 
-Then we need to think about Bevy animation of UI. Do we want to support something like
-CSS transitions? Or do we want to animate the global transform directly?
+let value = cx.read_atom(atom);
+cx.write_atom(atom, new_value);
+cx.init_atom(atom, initial_value);
+
+world.read_atom(atom);
+world.write_atom(atom, new_value);
+world.init_atom(atom, initial_value);
+world.is_atom_changed(atom);
+```

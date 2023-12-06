@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use bevy::prelude::*;
 
-use crate::{tracked_resources::AnyRes, TrackingContext, ViewContext};
+use crate::{tracked_resources::TrackedResource, TrackingContext, ViewContext};
 
 use super::local::{LocalData, TrackedLocals};
 
@@ -98,7 +98,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         self.tracking
             .borrow_mut()
             .resources
-            .push(Box::new(AnyRes::<T>::new()));
+            .push(Box::new(TrackedResource::<T>::new()));
     }
 
     fn add_tracked_component<C: Component>(&self, entity: Entity) {

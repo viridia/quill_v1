@@ -7,17 +7,17 @@ pub trait AnyResource: Send + Sync {
 }
 
 #[derive(PartialEq, Eq)]
-pub struct AnyRes<T> {
+pub struct TrackedResource<T> {
     pub pdata: PhantomData<T>,
 }
 
-impl<T> AnyRes<T> {
+impl<T> TrackedResource<T> {
     pub(crate) fn new() -> Self {
         Self { pdata: PhantomData }
     }
 }
 
-impl<T> AnyResource for AnyRes<T>
+impl<T> AnyResource for TrackedResource<T>
 where
     T: Resource,
 {
