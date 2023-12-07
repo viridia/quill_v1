@@ -1,3 +1,8 @@
+use super::style::PointerEvents;
+use super::transition::{
+    AnimatedBackgroundColor, AnimatedBorderColor, AnimatedTransform, Transition,
+    TransitionProperty, TransitionState,
+};
 use bevy::asset::AssetPath;
 use bevy::ecs::system::Command;
 use bevy::prelude::*;
@@ -6,12 +11,6 @@ use bevy::text::BreakLineOn;
 use bevy::ui::widget::UiImageSize;
 use bevy::ui::ContentSize;
 use bevy_mod_picking::prelude::Pickable;
-
-use super::style::PointerEvents;
-use super::transition::{
-    AnimatedBackgroundColor, AnimatedBorderColor, AnimatedTransform, Transition,
-    TransitionProperty, TransitionState,
-};
 
 /// A computed style represents the composition of one or more `ElementStyle`s.
 #[derive(Default, Clone, Debug)]
@@ -235,6 +234,7 @@ impl Command for UpdateComputedStyle {
                 }
             }
 
+            // Update outline
             match (self.computed.outline_color, e.get_mut::<Outline>()) {
                 (Some(color), Some(mut outline)) => {
                     outline.width = self.computed.outline_width;
@@ -254,6 +254,7 @@ impl Command for UpdateComputedStyle {
                 (None, None) => {}
             }
 
+            // Update Z-Index
             match (self.computed.z_index, e.get_mut::<ZIndex>()) {
                 (Some(z), Some(_)) => {
                     e.insert(z);
@@ -267,6 +268,7 @@ impl Command for UpdateComputedStyle {
                 (None, None) => {}
             }
 
+            // Update Pickable
             match (self.computed.pickable, e.get_mut::<Pickable>()) {
                 (Some(pe), Some(mut pickable)) => {
                     pickable.should_block_lower = pe == PointerEvents::All;

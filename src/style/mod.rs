@@ -1,3 +1,4 @@
+mod builder;
 mod computed;
 mod selector;
 mod selector_matcher;

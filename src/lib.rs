@@ -6,6 +6,7 @@
 mod cursor;
 mod node_span;
 mod plugin;
+mod scrolling;
 mod style;
 mod view;
 
@@ -13,6 +14,7 @@ pub use cursor::Cursor;
 pub use node_span::NodeSpan;
 #[doc(inline)]
 pub use prelude::*;
+pub use scrolling::*;
 
 /// Common imports
 pub mod prelude {

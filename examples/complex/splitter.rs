@@ -21,6 +21,8 @@ static STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .gap(8)
         .width(9)
         .selector(".drag", |ss| ss.background_color("#080808"))
 });
@@ -30,9 +32,9 @@ static STYLE_VSPLITTER: StyleHandle = StyleHandle::build(|ss| {
 static STYLE_VSPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
     ss.background_color("#282828")
         .display(ui::Display::Flex)
-        .width(5)
+        .width(3)
         .pointer_events(PointerEvents::None)
-        .height(ui::Val::Percent(30.))
+        .height(ui::Val::Percent(5.))
         .selector(":hover > &", |ss| ss.background_color("#383838"))
         .selector(".drag > &", |ss| ss.background_color("#484848"))
 });
@@ -112,5 +114,8 @@ pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
             ));
         })
         .styled(STYLE_VSPLITTER.clone())
-        .children(Element::new().styled(STYLE_VSPLITTER_INNER.clone()))
+        .children((
+            Element::new().styled(STYLE_VSPLITTER_INNER.clone()),
+            Element::new().styled(STYLE_VSPLITTER_INNER.clone()),
+        ))
 }

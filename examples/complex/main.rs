@@ -2,6 +2,7 @@
 mod button;
 mod dialog;
 mod enter_exit;
+mod scrollview;
 mod slider;
 mod splitter;
 mod swatch;
@@ -17,6 +18,7 @@ use bevy_quill::prelude::*;
 use button::{button, ButtonProps, Clicked};
 use dialog::{dialog, RequestClose};
 use enter_exit::EnterExitPlugin;
+use scrollview::{scroll_view, ScrollViewProps};
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use static_init::dynamic;
@@ -128,6 +130,15 @@ static STYLE_LOG_ENTRY: StyleHandle = StyleHandle::build(|ss| {
     ss.display(ui::Display::Flex)
         .justify_content(ui::JustifyContent::SpaceBetween)
         .align_self(ui::AlignSelf::Stretch)
+});
+
+#[dynamic]
+static STYLE_BOTTOM_PANE: StyleHandle = StyleHandle::build(|ss| {
+    ss.border(1)
+        .border_color("#080808")
+        .background_color("#171717")
+        .flex_grow(1.)
+        .padding(2)
 });
 
 #[dynamic]
@@ -244,6 +255,13 @@ fn ui_main(mut cx: Cx) -> impl View {
                         children: "Quit",
                     }),
                     color_edit,
+                    scroll_view.bind(ScrollViewProps {
+                        children: "Hello, World! This is a very long message.",
+                        scroll_enable_x: true,
+                        scroll_enable_y: true,
+                        style: STYLE_BOTTOM_PANE.clone(),
+                        ..default()
+                    }),
                 )),
             v_splitter.bind(SplitterProps {
                 id: "",
