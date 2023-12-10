@@ -98,7 +98,7 @@ pub fn scroll_view<V: View + Clone>(mut cx: Cx<ScrollViewProps<V>>) -> impl View
     let id_scroll_area = cx.create_entity();
     let id_scrollbar_x = cx.create_entity();
     let id_scrollbar_y = cx.create_entity();
-    let drag_state = cx.create_atom::<DragState>();
+    let drag_state = cx.create_atom_init(|| DragState::default());
     Element::new()
         .styled((STYLE_SCROLL_VIEW.clone(), cx.props.style.clone()))
         .children((
@@ -167,6 +167,11 @@ fn scrollbar(mut cx: Cx<ScrollbarProps>) -> impl View {
     let drag_state = cx.props.drag_state;
     let id_scroll_area = cx.props.id_scroll_area;
     let id_thumb = cx.create_entity();
+    let mode = if vertical {
+        DragMode::DragY
+    } else {
+        DragMode::DragX
+    };
     RefElement::new(cx.props.id_scrollbar)
         .once(move |mut e| {
             e.insert(
@@ -210,6 +215,7 @@ fn scrollbar(mut cx: Cx<ScrollbarProps>) -> impl View {
         })
         .children(
             RefElement::new(id_thumb)
+                .class_names("drag".if_true(cx.read_atom(drag_state).mode == mode))
                 .styled(if vertical {
                     STYLE_SCROLLBAR_Y_THUMB.clone()
                 } else {
@@ -222,8 +228,7 @@ fn scrollbar(mut cx: Cx<ScrollbarProps>) -> impl View {
                         On::<Pointer<DragStart>>::run(
                             move |mut ev: ListenerMut<Pointer<DragStart>>,
                                   mut atoms: AtomStore,
-                                  query: Query<&mut ScrollArea>,
-                                  mut classes: Query<&mut ElementClasses>| {
+                                  query: Query<&mut ScrollArea>| {
                                 ev.stop_propagation();
                                 if let Ok(scroll_area) = query.get(id_scroll_area) {
                                     handle_thumb_drag_start(
@@ -232,9 +237,6 @@ fn scrollbar(mut cx: Cx<ScrollbarProps>) -> impl View {
                                         &mut atoms,
                                         drag_state,
                                     );
-                                    if let Ok(mut cls_names) = classes.get_mut(ev.target) {
-                                        cls_names.add_class(CLS_DRAG)
-                                    }
                                 };
                             },
                         ),
@@ -251,23 +253,15 @@ fn scrollbar(mut cx: Cx<ScrollbarProps>) -> impl View {
                             },
                         ),
                         On::<Pointer<DragEnd>>::run(
-                            move |mut ev: ListenerMut<Pointer<DragEnd>>, mut atoms: AtomStore,
-                            mut classes: Query<&mut ElementClasses>| {
+                            move |mut ev: ListenerMut<Pointer<DragEnd>>, mut atoms: AtomStore| {
                                 ev.stop_propagation();
                                 handle_thumb_drag_end(&mut atoms, drag_state);
-                                if let Ok(mut cls_names) = classes.get_mut(ev.target) {
-                                    cls_names.remove_class(CLS_DRAG)
-                                }
                             },
                         ),
                         On::<Pointer<PointerCancel>>::run(
-                            move |mut ev: ListenerMut<Pointer<DragEnd>>, mut atoms: AtomStore,
-                            mut classes: Query<&mut ElementClasses>| {
+                            move |mut ev: ListenerMut<Pointer<DragEnd>>, mut atoms: AtomStore| {
                                 ev.stop_propagation();
                                 handle_thumb_drag_end(&mut atoms, drag_state);
-                                if let Ok(mut cls_names) = classes.get_mut(ev.target) {
-                                    cls_names.remove_class(CLS_DRAG)
-                                }
                             },
                         ),
                     ));

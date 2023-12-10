@@ -91,7 +91,7 @@ where
     }
 
     /// Set the class names for this View.
-    fn class_names<S: ClassNamesTuple>(self, class_names: S) -> ViewClasses<Self> {
+    fn class_names<'a, CN: ClassNamesTuple<'a>>(self, class_names: CN) -> ViewClasses<Self> {
         ViewClasses::new(self, class_names)
     }
 

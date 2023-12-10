@@ -28,14 +28,10 @@ pub struct ViewClasses<V: View> {
 }
 
 impl<V: View> ViewClasses<V> {
-    pub fn new<S: ClassNamesTuple>(inner: V, items: S) -> Self {
+    pub fn new<'a, S: ClassNamesTuple<'a>>(inner: V, items: S) -> Self {
         Self {
             inner,
-            class_names: items
-                .to_vec()
-                .iter()
-                .filter_map(|cl| cl.to_owned())
-                .collect(),
+            class_names: items.to_set(),
         }
     }
 
@@ -111,47 +107,72 @@ where
     }
 }
 
-// A class name with an optional condition
-
-trait ConditionalClassName: Send {
+/// A class name with an optional condition
+pub trait ClassName: Send + Sized {
     /// Convert the conditional class name to an Option<String>.
-    fn to_class(self) -> Option<String>;
-}
+    fn to_class(&self) -> Option<&str>;
 
-struct NoClass;
-impl ConditionalClassName for NoClass {
-    fn to_class(self) -> Option<String> {
-        None
+    /// Method which allows the class name to be added conditionally.
+    fn if_true(&self, condition: bool) -> ClassNameWithCondition<Self> {
+        ClassNameWithCondition {
+            inner: &self,
+            enabled: condition,
+        }
     }
 }
 
-impl ConditionalClassName for String {
-    fn to_class(self) -> Option<String> {
+pub struct ClassNameWithCondition<'a, C: ClassName> {
+    pub(crate) inner: &'a C,
+    pub(crate) enabled: bool,
+}
+
+impl<'a, C: ClassName + Sync> ClassName for ClassNameWithCondition<'a, C> {
+    fn to_class(&self) -> Option<&str> {
+        if self.enabled {
+            self.inner.to_class()
+        } else {
+            None
+        }
+    }
+
+    fn if_true(&self, condition: bool) -> ClassNameWithCondition<Self> {
+        ClassNameWithCondition {
+            inner: &self,
+            enabled: self.enabled && condition,
+        }
+    }
+}
+
+impl ClassName for String {
+    fn to_class(&self) -> Option<&str> {
         Some(self)
     }
 }
 
-impl ConditionalClassName for &str {
-    fn to_class(self) -> Option<String> {
-        Some(self.to_owned())
+impl ClassName for &str {
+    fn to_class(&self) -> Option<&str> {
+        Some(self)
     }
 }
 
 // Tuple of class names, possibly conditional
 
-pub trait ClassNamesTuple: Send {
-    fn to_vec(self) -> Vec<Option<String>>;
+pub trait ClassNamesTuple<'a>: Send {
+    fn to_set(self) -> HashSet<String>;
 }
 
-impl ClassNamesTuple for () {
-    fn to_vec(self) -> Vec<Option<String>> {
-        Vec::new()
+impl<'a> ClassNamesTuple<'a> for () {
+    fn to_set(self) -> HashSet<String> {
+        HashSet::new()
     }
 }
 
-impl<S0: ConditionalClassName> ClassNamesTuple for S0 {
-    fn to_vec(self) -> Vec<Option<String>> {
-        vec![self.to_class()]
+impl<'a, S0: ClassName> ClassNamesTuple<'a> for S0 {
+    fn to_set(self) -> HashSet<String> {
+        match self.to_class() {
+            Some(cls) => [cls.to_owned()].into(),
+            None => HashSet::new(),
+        }
     }
 }
 
@@ -168,10 +189,45 @@ impl<S0: ConditionalClassName> ClassNamesTuple for S0 {
 // all_tuples!(impl_class_names, 1, 16, S);
 
 #[impl_for_tuples(1, 16)]
-impl ClassNamesTuple for Tuple {
-    for_tuples!( where #( Tuple: ConditionalClassName )* );
+impl<'a> ClassNamesTuple<'a> for Tuple {
+    for_tuples!( where #( Tuple: ClassName )* );
 
-    fn to_vec(self) -> Vec<Option<String>> {
-        Vec::from([for_tuples!( #( self.Tuple.to_class() ),* )])
+    fn to_set(self) -> HashSet<String> {
+        let mut result = HashSet::<String>::new();
+        for_tuples!( #(
+            if let Some(cls) = self.Tuple.to_class() {
+                result.insert(cls.to_owned());
+            } )* );
+        result
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn get_names<'a, CN: ClassNamesTuple<'a>>(class_names: CN) -> HashSet<String> {
+        class_names.to_set()
+    }
+
+    #[test]
+    fn test_class_names() {
+        let cl = get_names(());
+        assert_eq!(cl, HashSet::new());
+
+        let cl = get_names("test");
+        assert_eq!(cl, ["test".to_owned()].into());
+
+        let cl = get_names(("one", "two"));
+        assert_eq!(cl, ["one".to_owned(), "two".to_owned()].into());
+
+        let cl = get_names(("one".if_true(true), "two"));
+        assert_eq!(cl, ["one".to_owned(), "two".to_owned()].into());
+
+        let cl = get_names(("one".if_true(false), "two"));
+        assert_eq!(cl, ["two".to_owned()].into());
+
+        let cl = get_names(("one".if_true(true).if_true(false), "two"));
+        assert_eq!(cl, ["two".to_owned()].into());
     }
 }

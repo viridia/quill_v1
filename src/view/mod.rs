@@ -37,6 +37,7 @@ pub use view::Bind;
 pub use view::PresenterFn;
 pub use view::View;
 pub use view::*;
+pub use view_classes::ClassName;
 pub use view_classes::ElementClasses;
 pub use view_param::ViewParam;
 pub use view_styled::ElementStyles;

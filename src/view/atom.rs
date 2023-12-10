@@ -1,4 +1,4 @@
-use std::{any::Any, marker::PhantomData};
+use std::{any::Any, fmt::Debug, marker::PhantomData};
 
 use bevy::ecs::{
     component::Component,
@@ -15,6 +15,18 @@ where
 {
     pub(crate) id: Entity,
     pub(crate) marker: PhantomData<T>,
+}
+
+impl<T> Debug for AtomHandle<T>
+where
+    T: Clone + Sync + Send + 'static,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AtomHandle")
+            .field("id", &self.id)
+            .field("marker", &self.marker)
+            .finish()
+    }
 }
 
 #[derive(Component)]
