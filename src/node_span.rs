@@ -47,19 +47,19 @@ impl NodeSpan {
         }
     }
 
-    /// Despawn all entities held.
-    /// This version uses Commands instead of a mutable world Borrow.
-    pub(crate) fn despawn2(&self, commands: &mut Commands) {
-        match self {
-            Self::Empty => {}
-            Self::Node(entity) => {
-                let mut entt = commands.entity(*entity);
-                entt.remove_parent();
-                entt.despawn();
-            }
-            Self::Fragment(nodes) => nodes.iter().for_each(|node| node.despawn2(commands)),
-        }
-    }
+    // Despawn all entities held.
+    // This version uses Commands instead of a mutable world Borrow.
+    // pub(crate) fn despawn2(&self, commands: &mut Commands) {
+    //     match self {
+    //         Self::Empty => {}
+    //         Self::Node(entity) => {
+    //             let mut entt = commands.entity(*entity);
+    //             entt.remove_parent();
+    //             entt.despawn();
+    //         }
+    //         Self::Fragment(nodes) => nodes.iter().for_each(|node| node.despawn2(commands)),
+    //     }
+    // }
 }
 
 impl PartialEq for NodeSpan {
