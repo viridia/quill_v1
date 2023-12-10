@@ -162,11 +162,13 @@ fn update_styles(
         Ref<'static, Style>,
     )>,
     parent_query: Query<&'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
+    children_query: Query<&'static Children, Or<(With<ElementStyles>, With<Text>)>>,
     hover_map: Res<HoverMap>,
     hover_map_prev: Res<PreviousHoverMap>,
 ) {
-    let matcher = SelectorMatcher::new(&query, &parent_query, &hover_map.0);
-    let matcher_prev = SelectorMatcher::new(&query, &parent_query, &hover_map_prev.0);
+    let matcher = SelectorMatcher::new(&query, &parent_query, &children_query, &hover_map.0);
+    let matcher_prev =
+        SelectorMatcher::new(&query, &parent_query, &children_query, &hover_map_prev.0);
     for (entity, styles, _, style) in query.iter() {
         let mut changed = styles.is_changed();
         if !changed && styles.selector_depth > 0 {

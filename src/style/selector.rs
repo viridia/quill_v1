@@ -40,6 +40,12 @@ pub enum Selector {
     /// Element that is being hovered.
     Hover(Box<Selector>),
 
+    /// Element is the first child of its parent.
+    FirstChild(Box<Selector>),
+
+    /// Element is the last child of its parent.
+    LastChild(Box<Selector>),
+
     /// Reference to the current element.
     Current(Box<Selector>),
 
@@ -53,6 +59,8 @@ pub enum Selector {
 enum SelectorToken<'s> {
     Class(&'s str),
     Hover,
+    FirstChild,
+    LastChild,
 }
 
 fn parent<'s>(input: &mut &'s str) -> PResult<()> {
@@ -79,8 +87,26 @@ fn hover<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
         .parse_next(input)
 }
 
+fn first_child<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
+    ":first-child"
+        .recognize()
+        .map(|_| SelectorToken::FirstChild)
+        .parse_next(input)
+}
+
+fn last_child<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
+    ":last-child"
+        .recognize()
+        .map(|_| SelectorToken::LastChild)
+        .parse_next(input)
+}
+
 fn simple_selector<'s>(input: &mut &'s str) -> PResult<(Option<char>, Vec<SelectorToken<'s>>)> {
-    (opt(alt(('*', '&'))), repeat(0.., alt((class_name, hover)))).parse_next(input)
+    (
+        opt(alt(('*', '&'))),
+        repeat(0.., alt((class_name, hover, first_child, last_child))),
+    )
+        .parse_next(input)
 }
 
 fn combo_selector<'s, 'a>(input: &mut &'s str) -> PResult<Box<Selector>> {
@@ -93,6 +119,12 @@ fn combo_selector<'s, 'a>(input: &mut &'s str) -> PResult<Box<Selector>> {
             }
             SelectorToken::Hover => {
                 sel = Box::new(Selector::Hover(sel));
+            }
+            SelectorToken::FirstChild => {
+                sel = Box::new(Selector::FirstChild(sel));
+            }
+            SelectorToken::LastChild => {
+                sel = Box::new(Selector::LastChild(sel));
             }
         }
     }
@@ -134,6 +166,12 @@ impl<'a> Selector {
                     SelectorToken::Hover => {
                         sel = Box::new(Selector::Hover(sel));
                     }
+                    SelectorToken::FirstChild => {
+                        sel = Box::new(Selector::FirstChild(sel));
+                    }
+                    SelectorToken::LastChild => {
+                        sel = Box::new(Selector::LastChild(sel));
+                    }
                 }
             }
             if let Some(ch) = prefix {
@@ -153,6 +191,8 @@ impl<'a> Selector {
             Selector::Accept => 1,
             Selector::Class(_, next) => next.depth(),
             Selector::Hover(next) => next.depth(),
+            Selector::FirstChild(next) => next.depth(),
+            Selector::LastChild(next) => next.depth(),
             Selector::Current(next) => next.depth(),
             Selector::Parent(next) => next.depth() + 1,
             Selector::Either(opts) => opts.iter().map(|next| next.depth()).max().unwrap_or(0),
@@ -165,6 +205,8 @@ impl<'a> Selector {
             Selector::Accept => false,
             Selector::Class(_, next) => next.uses_hover(),
             Selector::Hover(_) => true,
+            Selector::FirstChild(next) => next.uses_hover(),
+            Selector::LastChild(next) => next.uses_hover(),
             Selector::Current(next) => next.uses_hover(),
             Selector::Parent(next) => next.uses_hover(),
             Selector::Either(opts) => opts
@@ -206,6 +248,8 @@ impl fmt::Display for Selector {
 
             Selector::Class(name, prev) => write!(f, "{}.{}", prev, name),
             Selector::Hover(prev) => write!(f, "{}:hover", prev),
+            Selector::FirstChild(prev) => write!(f, "{}:first-child", prev),
+            Selector::LastChild(prev) => write!(f, "{}:last-child", prev),
             Selector::Parent(prev) => match prev.as_ref() {
                 Selector::Parent(_) => write!(f, "{}* > ", prev),
                 _ => write!(f, "{} > ", prev),
@@ -302,6 +346,32 @@ mod tests {
         assert_eq!(
             ".foo:hover".parse::<Selector>().unwrap(),
             Selector::Hover(Box::new(Selector::Class(
+                "foo".into(),
+                Box::new(Selector::Accept)
+            )))
+        );
+    }
+
+    #[test]
+    fn test_parse_first_last_child() {
+        assert_eq!(
+            ":first-child".parse::<Selector>().unwrap(),
+            Selector::FirstChild(Box::new(Selector::Accept))
+        );
+        assert_eq!(
+            ".foo:first-child".parse::<Selector>().unwrap(),
+            Selector::FirstChild(Box::new(Selector::Class(
+                "foo".into(),
+                Box::new(Selector::Accept)
+            )))
+        );
+        assert_eq!(
+            ":last-child".parse::<Selector>().unwrap(),
+            Selector::LastChild(Box::new(Selector::Accept))
+        );
+        assert_eq!(
+            ".foo:last-child".parse::<Selector>().unwrap(),
+            Selector::LastChild(Box::new(Selector::Class(
                 "foo".into(),
                 Box::new(Selector::Accept)
             )))

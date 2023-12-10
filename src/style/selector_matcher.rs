@@ -17,6 +17,7 @@ pub struct SelectorMatcher<'w, 's, 'h> {
         ),
     >,
     parent_query: &'h Query<'w, 's, &'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
+    children_query: &'h Query<'w, 's, &'static Children, Or<(With<ElementStyles>, With<Text>)>>,
     hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
 }
 
@@ -33,11 +34,13 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
             ),
         >,
         parent_query: &'h Query<'w, 's, &'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
+        children_query: &'h Query<'w, 's, &'static Children, Or<(With<ElementStyles>, With<Text>)>>,
         hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
     ) -> Self {
         Self {
             query,
             parent_query,
+            children_query,
             hover_map,
         }
     }
@@ -59,6 +62,26 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
         }
     }
 
+    pub(crate) fn is_first_child(&self, entity: &Entity) -> bool {
+        match self.parent_query.get(*entity) {
+            Ok(parent) => match self.children_query.get(parent.get()) {
+                Ok(children) => children.first() == Some(entity),
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_last_child(&self, entity: &Entity) -> bool {
+        match self.parent_query.get(*entity) {
+            Ok(parent) => match self.children_query.get(parent.get()) {
+                Ok(children) => children.last() == Some(entity),
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
     /// Given an array of match params representing the element's ancestor chain, match the
     /// selector expression with the params.
     pub(crate) fn selector_match<'b>(&self, selector: &'b Selector, entity: &Entity) -> bool {
@@ -71,6 +94,12 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
                 Err(_) => false,
             },
             Selector::Hover(next) => self.is_hovering(&entity) && self.selector_match(next, entity),
+            Selector::FirstChild(next) => {
+                self.is_first_child(&entity) && self.selector_match(next, entity)
+            }
+            Selector::LastChild(next) => {
+                self.is_last_child(&entity) && self.selector_match(next, entity)
+            }
             Selector::Current(next) => self.selector_match(next, entity),
             Selector::Parent(next) => match self.parent_query.get(*entity) {
                 Ok(parent) => self.selector_match(next, &parent.get()),

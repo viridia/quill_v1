@@ -215,7 +215,7 @@ fn scrollbar(mut cx: Cx<ScrollbarProps>) -> impl View {
         })
         .children(
             RefElement::new(id_thumb)
-                .class_names("drag".if_true(cx.read_atom(drag_state).mode == mode))
+                .class_names(CLS_DRAG.if_true(cx.read_atom(drag_state).mode == mode))
                 .styled(if vertical {
                     STYLE_SCROLLBAR_Y_THUMB.clone()
                 } else {
