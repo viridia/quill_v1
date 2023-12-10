@@ -257,13 +257,26 @@ Conditional styles can be added via selectors. It supports a limited subset of C
 
 * `:hover`
 * `.classname`
-* `>` (parent combinator, e.g. `:hover > &`
+* `:first-child` and `:last-child`
+* `>` (parent combinator, e.g. `:hover > &`)
 * `&` (current element)
 * ',' (logical-or)
 
 Note that selectors only support styling the *current* node - that is, the node that the style handle is attached to. Selectors can't affect child nodes - they need to have their own styles.
 
 So for example, `".bg:hover > &"` is a valid selector expression, but `"&:hover > .bg"` is not valid. The `&` must always be on the last term. The reason for this is performance - Quill only supports those features of CSS that are lightning-fast.
+
+### Class names
+
+The `class_names` method can add class names to an element. Class names can be added conditionally
+using the `.if_true()` modifier.
+
+```rust
+pub fn classnames_example(cx: Cx<Props>) -> impl View {
+    Element::new()
+        .class_names("vertical", "selected".if_true(cx.props.selected))
+}
+```
 
 ### Adding new hooks
 
