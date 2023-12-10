@@ -1,6 +1,7 @@
 use crate::node_span::NodeSpan;
 use crate::{View, ViewContext};
 use bevy::prelude::*;
+// use bevy::utils::all_tuples;
 use bevy::utils::HashSet;
 use impl_trait_for_tuples::*;
 
@@ -89,6 +90,27 @@ impl<V: View> View for ViewClasses<V> {
     }
 }
 
+impl<V: View> Clone for ViewClasses<V>
+where
+    V: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            class_names: self.class_names.clone(),
+        }
+    }
+}
+
+impl<V: View> PartialEq for ViewClasses<V>
+where
+    V: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.inner == other.inner && self.class_names == other.class_names
+    }
+}
+
 // A class name with an optional condition
 
 trait ConditionalClassName: Send {
@@ -132,6 +154,18 @@ impl<S0: ConditionalClassName> ClassNamesTuple for S0 {
         vec![self.to_class()]
     }
 }
+
+// macro_rules! impl_class_names {
+//     ($($T:ident),*) => {
+//         impl<$($T: ConditionalClassName),*> ClassNamesTuple for ($($T,)*) {
+//             fn to_vec(self) -> Vec<Option<String>> {
+//                 Vec::from([$(self.$T.to_class()),* ])
+//             }
+//         }
+//     };
+// }
+
+// all_tuples!(impl_class_names, 1, 16, S);
 
 #[impl_for_tuples(1, 16)]
 impl ClassNamesTuple for Tuple {

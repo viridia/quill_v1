@@ -22,7 +22,7 @@ use scrollview::{scroll_view, ScrollViewProps};
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use static_init::dynamic;
-use swatch::{swatch, swatch_grid, SwatchGridProps, SwatchProps};
+use swatch::{swatch, swatch_grid, swatch_list, SwatchGridProps, SwatchProps};
 use viewport::{ViewportInset, ViewportInsetElement};
 
 fn main() {
@@ -142,6 +142,13 @@ static STYLE_BOTTOM_PANE: StyleHandle = StyleHandle::build(|ss| {
 });
 
 #[dynamic]
+static STYLE_BOTTOM_PANE_INNER: StyleHandle = StyleHandle::build(|ss| {
+    ss.flex_direction(ui::FlexDirection::Column)
+        .height(ui::Val::Auto)
+        .min_width(200)
+});
+
+#[dynamic]
 static COLORS: Vec<Color> = vec![
     Color::hex("#fff").unwrap(),
     Color::hex("#ffc").unwrap(),
@@ -256,11 +263,18 @@ fn ui_main(mut cx: Cx) -> impl View {
                     }),
                     color_edit,
                     scroll_view.bind(ScrollViewProps {
-                        children: "Hello, World! This is a very long message.",
+                        children: ViewParam::new(
+                            Element::new().styled(STYLE_BOTTOM_PANE_INNER.clone()).children((
+                                "Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message.",
+                                swatch_list.bind(SwatchGridProps {
+                                    colors: &COLORS,
+                                    row_span: 4,
+                                }),
+                            )),
+                        ),
                         scroll_enable_x: true,
                         scroll_enable_y: true,
                         style: STYLE_BOTTOM_PANE.clone(),
-                        ..default()
                     }),
                 )),
             v_splitter.bind(SplitterProps {

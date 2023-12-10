@@ -7,7 +7,7 @@ use bevy::{prelude::*, utils::HashSet};
 
 use crate::{
     tracked_resources::TrackedResources,
-    tracking::{OwnedAtomHandles, TrackedComponents},
+    tracking::{OwnedEntities, TrackedComponents},
     NodeSpan, PresenterFn, TrackingContext, ViewContext,
 };
 
@@ -89,7 +89,7 @@ pub trait AnyPresenterState: Send {
 
 impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker, F> {
     fn build(&mut self, vc: &mut ViewContext, entity: Entity) {
-        let atom_handles: Vec<Entity> = match vc.world.entity(entity).get::<OwnedAtomHandles>() {
+        let atom_handles: Vec<Entity> = match vc.world.entity(entity).get::<OwnedEntities>() {
             Some(owned) => owned.0.clone(),
             None => Vec::new(),
         };
@@ -97,8 +97,8 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         let mut tracking = TrackingContext {
             resources: Vec::new(),
             components: HashSet::new(),
-            next_atom_index: 0,
-            atom_handles,
+            next_entity_index: 0,
+            owned_entities: atom_handles,
         };
         let cx = Cx::new(&self.props, &mut child_context, &mut tracking);
         self.view = Some(self.presenter.call(cx));
@@ -137,10 +137,10 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
             entt.remove::<TrackedComponents>();
         }
 
-        if tracking.atom_handles.len() > 0 {
-            entt.insert(OwnedAtomHandles(tracking.atom_handles));
+        if tracking.owned_entities.len() > 0 {
+            entt.insert(OwnedEntities(tracking.owned_entities));
         } else {
-            entt.remove::<OwnedAtomHandles>();
+            entt.remove::<OwnedEntities>();
         }
     }
 
@@ -155,8 +155,8 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
             self.state = None;
         }
 
-        // Release all atom handles.
-        if let Some(mut handles) = vc.world.entity_mut(entity).get_mut::<OwnedAtomHandles>() {
+        // Release all owned entities.
+        if let Some(mut handles) = vc.world.entity_mut(entity).get_mut::<OwnedEntities>() {
             let mut handles_copy: Vec<Entity> = Vec::new();
             std::mem::swap(&mut handles.0, &mut handles_copy);
             for handle in handles_copy.iter() {

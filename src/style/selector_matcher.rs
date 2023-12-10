@@ -13,6 +13,7 @@ pub struct SelectorMatcher<'w, 's, 'h> {
             Entity,
             Ref<'static, ElementStyles>,
             Ref<'static, ElementClasses>,
+            Ref<'static, Style>,
         ),
     >,
     parent_query: &'h Query<'w, 's, &'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
@@ -28,6 +29,7 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
                 Entity,
                 Ref<'static, ElementStyles>,
                 Ref<'static, ElementClasses>,
+                Ref<'static, Style>,
             ),
         >,
         parent_query: &'h Query<'w, 's, &'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
@@ -63,7 +65,9 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
         match selector {
             Selector::Accept => true,
             Selector::Class(cls, next) => match self.query.get(*entity) {
-                Ok((_, _, classes)) => classes.0.contains(cls) && self.selector_match(next, entity),
+                Ok((_, _, classes, _)) => {
+                    classes.0.contains(cls) && self.selector_match(next, entity)
+                }
                 Err(_) => false,
             },
             Selector::Hover(next) => self.is_hovering(&entity) && self.selector_match(next, entity),

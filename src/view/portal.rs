@@ -45,3 +45,15 @@ impl View for Portal {
         entt.despawn();
     }
 }
+
+impl Clone for Portal {
+    fn clone(&self) -> Self {
+        Self {}
+    }
+}
+
+impl PartialEq for Portal {
+    fn eq(&self, _other: &Self) -> bool {
+        true
+    }
+}

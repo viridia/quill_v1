@@ -1,13 +1,17 @@
 use bevy::{prelude::*, utils::HashSet};
-use bevy_mod_picking::focus::{HoverMap, PreviousHoverMap};
+use bevy_mod_picking::{
+    focus::{HoverMap, PreviousHoverMap},
+    prelude::EventListenerPlugin,
+};
 
 use crate::{
-    animate_bg_colors, animate_border_colors, animate_transforms,
+    animate_bg_colors, animate_border_colors, animate_transforms, handle_scroll_events,
     presenter_state::{PresenterGraphChanged, PresenterStateChanged},
     style::{ComputedStyle, UpdateComputedStyle},
     tracked_resources::TrackedResources,
     tracking::TrackedComponents,
-    ElementClasses, ElementStyles, SelectorMatcher, ViewContext, ViewHandle,
+    update_scroll_positions, ElementClasses, ElementStyles, ScrollWheel, SelectorMatcher,
+    ViewContext, ViewHandle,
 };
 
 /// Plugin which initializes the Quill library.
@@ -25,7 +29,10 @@ impl Plugin for QuillPlugin {
                 animate_border_colors,
             )
                 .chain(),
-        );
+        )
+        .add_systems(Update, (update_scroll_positions, handle_scroll_events))
+        .add_plugins(EventListenerPlugin::<ScrollWheel>::default())
+        .add_event::<ScrollWheel>();
     }
 }
 
@@ -152,6 +159,7 @@ fn update_styles(
         Entity,
         Ref<'static, ElementStyles>,
         Ref<'static, ElementClasses>,
+        Ref<'static, Style>,
     )>,
     parent_query: Query<&'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
     hover_map: Res<HoverMap>,
@@ -159,7 +167,7 @@ fn update_styles(
 ) {
     let matcher = SelectorMatcher::new(&query, &parent_query, &hover_map.0);
     let matcher_prev = SelectorMatcher::new(&query, &parent_query, &hover_map_prev.0);
-    for (entity, styles, _) in query.iter() {
+    for (entity, styles, _, style) in query.iter() {
         let mut changed = styles.is_changed();
         if !changed && styles.selector_depth > 0 {
             // Search ancestors to see if any have changed.
@@ -167,7 +175,7 @@ fn update_styles(
             let mut e = entity;
             for _ in 0..styles.selector_depth {
                 match query.get(e) {
-                    Ok((_, _, a_classes)) => {
+                    Ok((_, _, a_classes, _)) => {
                         if styles.uses_hover
                             && matcher.is_hovering(&e) != matcher_prev.is_hovering(&e)
                         {
@@ -190,8 +198,9 @@ fn update_styles(
             }
         }
         if changed {
-            // Compute computed style.
+            // Compute computed style. Initialize to the current state.
             let mut computed = ComputedStyle::new();
+            computed.style = style.clone();
             for ss in styles.styles.iter() {
                 ss.apply_to(&mut computed, &matcher, &entity);
             }

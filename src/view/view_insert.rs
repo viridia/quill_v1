@@ -47,7 +47,7 @@ impl<V: View, C: Component + Clone> View for ViewInsert<V, C> {
 
     fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
         self.inner.update(vc, &mut state.0);
-        let nodes = self.nodes(vc, state);
+        let nodes = self.inner.nodes(vc, &state.0);
         // Only insert the component when the output entity has changed.
         if state.1 != nodes {
             state.1 = nodes;

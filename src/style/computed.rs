@@ -255,9 +255,12 @@ impl Command for UpdateComputedStyle {
             }
 
             // Update Z-Index
-            match (self.computed.z_index, e.get_mut::<ZIndex>()) {
-                (Some(z), Some(_)) => {
-                    e.insert(z);
+            match (self.computed.z_index, e.get::<ZIndex>()) {
+                // Don't change if value is the same
+                (Some(ZIndex::Local(zi)), Some(ZIndex::Local(zo))) if zi == *zo => {}
+                (Some(ZIndex::Global(zi)), Some(ZIndex::Global(zo))) if zi == *zo => {}
+                (Some(zi), Some(_)) => {
+                    e.insert(zi);
                 }
                 (None, Some(_)) => {
                     e.remove::<ZIndex>();

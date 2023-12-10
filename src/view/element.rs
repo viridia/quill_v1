@@ -46,3 +46,15 @@ impl View for Element {
         entt.despawn();
     }
 }
+
+impl Clone for Element {
+    fn clone(&self) -> Self {
+        Self {}
+    }
+}
+
+impl PartialEq for Element {
+    fn eq(&self, _other: &Self) -> bool {
+        true
+    }
+}

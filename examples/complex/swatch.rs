@@ -10,7 +10,7 @@ static STYLE_SWATCH: StyleHandle = StyleHandle::build(|ss| {
     ss.border_color(Some(Color::BLACK))
         .border(1)
         .min_width(9)
-        .min_height(16)
+        .height(16)
         .outline_color(Some(Color::NONE))
         .outline_offset(1.)
         .outline_width(1.)
@@ -22,7 +22,6 @@ static STYLE_SWATCH: StyleHandle = StyleHandle::build(|ss| {
 static STYLE_SWATCH_GRID: StyleHandle = StyleHandle::build(|ss| {
     ss.display(ui::Display::Grid)
         .grid_template_columns(vec![ui::RepeatedGridTrack::fr(5, 1.)])
-        // .grid_auto_flow(ui::GridAutoFlow::Column)
         .gap(3)
         .min_width(9)
         .min_height(16)
@@ -50,11 +49,15 @@ pub struct SwatchGridProps<'a> {
 // Color swatch grid
 pub fn swatch_grid(cx: Cx<SwatchGridProps>) -> impl View {
     Element::new()
-        .styled((
-            STYLE_SWATCH_GRID.clone(),
-            // StyleHandle::build(|s| s.background_color(Some(cx.props.color))),
-        ))
+        .styled(STYLE_SWATCH_GRID.clone())
         .children(For::each(cx.props.colors, |color| {
             swatch.bind(SwatchProps { color: *color })
         }))
+}
+
+// Color swatch list
+pub fn swatch_list(cx: Cx<SwatchGridProps>) -> impl View {
+    For::each(cx.props.colors, |color| {
+        swatch.bind(SwatchProps { color: *color })
+    })
 }

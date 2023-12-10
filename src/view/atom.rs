@@ -8,7 +8,7 @@ use bevy::ecs::{
 };
 
 /// A unique key which can be used to read and write an atom.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct AtomHandle<T>
 where
     T: Clone + Sync + Send + 'static,
@@ -89,6 +89,21 @@ impl<'w, 's> AtomStore<'w, 's> {
             .downcast_ref::<T>()
             .expect("Atom is incorrect type")
             .clone()
+    }
+
+    /// Read the value of an atom. Returns None atom does not exist.
+    pub fn try_get<T: Clone + Sync + Send + 'static>(&self, handle: AtomHandle<T>) -> Option<T> {
+        if let Ok(cell) = self.query.get(handle.id) {
+            Some(
+                cell.0
+                    .as_ref()
+                    .downcast_ref::<T>()
+                    .expect("Atom is incorrect type")
+                    .clone(),
+            )
+        } else {
+            None
+        }
     }
 
     /// Write the value of an atom. Panics if the atom handle is invalid.

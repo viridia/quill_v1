@@ -178,9 +178,9 @@ which don't have tracking contexts. Calling `.get()` does not track the atom. Ho
 `.set()` will trigger reactions in any other tracking contexts that depend on the atom.
 
 ```rust
-fn local_test(mut cx: Cx<&str>) -> impl View {
+fn atom_example(mut cx: Cx<&str>) -> impl View {
     let name = *cx.props;
-    let counter = cx.create_atom::<i32>(|| 0);
+    let counter = cx.create_atom_init::<i32>(|| 0);
     Element::new()
         .children((
             format!("The count is: {}: {}", name, cx.read_atom(counter)),
@@ -196,6 +196,35 @@ fn local_test(mut cx: Cx<&str>) -> impl View {
         })
 }
 ```
+
+### RefElement and explicit entity ids
+
+The typical way of updating the state of an element is by modifying the state and props of
+a presenter, which causes the elements to be rebuilt and patched. However, there are a few
+cases where you may want to directly modify an element at the component level from another element,
+bypassing the normal update process. In this case, it's desirable for an element to contain
+the entity id of another element, so that it access it directly.
+
+To do this, we can pre-allocated an entity id via `cx.create_entity()`. This method creates
+a stable entity id which is "owned" by the presenter state, meaning that when the presenter
+is razed, all of the owned ids will be despawned as well. `create_entity` is a hook, so it returns
+the same entity id each time the presenter function is run.
+
+Now that we have an entity id, we can do two things with it:
+
+* Render a `View` using that entity id.
+* Pass that entity as a parameter to other `Views`, either as a property or as an attribute of
+  a component.
+
+`RefElement` is a `View` type, similar to `Element`. The only difference is that where `Element`
+automatically spawns a new entity when building the `View`, `RefElement` uses the entity id that
+you pass into it.
+
+> [!NOTE]
+> Note: Those who are familiar with React.js will note that this is the exact inverse of React's
+> `useRef()` hook, although it is used for the same purpose. The `useRef()` hook creates an empty
+> placeholder which is filled in with the element reference during rendering, whereas
+> `create_entity` lets us allocate an element id before rendering happens.
 
 ### Styling
 

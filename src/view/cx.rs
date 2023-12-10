@@ -67,24 +67,31 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         self.vc.world.entity_mut(self.vc.entity)
     }
 
+    /// Spawn an empty [`Entity`] which is owned by this presenter. The entity will be
+    /// despawned when the presenter state is razed.
+    pub fn create_entity(&mut self) -> Entity {
+        let mut tracking = self.tracking.borrow_mut();
+        let index = tracking.next_entity_index;
+        tracking.next_entity_index = index + 1;
+        if index < tracking.owned_entities.len() {
+            return tracking.owned_entities[index];
+        } else if index == tracking.owned_entities.len() {
+            let id = self.vc.world.spawn_empty().id();
+            tracking.owned_entities.push(id);
+            return id;
+        } else {
+            panic!("Invalid presenter entity index");
+        }
+    }
+
     /// Create an [`AtomHandle`]. This can be used to read and write the content of an atom.
     /// The handle is owned by the current context, and will be deleted when the presenter
     /// invocation is razed.
     pub fn create_atom<T: Clone + Sync + Send + 'static>(&mut self) -> AtomHandle<T> {
-        let mut tracking = self.tracking.borrow_mut();
-        let index = tracking.next_atom_index;
-        tracking.next_atom_index = index + 1;
-        if index < tracking.atom_handles.len() {
-            return AtomHandle {
-                id: tracking.atom_handles[index],
-                marker: PhantomData,
-            };
-        } else if index == tracking.atom_handles.len() {
-            let handle = self.vc.world.create_atom::<T>();
-            tracking.atom_handles.push(handle.id);
-            return handle;
-        } else {
-            panic!("Invalid atom handle index");
+        let id = self.create_entity();
+        AtomHandle {
+            id,
+            marker: PhantomData,
         }
     }
 

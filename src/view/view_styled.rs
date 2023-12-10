@@ -108,6 +108,27 @@ impl<V: View> View for ViewStyled<V> {
     // }
 }
 
+impl<V: View> Clone for ViewStyled<V>
+where
+    V: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            styles: self.styles.clone(),
+        }
+    }
+}
+
+impl<V: View> PartialEq for ViewStyled<V>
+where
+    V: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.inner == other.inner && self.styles == other.styles
+    }
+}
+
 // StyleTuple - a variable-length tuple of styles.
 
 pub trait StyleTuple: Send {
