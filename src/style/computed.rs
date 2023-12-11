@@ -6,7 +6,6 @@ use super::transition::{
 use bevy::asset::AssetPath;
 use bevy::ecs::system::Command;
 use bevy::prelude::*;
-use bevy::render::texture::{ImageLoaderSettings, ImageSampler};
 use bevy::text::BreakLineOn;
 use bevy::ui::widget::UiImageSize;
 use bevy::ui::ContentSize;
@@ -22,7 +21,8 @@ pub struct ComputedStyle {
     pub alignment: Option<TextAlignment>,
     pub color: Option<Color>,
     pub font_size: Option<f32>,
-    pub font: Option<Handle<Font>>,
+    pub font: Option<AssetPath<'static>>,
+    pub font_handle: Option<Handle<Font>>,
     pub line_break: Option<BreakLineOn>,
 
     // pub text_style: TextStyle,
@@ -41,6 +41,7 @@ pub struct ComputedStyle {
 
     // Image properties
     pub image: Option<AssetPath<'static>>,
+    pub image_handle: Option<Handle<Image>>,
     pub flip_x: bool,
     pub flip_y: bool,
 
@@ -57,18 +58,18 @@ impl ComputedStyle {
         Self { ..default() }
     }
 
-    /// Construct a new style that inherits from a parent style. Only attributes which
-    /// are inheritable will be inherited, all others will be set to the default.
-    pub fn inherit(parent: &Self) -> Self {
-        Self {
-            alignment: parent.alignment,
-            color: parent.color,
-            font_size: parent.font_size,
-            font: parent.font.clone(),
-            line_break: parent.line_break.clone(),
-            ..default()
-        }
-    }
+    // Construct a new style that inherits from a parent style. Only attributes which
+    // are inheritable will be inherited, all others will be set to the default.
+    // pub fn inherit(parent: &Self) -> Self {
+    //     Self {
+    //         alignment: parent.alignment,
+    //         color: parent.color,
+    //         font_size: parent.font_size,
+    //         font: parent.font.clone(),
+    //         line_break: parent.line_break.clone(),
+    //         ..default()
+    //     }
+    // }
 }
 
 /// Custom command that updates the style of an entity.
@@ -92,15 +93,9 @@ impl Command for UpdateComputedStyle {
                 TransitionProperty::BorderColor => is_animated_border_color = true,
             });
 
-        let bg_image = self.computed.image.map(|path| {
-            world
-                .get_resource::<AssetServer>()
-                .unwrap()
-                .load_with_settings(path, |s: &mut ImageLoaderSettings| {
-                    s.sampler = ImageSampler::linear()
-                })
-        });
         if let Some(mut e) = world.get_entity_mut(self.entity) {
+            let bg_image = self.computed.image_handle;
+
             if let Some(mut style) = e.get_mut::<Style>() {
                 // Update the existing style
                 if !style.eq(&self.computed.style) {
@@ -113,8 +108,6 @@ impl Command for UpdateComputedStyle {
 
             match e.get_mut::<Text>() {
                 Some(mut text) => {
-                    // TODO: This is never executed
-                    // TODO: Compare and mutate
                     if let Some(color) = self.computed.color {
                         for section in text.sections.iter_mut() {
                             if section.style.color != color {
@@ -126,6 +119,22 @@ impl Command for UpdateComputedStyle {
                     if let Some(ws) = self.computed.line_break {
                         if text.linebreak_behavior != ws {
                             text.linebreak_behavior = ws;
+                        }
+                    }
+
+                    if let Some(font_size) = self.computed.font_size {
+                        for section in text.sections.iter_mut() {
+                            if section.style.font_size != font_size {
+                                section.style.font_size = font_size;
+                            }
+                        }
+                    }
+
+                    if let Some(ref font) = self.computed.font_handle {
+                        for section in text.sections.iter_mut() {
+                            if section.style.font != *font {
+                                section.style.font = font.clone();
+                            }
                         }
                     }
                 }

@@ -10,12 +10,13 @@ pub struct ElementStyles {
     /// The collection of styles associated with this element.
     pub styles: Vec<StyleHandle>,
 
-    // How far up the hierarchy the selectors need to search
+    /// How far up the hierarchy the selectors need to search
     pub(crate) selector_depth: usize,
 
-    // Whether any selectors use the :hover pseudo-class
+    /// Whether any selectors use the :hover pseudo-class
     pub(crate) uses_hover: bool,
-    // TODO: Inherited
+    // Whether any selectors use inherited properties.
+    // pub(crate) uses_inherited: bool,
 }
 
 // A wrapper view which applies styles to the output of an inner view.

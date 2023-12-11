@@ -1,4 +1,8 @@
-use bevy::{prelude::*, utils::HashSet};
+use bevy::{
+    prelude::*,
+    render::texture::{ImageLoaderSettings, ImageSampler},
+    utils::HashSet,
+};
 use bevy_mod_picking::{
     focus::{HoverMap, PreviousHoverMap},
     prelude::EventListenerPlugin,
@@ -161,10 +165,11 @@ fn update_styles(
         Ref<'static, ElementClasses>,
         Ref<'static, Style>,
     )>,
-    parent_query: Query<&'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
-    children_query: Query<&'static Children, Or<(With<ElementStyles>, With<Text>)>>,
+    parent_query: Query<&'static Parent, (With<Node>, With<Visibility>)>,
+    children_query: Query<&'static Children, (With<Node>, With<Visibility>)>,
     hover_map: Res<HoverMap>,
     hover_map_prev: Res<PreviousHoverMap>,
+    assets: Res<AssetServer>,
 ) {
     let matcher = SelectorMatcher::new(&query, &parent_query, &children_query, &hover_map.0);
     let matcher_prev =
@@ -206,6 +211,18 @@ fn update_styles(
             for ss in styles.styles.iter() {
                 ss.apply_to(&mut computed, &matcher, &entity);
             }
+            computed.font_handle = match computed.font {
+                Some(ref path) => Some(assets.load(path)),
+                None => None,
+            };
+            computed.image_handle = match computed.image {
+                Some(ref path) => Some(
+                    assets.load_with_settings(path, |s: &mut ImageLoaderSettings| {
+                        s.sampler = ImageSampler::linear()
+                    }),
+                ),
+                None => None,
+            };
             commands.add(UpdateComputedStyle { entity, computed });
         }
     }

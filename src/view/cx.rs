@@ -57,6 +57,29 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         self.vc.world.entity(self.vc.entity).get::<C>()
     }
 
+    /// Run a function on the view entity. Will only re-run when [`deps`] changes.
+    pub fn use_effect<F: Fn(EntityWorldMut), D: Clone + PartialEq + Send + Sync + 'static>(
+        &mut self,
+        effect: F,
+        deps: D,
+    ) {
+        let handle = self.create_atom_handle::<D>();
+        let mut entt = self.vc.world.entity_mut(handle.id);
+        match entt.get_mut::<AtomCell>() {
+            Some(mut cell) => {
+                let deps_old = cell.0.downcast_mut::<D>().expect("Atom is incorrect type");
+                if *deps_old != deps {
+                    *deps_old = deps;
+                    (effect)(self.vc.world.entity_mut(self.vc.entity));
+                }
+            }
+            None => {
+                entt.insert(AtomCell(Box::new(deps)));
+                (effect)(self.vc.world.entity_mut(self.vc.entity));
+            }
+        }
+    }
+
     /// Return a reference to the entity that holds the current presenter invocation.
     pub fn use_view_entity(&self) -> EntityRef<'_> {
         self.vc.world.entity(self.vc.entity)
@@ -87,12 +110,16 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// Create an [`AtomHandle`]. This can be used to read and write the content of an atom.
     /// The handle is owned by the current context, and will be deleted when the presenter
     /// invocation is razed.
-    pub fn create_atom<T: Clone + Sync + Send + 'static>(&mut self) -> AtomHandle<T> {
-        let id = self.create_entity();
-        AtomHandle {
-            id,
-            marker: PhantomData,
+    pub fn create_atom<T: Clone + Sync + Send + Default + 'static>(&mut self) -> AtomHandle<T> {
+        let handle = self.create_atom_handle::<T>();
+        let mut entt = self.vc.world.entity_mut(handle.id);
+        match entt.get_mut::<AtomCell>() {
+            Some(_) => {}
+            None => {
+                entt.insert(AtomCell(Box::new(T::default())));
+            }
         }
+        handle
     }
 
     /// Create an [`AtomHandle`] with an initial value.
@@ -102,7 +129,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         &mut self,
         init: impl FnOnce() -> T,
     ) -> AtomHandle<T> {
-        let handle = self.create_atom::<T>();
+        let handle = self.create_atom_handle::<T>();
         let mut entt = self.vc.world.entity_mut(handle.id);
         match entt.get_mut::<AtomCell>() {
             Some(_) => {}
@@ -141,6 +168,17 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     // pub fn use_callback<In, Marker>(&mut self, sys: impl IntoSystem<In, (), Marker>) {
     //     todo!()
     // }
+
+    /// Create an [`AtomHandle`]. This can be used to read and write the content of an atom.
+    /// The handle is owned by the current context, and will be deleted when the presenter
+    /// invocation is razed.
+    fn create_atom_handle<T: Clone + Sync + Send + 'static>(&mut self) -> AtomHandle<T> {
+        let id = self.create_entity();
+        AtomHandle {
+            id,
+            marker: PhantomData,
+        }
+    }
 
     fn add_tracked_resource<T: Resource>(&self) {
         self.tracking

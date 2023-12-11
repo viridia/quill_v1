@@ -179,6 +179,10 @@ pub enum StyleProp {
     // LineBreak(BreakLineOn),
     PointerEvents(StyleExpr<PointerEvents>),
 
+    // Text
+    Font(Option<AssetPath<'static>>),
+    FontSize(StyleExpr<f32>),
+
     // Outlines
     OutlineColor(StyleExpr<Option<Color>>),
     OutlineWidth(StyleExpr<ui::Val>),
@@ -620,6 +624,16 @@ impl StyleSet {
                     }
                 }
 
+                StyleProp::Font(expr) => {
+                    computed.font = expr.clone();
+                }
+
+                StyleProp::FontSize(expr) => {
+                    if let Ok(fsize) = expr.eval() {
+                        computed.font_size = Some(fsize);
+                    }
+                }
+
                 StyleProp::Cursor(_) => todo!(),
                 StyleProp::CursorImage(_) => todo!(),
                 StyleProp::CursorOffset(_) => todo!(),
@@ -643,7 +657,6 @@ impl StyleSet {
                 StyleProp::Rotation(expr) => {
                     if let Ok(rot) = expr.eval() {
                         computed.rotation = Some(rot);
-                        computed.scale_y = Some(rot);
                     }
                 }
                 StyleProp::Translation(expr) => {

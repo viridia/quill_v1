@@ -20,6 +20,7 @@ mod view_param;
 mod view_styled;
 mod view_tuple;
 mod view_with;
+mod view_with_memo;
 
 pub use atom::*;
 pub use cx::Cx;

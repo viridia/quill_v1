@@ -16,8 +16,8 @@ pub struct SelectorMatcher<'w, 's, 'h> {
             Ref<'static, Style>,
         ),
     >,
-    parent_query: &'h Query<'w, 's, &'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
-    children_query: &'h Query<'w, 's, &'static Children, Or<(With<ElementStyles>, With<Text>)>>,
+    parent_query: &'h Query<'w, 's, &'static Parent, (With<Node>, With<Visibility>)>,
+    children_query: &'h Query<'w, 's, &'static Children, (With<Node>, With<Visibility>)>,
     hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
 }
 
@@ -33,8 +33,8 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
                 Ref<'static, Style>,
             ),
         >,
-        parent_query: &'h Query<'w, 's, &'static Parent, Or<(With<ElementStyles>, With<Text>)>>,
-        children_query: &'h Query<'w, 's, &'static Children, Or<(With<ElementStyles>, With<Text>)>>,
+        parent_query: &'h Query<'w, 's, &'static Parent, (With<Node>, With<Visibility>)>,
+        children_query: &'h Query<'w, 's, &'static Children, (With<Node>, With<Visibility>)>,
         hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
     ) -> Self {
         Self {

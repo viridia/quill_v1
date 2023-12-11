@@ -33,6 +33,8 @@ static STYLE_SCROLL_REGION: StyleHandle = StyleHandle::build(|ss| {
 static STYLE_SCROLL_CONTENT: StyleHandle = StyleHandle::build(|ss| {
     ss.position(ui::PositionType::Absolute)
         .height(ui::Val::Auto)
+        .min_width(ui::Val::Percent(100.))
+        .border(1)
 });
 
 #[dynamic]
@@ -73,6 +75,7 @@ const CLS_DRAG: &str = "drag";
 pub struct ScrollViewProps<V: View> {
     pub children: V,
     pub style: StyleHandle,
+    pub content_style: StyleHandle,
     pub scroll_enable_x: bool,
     pub scroll_enable_y: bool,
 }
@@ -104,29 +107,32 @@ pub fn scroll_view<V: View + Clone>(mut cx: Cx<ScrollViewProps<V>>) -> impl View
         .children((
             // Scroll area
             RefElement::new(id_scroll_area)
-                .once(move |mut e| {
-                    e.insert((
-                        ScrollArea {
-                            id_scrollbar_x: if enable_x { Some(id_scrollbar_x) } else { None },
-                            id_scrollbar_y: if enable_y { Some(id_scrollbar_y) } else { None },
-                            ..default()
-                        },
-                        On::<ScrollWheel>::listener_component_mut::<ScrollArea>(
-                            move |ev, scrolling| {
-                                // TODO: stop prop
-                                // ev.stop_propagation();
-                                scrolling.scroll_by(-ev.delta.x, -ev.delta.y);
+                .with_memo(
+                    move |mut e| {
+                        e.insert((
+                            ScrollArea {
+                                id_scrollbar_x: if enable_x { Some(id_scrollbar_x) } else { None },
+                                id_scrollbar_y: if enable_y { Some(id_scrollbar_y) } else { None },
+                                ..default()
                             },
-                        ),
-                    ));
-                })
+                            On::<ScrollWheel>::listener_component_mut::<ScrollArea>(
+                                move |ev, scrolling| {
+                                    // TODO: stop prop
+                                    // ev.stop_propagation();
+                                    scrolling.scroll_by(-ev.delta.x, -ev.delta.y);
+                                },
+                            ),
+                        ));
+                    },
+                    (),
+                )
                 .styled(STYLE_SCROLL_REGION.clone())
                 .children(
                     Element::new()
                         .once(move |mut e| {
                             e.insert(ScrollContent);
                         })
-                        .styled(STYLE_SCROLL_CONTENT.clone())
+                        .styled((STYLE_SCROLL_CONTENT.clone(), cx.props.content_style.clone()))
                         .children(cx.props.children.clone()),
                 ),
             // Horizontal scroll bar

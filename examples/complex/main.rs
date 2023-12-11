@@ -1,7 +1,9 @@
 //! Complex example with multiple views
 mod button;
 mod dialog;
+mod disclosure;
 mod enter_exit;
+mod node_tree;
 mod scrollview;
 mod slider;
 mod splitter;
@@ -18,11 +20,11 @@ use bevy_quill::prelude::*;
 use button::{button, ButtonProps, Clicked};
 use dialog::{dialog, RequestClose};
 use enter_exit::EnterExitPlugin;
-use scrollview::{scroll_view, ScrollViewProps};
+use node_tree::{node_tree, NodeTreePlugin};
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use static_init::dynamic;
-use swatch::{swatch, swatch_grid, swatch_list, SwatchGridProps, SwatchProps};
+use swatch::{swatch, swatch_grid, SwatchGridProps, SwatchProps};
 use viewport::{ViewportInset, ViewportInsetElement};
 
 fn main() {
@@ -49,7 +51,13 @@ fn main() {
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(EventListenerPlugin::<Clicked>::default())
         .add_plugins(EventListenerPlugin::<RequestClose>::default())
-        .add_plugins((QuillPlugin, SplitterPlugin, SliderPlugin, EnterExitPlugin))
+        .add_plugins((
+            QuillPlugin,
+            SplitterPlugin,
+            SliderPlugin,
+            NodeTreePlugin,
+            EnterExitPlugin,
+        ))
         .add_systems(Startup, (test_scene::setup, setup_view_root))
         .add_event::<Clicked>()
         .add_event::<RequestClose>()
@@ -130,22 +138,6 @@ static STYLE_LOG_ENTRY: StyleHandle = StyleHandle::build(|ss| {
     ss.display(ui::Display::Flex)
         .justify_content(ui::JustifyContent::SpaceBetween)
         .align_self(ui::AlignSelf::Stretch)
-});
-
-#[dynamic]
-static STYLE_BOTTOM_PANE: StyleHandle = StyleHandle::build(|ss| {
-    ss.border(1)
-        .border_color("#080808")
-        .background_color("#171717")
-        .flex_grow(1.)
-        .padding(2)
-});
-
-#[dynamic]
-static STYLE_BOTTOM_PANE_INNER: StyleHandle = StyleHandle::build(|ss| {
-    ss.flex_direction(ui::FlexDirection::Column)
-        .height(ui::Val::Auto)
-        .min_width(200)
 });
 
 #[dynamic]
@@ -262,20 +254,22 @@ fn ui_main(mut cx: Cx) -> impl View {
                         children: "Quit",
                     }),
                     color_edit,
-                    scroll_view.bind(ScrollViewProps {
-                        children: ViewParam::new(
-                            Element::new().styled(STYLE_BOTTOM_PANE_INNER.clone()).children((
-                                "Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message.",
-                                swatch_list.bind(SwatchGridProps {
-                                    colors: &COLORS,
-                                    row_span: 4,
-                                }),
-                            )),
-                        ),
-                        scroll_enable_x: true,
-                        scroll_enable_y: true,
-                        style: STYLE_BOTTOM_PANE.clone(),
-                    }),
+                    node_tree,
+                    // scroll_view.bind(ScrollViewProps {
+                    //     children: ViewParam::new(
+                    //         Element::new().styled(STYLE_BOTTOM_PANE_INNER.clone()).children((
+                    //             For::keyed(&roots.0, |e| e.entity, |e| e.name.clone()),
+                    //             "Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message.",
+                    //             swatch_list.bind(SwatchGridProps {
+                    //                 colors: &COLORS,
+                    //                 row_span: 4,
+                    //             }),
+                    //         )),
+                    //     ),
+                    //     scroll_enable_x: true,
+                    //     scroll_enable_y: true,
+                    //     style: STYLE_BOTTOM_PANE.clone(),
+                    // }),
                 )),
             v_splitter.bind(SplitterProps {
                 id: "",

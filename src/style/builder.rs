@@ -536,6 +536,17 @@ impl StyleBuilder {
         self
     }
 
+    pub fn font(&mut self, path: Option<AssetPath<'static>>) -> &mut Self {
+        self.props.push(StyleProp::Font(path));
+        self
+    }
+
+    pub fn font_size(&mut self, val: f32) -> &mut Self {
+        self.props
+            .push(StyleProp::FontSize(StyleExpr::Constant(val)));
+        self
+    }
+
     pub fn scale_x(&mut self, scale: f32) -> &mut Self {
         self.props
             .push(StyleProp::ScaleX(StyleExpr::Constant(scale)));

@@ -71,7 +71,7 @@ static STYLE_THUMB_FG: StyleHandle = StyleHandle::build(|ss| {
         .height(THUMB_SIZE)
         .z_index(1)
         .pointer_events(PointerEvents::None)
-        .selector(":hover > &", |ss| ss.background_color("#aaa"))
+        .selector(":hover > &,.drag > &", |ss| ss.background_color("#aaa"))
 });
 
 // Slider thumb shadow

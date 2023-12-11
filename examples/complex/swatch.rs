@@ -54,10 +54,3 @@ pub fn swatch_grid(cx: Cx<SwatchGridProps>) -> impl View {
             swatch.bind(SwatchProps { color: *color })
         }))
 }
-
-// Color swatch list
-pub fn swatch_list(cx: Cx<SwatchGridProps>) -> impl View {
-    For::each(cx.props.colors, |color| {
-        swatch.bind(SwatchProps { color: *color })
-    })
-}
