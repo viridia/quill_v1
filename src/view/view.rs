@@ -1,9 +1,14 @@
+use std::sync::{Arc, Mutex};
+
 use bevy::{
     prelude::*,
     text::{Text, TextStyle},
 };
 
-use crate::{presenter_state::PresenterGraphChanged, Cx, ViewHandle, ViewTuple};
+use crate::{
+    presenter_state::{AnyPresenterState, PresenterGraphChanged, PresenterState},
+    Cx, ViewHandle, ViewTuple,
+};
 
 use crate::node_span::NodeSpan;
 
@@ -332,18 +337,19 @@ where
 
 /// Binds a presenter to properties and implements a view
 #[doc(hidden)]
-pub struct Bind<Marker: 'static, F: PresenterFn<Marker>> {
-    presenter: F,
-    props: F::Props,
+pub struct Bind {
+    presenter_state: Arc<Mutex<dyn AnyPresenterState>>,
 }
 
-impl<Marker, F: PresenterFn<Marker>> Bind<Marker, F> {
-    pub fn new(presenter: F, props: F::Props) -> Self {
-        Self { presenter, props }
+impl Bind {
+    pub fn new<Marker, F: PresenterFn<Marker>>(presenter: F, props: F::Props) -> Self {
+        Self {
+            presenter_state: Arc::new(Mutex::new(PresenterState::new(presenter, props))),
+        }
     }
 }
 
-impl<Marker, F: PresenterFn<Marker>> View for Bind<Marker, F> {
+impl View for Bind {
     // State holds the PresenterState entity.
     type State = Entity;
 
@@ -359,11 +365,11 @@ impl<Marker, F: PresenterFn<Marker>> View for Bind<Marker, F> {
     fn build(&self, parent_ecx: &mut ViewContext) -> Self::State {
         let entity = parent_ecx
             .world
-            .spawn(ViewHandle::new(self.presenter, self.props.clone()))
+            .spawn(ViewHandle::from_boxed(self.presenter_state.clone()))
             .insert(PresenterStateChanged)
             .set_parent(parent_ecx.entity)
             .id();
-        // Not calling build here: will be done asynchronously.
+        // Not calling inner build here: will be done asynchronously.
         entity
     }
 
@@ -374,7 +380,8 @@ impl<Marker, F: PresenterFn<Marker>> View for Bind<Marker, F> {
             return;
         };
         // Update child view properties.
-        if handle.update_props(&self.props) {
+        let lock = self.presenter_state.lock().unwrap();
+        if handle.update_props(lock.get_props()) {
             entt.insert(PresenterStateChanged);
         }
     }
@@ -405,7 +412,7 @@ pub trait PresenterFn<Marker: 'static>: Sized + Send + Copy + 'static {
     /// Used to invoke a presenter from within a presenter. This binds a set of properties
     /// to the child presenter, and constructs a new [`ViewHandle`] containing a [`PresenterState`].
     /// The result is a [`View`] which references this handle.
-    fn bind(self, props: Self::Props) -> Bind<Marker, Self>;
+    fn bind(self, props: Self::Props) -> Bind;
 
     /// Method which calls the presenter, creating the [`View`].
     fn call(
@@ -426,7 +433,7 @@ where
     type Props = P;
     type View = V;
 
-    fn bind(self, props: Self::Props) -> Bind<fn(Cx<P>) -> V, Self> {
+    fn bind(self, props: Self::Props) -> Bind {
         Bind::new(self, props)
     }
 

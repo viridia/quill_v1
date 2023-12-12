@@ -22,10 +22,16 @@ pub struct ViewHandle {
 
 impl ViewHandle {
     /// Construct a new ViewRoot from a presenter and props.
-
     pub fn new<Marker, P: PresenterFn<Marker>>(presenter: P, props: P::Props) -> Self {
         Self {
             inner: Arc::new(Mutex::new(PresenterState::new(presenter, props))),
+        }
+    }
+
+    /// Construct a new ViewRoot from an already boxed presenter and props.
+    pub fn from_boxed(bind: Arc<Mutex<dyn AnyPresenterState>>) -> Self {
+        Self {
+            inner: bind.clone(),
         }
     }
 
@@ -85,6 +91,9 @@ pub trait AnyPresenterState: Send {
 
     /// Update the copy of props in this view state.
     fn update_props<'a>(&mut self, props: &'a dyn Any) -> bool;
+
+    /// Update the copy of props in this view state.
+    fn get_props<'a>(&'a self) -> &'a dyn Any;
 }
 
 impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker, F> {
@@ -196,6 +205,10 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         } else {
             false
         }
+    }
+
+    fn get_props<'a>(&'a self) -> &'a dyn Any {
+        &self.props
     }
 }
 
