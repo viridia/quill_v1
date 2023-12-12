@@ -5,6 +5,15 @@ use bevy_mod_picking::prelude::*;
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
+pub struct DisclosureTrianglePlugin;
+
+impl Plugin for DisclosureTrianglePlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(EventListenerPlugin::<ToggleExpand>::default())
+            .add_event::<ToggleExpand>();
+    }
+}
+
 #[dynamic]
 static STYLE_DISCLOSURE_TRIANGLE: StyleHandle = StyleHandle::build(|ss| {
     ss.display(ui::Display::Flex)
@@ -18,7 +27,7 @@ static STYLE_DISCLOSURE_TRIANGLE: StyleHandle = StyleHandle::build(|ss| {
             timing: timing::EASE_IN_OUT,
             ..default()
         }])
-        .selector(":hover", |ss| ss.rotation(PI / 2.))
+        .selector(".expanded", |ss| ss.rotation(PI / 2.))
 });
 
 #[dynamic]
@@ -33,33 +42,32 @@ static STYLE_ICON: StyleHandle = StyleHandle::build(|ss| {
 #[derive(Clone, PartialEq)]
 pub struct DisclosureTriangleProps {
     pub expanded: bool,
-    pub id: &'static str,
 }
 
 #[derive(Clone, Event, EntityEvent)]
-pub struct Clicked {
+pub struct ToggleExpand {
     #[target]
     pub target: Entity,
-    pub id: &'static str,
+    pub value: bool,
 }
 
 pub fn disclosure_triangle(cx: Cx<DisclosureTriangleProps>) -> impl View {
-    // Needs to be a local variable so that it can be captured in the event handler.
-    let id = cx.props.id;
+    let expanded = cx.props.expanded;
     Element::new()
         .with_memo(
             move |mut e| {
                 e.insert((On::<Pointer<Click>>::run(
-                    move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
-                        writer.send(Clicked {
+                    move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<ToggleExpand>| {
+                        writer.send(ToggleExpand {
                             target: ev.target,
-                            id,
+                            value: !expanded,
                         });
                     },
                 ),));
             },
-            (),
+            expanded,
         )
+        .class_names("expanded".if_true(cx.props.expanded))
         .styled(STYLE_DISCLOSURE_TRIANGLE.clone())
         .children(Element::new().styled(STYLE_ICON.clone()))
 }

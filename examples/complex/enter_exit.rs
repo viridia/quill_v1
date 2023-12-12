@@ -65,22 +65,23 @@ pub trait EnterExitApi {
 
 impl<'w, 'p, Props> EnterExitApi for Cx<'w, 'p, Props> {
     fn use_enter_exit(&mut self, open: bool) -> EnterExitState {
-        let mut ent = self.use_view_entity_mut();
-        match ent.get_mut::<EnterExit>() {
-            Some(mut ee) => {
-                if ee.open != open {
-                    ee.open = open;
-                }
-                ee.state.clone()
-            }
-            None => {
-                ent.insert((
-                    EnterExit { open, ..default() },
-                    EnterExitTimer { ..default() },
-                ));
-                EnterExitState::Exited
-            }
-        };
+        self.use_effect(
+            |mut ve| {
+                match ve.get_mut::<EnterExit>() {
+                    Some(mut ee) => {
+                        ee.open = open;
+                    }
+                    None => {
+                        ve.insert((
+                            EnterExit { open, ..default() },
+                            EnterExitTimer { ..default() },
+                        ));
+                    }
+                };
+            },
+            open,
+        );
+
         self.use_view_component::<EnterExit>()
             .unwrap()
             .state

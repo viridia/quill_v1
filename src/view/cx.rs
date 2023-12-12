@@ -37,13 +37,6 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         self.vc.world.resource::<T>()
     }
 
-    /// Return a mutable reference to the resource of the given type. Calling this function
-    /// adds the resource as a dependency of the current presenter invocation.
-    pub fn use_resource_mut<T: Resource>(&mut self) -> Mut<T> {
-        self.add_tracked_resource::<T>();
-        self.vc.world.resource_mut::<T>()
-    }
-
     /// Return a reference to the Component `C` on the given entity.
     pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
         self.add_tracked_component::<C>(entity);
@@ -83,11 +76,6 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// Return a reference to the entity that holds the current presenter invocation.
     pub fn use_view_entity(&self) -> EntityRef<'_> {
         self.vc.world.entity(self.vc.entity)
-    }
-
-    /// Return a mutable reference to the entity that holds the current presenter invocation.
-    pub fn use_view_entity_mut(&mut self) -> EntityWorldMut<'_> {
-        self.vc.world.entity_mut(self.vc.entity)
     }
 
     /// Spawn an empty [`Entity`] which is owned by this presenter. The entity will be

@@ -19,6 +19,7 @@ use bevy_mod_picking::{
 use bevy_quill::prelude::*;
 use button::{button, ButtonProps, Clicked};
 use dialog::{dialog, RequestClose};
+use disclosure::DisclosureTrianglePlugin;
 use enter_exit::EnterExitPlugin;
 use node_tree::{node_tree, NodeTreePlugin};
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
@@ -57,6 +58,7 @@ fn main() {
             SliderPlugin,
             NodeTreePlugin,
             EnterExitPlugin,
+            DisclosureTrianglePlugin,
         ))
         .add_systems(Startup, (test_scene::setup, setup_view_root))
         .add_event::<Clicked>()
@@ -195,9 +197,14 @@ fn setup_view_root(mut commands: Commands) {
 fn ui_main(mut cx: Cx) -> impl View {
     let target = cx.use_view_entity().id();
     let open = cx.create_atom_init(|| false);
-    cx.use_view_entity_mut().insert(On::<RequestClose>::run(
-        move |_ev: Listener<RequestClose>, mut atoms: AtomStore| atoms.set(open, false),
-    ));
+    cx.use_effect(
+        |mut ve| {
+            ve.insert(On::<RequestClose>::run(move |mut atoms: AtomStore| {
+                atoms.set(open, false)
+            }));
+        },
+        (),
+    );
     let width = cx.use_resource::<PanelWidth>();
     Element::new()
         .styled(STYLE_MAIN.clone())

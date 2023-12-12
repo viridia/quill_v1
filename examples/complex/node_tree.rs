@@ -4,7 +4,7 @@ use bevy_quill::prelude::*;
 use static_init::dynamic;
 
 use crate::{
-    disclosure::{disclosure_triangle, DisclosureTriangleProps},
+    disclosure::{disclosure_triangle, DisclosureTriangleProps, ToggleExpand},
     scrollview::{scroll_view, ScrollViewProps},
 };
 
@@ -68,6 +68,14 @@ static STYLE_CONTENT: StyleHandle = StyleHandle::build(|ss| {
 });
 
 #[dynamic]
+static STYLE_TREE_NODE: StyleHandle = StyleHandle::build(|ss| {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .flex_grow(1.)
+        .align_items(ui::AlignItems::Stretch)
+});
+
+#[dynamic]
 static STYLE_TREE_NODE_HEADER: StyleHandle = StyleHandle::build(|ss| {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
@@ -88,17 +96,26 @@ static STYLE_TREE_NODE_TITLE: StyleHandle = StyleHandle::build(|ss| {
         .font(Some(AssetPath::from("fonts/Exo_2/static/Exo2-Medium.ttf")))
 });
 
+#[dynamic]
+static STYLE_TREE_NODE_CHILDREN: StyleHandle = StyleHandle::build(|ss| {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .flex_grow(1.)
+        .align_items(ui::AlignItems::Stretch)
+        .margin_left(16)
+});
+
 pub fn node_tree(cx: Cx) -> impl View {
     let roots = cx.use_resource::<RootEntityList>();
     scroll_view.bind(ScrollViewProps {
         children: ViewParam::new(
             Element::new()
                 .styled(STYLE_BOTTOM_PANE_INNER.clone())
-                .children((For::keyed(
+                .children(For::keyed(
                     &roots.0,
                     |e| e.entity,
                     |e| node_item.bind(e.clone()),
-                ),)),
+                )),
         ),
         scroll_enable_x: true,
         scroll_enable_y: true,
@@ -108,6 +125,7 @@ pub fn node_tree(cx: Cx) -> impl View {
 }
 
 pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
+    let expanded = cx.create_atom_init(|| false);
     cx.use_effect(
         |mut ve| {
             ve.insert(NodeInfo {
@@ -117,7 +135,6 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
         },
         cx.props.entity,
     );
-    let expanded = cx.create_atom_init(|| false);
     let selected = cx.use_resource::<SelectedEntity>();
     let info = cx.use_view_component::<NodeInfo>();
     let children = match info {
@@ -125,33 +142,56 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
         None => Vec::new(),
     };
     let entity = cx.props.entity;
-    Element::new()
-        .styled(STYLE_TREE_NODE_HEADER.clone())
-        .class_names((
-            "selected".if_true(selected.0 == Some(cx.props.entity)),
-            "expandable".if_true(children.len() > 0),
-        ))
-        .with_memo(
-            move |mut e| {
-                e.insert((On::<Pointer<Click>>::run(
-                    move |mut selected: ResMut<SelectedEntity>| {
-                        selected.0 = Some(entity);
-                    },
-                ),));
-            },
-            (),
-        )
-        .children((
-            If::new(
-                children.len() > 0,
-                disclosure_triangle.bind(DisclosureTriangleProps {
-                    id: "",
-                    expanded: cx.read_atom(expanded),
-                }),
+    Element::new().styled(STYLE_TREE_NODE.clone()).children((
+        Element::new()
+            .styled(STYLE_TREE_NODE_HEADER.clone())
+            .class_names((
+                "selected".if_true(selected.0 == Some(cx.props.entity)),
+                "expandable".if_true(children.len() > 0),
+            ))
+            .with_memo(
+                move |mut e| {
+                    e.insert((
+                        On::<Pointer<Click>>::run(move |mut selected: ResMut<SelectedEntity>| {
+                            selected.0 = Some(entity);
+                        }),
+                        On::<ToggleExpand>::run(
+                            move |mut ev: ListenerMut<ToggleExpand>, mut atoms: AtomStore| {
+                                ev.stop_propagation();
+                                atoms.set(expanded, ev.value);
+                            },
+                        ),
+                    ));
+                },
                 (),
-            ),
-            format!("{:?}", cx.props.entity).styled(STYLE_TREE_NODE_TITLE.clone()),
-        ))
+            )
+            .children((
+                If::new(
+                    children.len() > 0,
+                    disclosure_triangle.bind(DisclosureTriangleProps {
+                        expanded: cx.read_atom(expanded),
+                    }),
+                    (),
+                ),
+                format!("{:?}", cx.props.entity).styled(STYLE_TREE_NODE_TITLE.clone()),
+            )),
+        If::new(
+            cx.read_atom(expanded),
+            Element::new()
+                .styled(STYLE_TREE_NODE_CHILDREN.clone())
+                .children(For::keyed(
+                    &children,
+                    |e| e.clone(),
+                    |e| {
+                        node_item.bind(EntityListNode {
+                            name: None,
+                            entity: e.clone(),
+                        })
+                    },
+                )),
+            (),
+        ),
+    ))
 }
 
 fn update_root_entities(
