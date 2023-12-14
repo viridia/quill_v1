@@ -129,9 +129,7 @@ pub fn scroll_view<V: View + Clone>(mut cx: Cx<ScrollViewProps<V>>) -> impl View
                 .styled(STYLE_SCROLL_REGION.clone())
                 .children(
                     Element::new()
-                        .once(move |mut e| {
-                            e.insert(ScrollContent);
-                        })
+                        .insert(ScrollContent)
                         .styled((STYLE_SCROLL_CONTENT.clone(), cx.props.content_style.clone()))
                         .children(cx.props.children.clone()),
                 ),
@@ -179,41 +177,39 @@ fn scrollbar(mut cx: Cx<ScrollbarProps>) -> impl View {
         DragMode::DragX
     };
     RefElement::new(cx.props.id_scrollbar)
-        .once(move |mut e| {
-            e.insert(
-                (
-                    ScrollBar {
-                        id_scroll_area,
-                        vertical,
-                        min_thumb_size: 10.,
+        .insert(
+            (
+                ScrollBar {
+                    id_scroll_area,
+                    vertical,
+                    min_thumb_size: 10.,
+                },
+                // Click outside of thumb
+                On::<Pointer<DragStart>>::run(
+                    move |mut ev: ListenerMut<Pointer<DragStart>>,
+                            mut query: Query<&mut ScrollArea>,
+                            query_thumb: Query<(
+                        &Node,
+                        &mut ScrollBarThumb,
+                        &GlobalTransform,
+                    )>| {
+                        ev.stop_propagation();
+                        if let Ok(mut scroll_area) = query.get_mut(id_scroll_area) {
+                            if let Ok((thumb, _, transform)) = query_thumb.get(id_thumb) {
+                                // Get thumb rectangle
+                                let rect = thumb.logical_rect(transform);
+                                handle_track_click(
+                                    &mut scroll_area,
+                                    vertical,
+                                    ev.pointer_location.position,
+                                    rect,
+                                );
+                            }
+                        };
                     },
-                    // Click outside of thumb
-                    On::<Pointer<DragStart>>::run(
-                        move |mut ev: ListenerMut<Pointer<DragStart>>,
-                              mut query: Query<&mut ScrollArea>,
-                              query_thumb: Query<(
-                            &Node,
-                            &mut ScrollBarThumb,
-                            &GlobalTransform,
-                        )>| {
-                            ev.stop_propagation();
-                            if let Ok(mut scroll_area) = query.get_mut(id_scroll_area) {
-                                if let Ok((thumb, _, transform)) = query_thumb.get(id_thumb) {
-                                    // Get thumb rectangle
-                                    let rect = thumb.logical_rect(transform);
-                                    handle_track_click(
-                                        &mut scroll_area,
-                                        vertical,
-                                        ev.pointer_location.position,
-                                        rect,
-                                    );
-                                }
-                            };
-                        },
-                    ),
                 ),
-            );
-        })
+            ),
+        )
         .styled(if vertical {
             STYLE_SCROLLBAR_Y.clone()
         } else {
@@ -227,51 +223,49 @@ fn scrollbar(mut cx: Cx<ScrollbarProps>) -> impl View {
                 } else {
                     STYLE_SCROLLBAR_X_THUMB.clone()
                 })
-                .once(move |mut e| {
-                    e.insert((
-                        ScrollBarThumb,
-                        // Click/Drag on thumb
-                        On::<Pointer<DragStart>>::run(
-                            move |mut ev: ListenerMut<Pointer<DragStart>>,
-                                  mut atoms: AtomStore,
-                                  query: Query<&mut ScrollArea>| {
-                                ev.stop_propagation();
-                                if let Ok(scroll_area) = query.get(id_scroll_area) {
-                                    handle_thumb_drag_start(
-                                        &scroll_area,
-                                        vertical,
-                                        &mut atoms,
-                                        drag_state,
-                                    );
-                                };
-                            },
-                        ),
-                        On::<Pointer<Drag>>::run(
-                            move |mut ev: ListenerMut<Pointer<Drag>>,
-                                  atoms: AtomStore,
-                                  mut query: Query<&mut ScrollArea>| {
-                                ev.stop_propagation();
-                                if let Ok(mut scroll_area) = query.get_mut(id_scroll_area) {
-                                    if let Some(ds) = atoms.try_get(drag_state) {
-                                        handle_thumb_drag(&mut scroll_area, &ds, ev.distance);
-                                    }
+                .insert((
+                    ScrollBarThumb,
+                    // Click/Drag on thumb
+                    On::<Pointer<DragStart>>::run(
+                        move |mut ev: ListenerMut<Pointer<DragStart>>,
+                                mut atoms: AtomStore,
+                                query: Query<&mut ScrollArea>| {
+                            ev.stop_propagation();
+                            if let Ok(scroll_area) = query.get(id_scroll_area) {
+                                handle_thumb_drag_start(
+                                    &scroll_area,
+                                    vertical,
+                                    &mut atoms,
+                                    drag_state,
+                                );
+                            };
+                        },
+                    ),
+                    On::<Pointer<Drag>>::run(
+                        move |mut ev: ListenerMut<Pointer<Drag>>,
+                                atoms: AtomStore,
+                                mut query: Query<&mut ScrollArea>| {
+                            ev.stop_propagation();
+                            if let Ok(mut scroll_area) = query.get_mut(id_scroll_area) {
+                                if let Some(ds) = atoms.try_get(drag_state) {
+                                    handle_thumb_drag(&mut scroll_area, &ds, ev.distance);
                                 }
-                            },
-                        ),
-                        On::<Pointer<DragEnd>>::run(
-                            move |mut ev: ListenerMut<Pointer<DragEnd>>, mut atoms: AtomStore| {
-                                ev.stop_propagation();
-                                handle_thumb_drag_end(&mut atoms, drag_state);
-                            },
-                        ),
-                        On::<Pointer<PointerCancel>>::run(
-                            move |mut ev: ListenerMut<Pointer<DragEnd>>, mut atoms: AtomStore| {
-                                ev.stop_propagation();
-                                handle_thumb_drag_end(&mut atoms, drag_state);
-                            },
-                        ),
-                    ));
-                }),
+                            }
+                        },
+                    ),
+                    On::<Pointer<DragEnd>>::run(
+                        move |mut ev: ListenerMut<Pointer<DragEnd>>, mut atoms: AtomStore| {
+                            ev.stop_propagation();
+                            handle_thumb_drag_end(&mut atoms, drag_state);
+                        },
+                    ),
+                    On::<Pointer<PointerCancel>>::run(
+                        move |mut ev: ListenerMut<Pointer<DragEnd>>, mut atoms: AtomStore| {
+                            ev.stop_propagation();
+                            handle_thumb_drag_end(&mut atoms, drag_state);
+                        },
+                    ),
+                ))
         )
 }
 

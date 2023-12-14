@@ -129,16 +129,13 @@ pub fn dialog(mut cx: Cx<DemoDialogProps>) -> impl View {
                         ),
                         Element::new()
                             .styled(STYLE_DIALOG_FOOTER.clone())
-                            .once(move |mut e| {
-                                let target = target;
-                                e.insert(On::<Clicked>::run(move |_ev: Listener<Clicked>,
-                                    mut writer: EventWriter<RequestClose>| {
-                                        writer.send(RequestClose {
-                                            target,
-                                            id: "demo_dialog",
-                                        });
-                                }));
-                            })
+                            .insert(On::<Clicked>::run(move |_ev: Listener<Clicked>,
+                                mut writer: EventWriter<RequestClose>| {
+                                    writer.send(RequestClose {
+                                        target,
+                                        id: "demo_dialog",
+                                    });
+                            }))
                             .children((
                                 button.bind(ButtonProps {
                                     id: "cancel",

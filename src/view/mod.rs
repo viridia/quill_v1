@@ -15,7 +15,7 @@ pub(crate) mod tracking;
 pub(crate) mod view;
 mod view_children;
 mod view_classes;
-mod view_insert;
+mod view_insert_bundle;
 mod view_param;
 mod view_styled;
 mod view_tuple;

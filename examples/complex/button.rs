@@ -48,30 +48,26 @@ pub fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;
     Element::new()
-        .once(move |mut e| {
-            e.insert((
-                On::<Pointer<Click>>::run(
-                    move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
-                        writer.send(Clicked {
-                            target: ev.target,
-                            id,
-                        });
-                    },
-                ),
-                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.add_class(CLS_PRESSED)
-                }),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.remove_class(CLS_PRESSED)
-                }),
-                On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
-                    |_, classes| {
-                        println!("Cancel");
-                        classes.remove_class(CLS_PRESSED)
-                    },
-                ),
-            ));
-        })
+        .insert((
+            On::<Pointer<Click>>::run(
+                move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
+                    writer.send(Clicked {
+                        target: ev.target,
+                        id,
+                    });
+                },
+            ),
+            On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                classes.add_class(CLS_PRESSED)
+            }),
+            On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                classes.remove_class(CLS_PRESSED)
+            }),
+            On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                println!("Cancel");
+                classes.remove_class(CLS_PRESSED)
+            }),
+        ))
         .styled(STYLE_BUTTON.clone())
         .children(cx.props.children.clone())
 }

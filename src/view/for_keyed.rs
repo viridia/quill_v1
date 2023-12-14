@@ -123,7 +123,6 @@ where
                 )
             } else {
                 // Deletions
-                println!("Razing before");
                 for i in prev_range.start..prev_start {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {

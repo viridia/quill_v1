@@ -168,11 +168,9 @@ fn ui_main(cx: Cx) -> impl View {
                     children: "Quit",
                 }),
             ))
-            .once(|mut e| {
-                e.insert((On::<Clicked>::run(|ev: Listener<Clicked>| {
-                    println!("Clicked {}", ev.id);
-                }),));
-            }),
+            .insert((On::<Clicked>::run(|ev: Listener<Clicked>| {
+                println!("Clicked {}", ev.id);
+            }),)),
         v_splitter,
         Element::new()
             .styled(STYLE_VIEWPORT.clone())
@@ -183,27 +181,21 @@ fn ui_main(cx: Cx) -> impl View {
 fn v_splitter(_cx: Cx) -> impl View {
     Element::new()
         .children(Element::new().styled(STYLE_VSPLITTER_INNER.clone()))
-        .once(|mut e| {
-            e.insert((
-                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.add_class(CLS_DRAG)
-                }),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.remove_class(CLS_DRAG)
-                }),
-                On::<Pointer<Drag>>::run(
-                    |ev: Listener<Pointer<Drag>>, mut res: ResMut<PanelWidth>| {
-                        res.0 += ev.delta.x as i32;
-                    },
-                ),
-                On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
-                    |_, classes| {
-                        println!("Cancel");
-                        classes.remove_class(CLS_DRAG)
-                    },
-                ),
-            ));
-        })
+        .insert((
+            On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                classes.add_class(CLS_DRAG)
+            }),
+            On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                classes.remove_class(CLS_DRAG)
+            }),
+            On::<Pointer<Drag>>::run(|ev: Listener<Pointer<Drag>>, mut res: ResMut<PanelWidth>| {
+                res.0 += ev.delta.x as i32;
+            }),
+            On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                println!("Cancel");
+                classes.remove_class(CLS_DRAG)
+            }),
+        ))
         .styled(STYLE_VSPLITTER.clone())
 }
 
@@ -225,30 +217,26 @@ fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
     let id = cx.props.id;
     Element::new()
         .children(cx.props.children.clone())
-        .once(move |mut e| {
-            e.insert((
-                On::<Pointer<Click>>::run(
-                    move |events: Listener<Pointer<Click>>, mut ev: EventWriter<Clicked>| {
-                        ev.send(Clicked {
-                            target: events.target,
-                            id,
-                        });
-                    },
-                ),
-                On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.add_class(CLS_PRESSED)
-                }),
-                On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
-                    classes.remove_class(CLS_PRESSED)
-                }),
-                On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
-                    |_, classes| {
-                        println!("Cancel");
-                        classes.remove_class(CLS_PRESSED)
-                    },
-                ),
-            ));
-        })
+        .insert((
+            On::<Pointer<Click>>::run(
+                move |events: Listener<Pointer<Click>>, mut ev: EventWriter<Clicked>| {
+                    ev.send(Clicked {
+                        target: events.target,
+                        id,
+                    });
+                },
+            ),
+            On::<Pointer<DragStart>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                classes.add_class(CLS_PRESSED)
+            }),
+            On::<Pointer<DragEnd>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                classes.remove_class(CLS_PRESSED)
+            }),
+            On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(|_, classes| {
+                println!("Cancel");
+                classes.remove_class(CLS_PRESSED)
+            }),
+        ))
         .styled(STYLE_BUTTON.clone())
 }
 

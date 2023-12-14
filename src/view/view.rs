@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    cell::Cell,
+    sync::{Arc, Mutex},
+};
 
 use bevy::{
     prelude::*,
@@ -16,7 +19,7 @@ use super::{
     presenter_state::PresenterStateChanged,
     view_children::ViewChildren,
     view_classes::{ClassNamesTuple, ViewClasses},
-    view_insert::ViewInsert,
+    view_insert_bundle::ViewInsertBundle,
     view_styled::{StyleTuple, ViewStyled},
     view_with::ViewWith,
     view_with_memo::ViewWithMemo,
@@ -101,16 +104,16 @@ where
         ViewClasses::new(self, class_names)
     }
 
-    /// Inserts a default instance of the specified component to the display entities generated
-    /// by this view. This insertion occurs only once per output entity. If there are multiple
-    /// entities, they will each get a copy of the component; if the output entity is replaced,
-    /// then the component will be inserted on the replacement.
+    /// Inserts a default instance of the specified component or bundle to the display entity.
+    /// This insertion occurs only once per output entity. The entity takes ownership of the
+    /// bundle.
     ///
-    /// The component must implement Clone.
-    fn insert<C: Component + Clone>(self, component: C) -> ViewInsert<Self, C> {
-        ViewInsert {
+    /// This method will panic if you call this on a view which produces more than one output
+    /// entity, since only one entity can take ownership.
+    fn insert<B: Bundle>(self, component: B) -> ViewInsertBundle<Self, B> {
+        ViewInsertBundle {
             inner: self,
-            component,
+            component: Cell::new(Some(component)),
         }
     }
 

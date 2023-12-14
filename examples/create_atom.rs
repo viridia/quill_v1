@@ -38,13 +38,11 @@ fn nested(mut cx: Cx<&str>) -> impl View {
             format!("{}: {}", name, cx.read_atom(counter)),
             If::new(cx.read_atom(counter) & 1 == 0, even, odd),
         ))
-        .once(move |mut e| {
-            e.insert(On::<Pointer<Click>>::run(
-                move |_ev: Listener<Pointer<Click>>, mut atoms: AtomStore| {
-                    atoms.update(counter, |n| n + 1)
-                },
-            ));
-        })
+        .insert(On::<Pointer<Click>>::run(
+            move |_ev: Listener<Pointer<Click>>, mut atoms: AtomStore| {
+                atoms.update(counter, |n| n + 1)
+            },
+        ))
 }
 
 fn even(mut _cx: Cx) -> impl View {

@@ -5,6 +5,7 @@ use static_init::dynamic;
 
 use crate::{
     disclosure::{disclosure_triangle, DisclosureTriangleProps, ToggleExpand},
+    enter_exit::{EnterExitApi, EnterExitState},
     scrollview::{scroll_view, ScrollViewProps},
 };
 
@@ -103,6 +104,15 @@ static STYLE_TREE_NODE_CHILDREN: StyleHandle = StyleHandle::build(|ss| {
         .flex_grow(1.)
         .align_items(ui::AlignItems::Stretch)
         .margin_left(16)
+        .height(10)
+        .overflow_y(ui::OverflowAxis::Clip)
+        .transition(&vec![Transition {
+            property: TransitionProperty::Transform,
+            duration: 0.3,
+            timing: timing::EASE_IN_OUT,
+            ..default()
+        }])
+        .selector(".entering,.entered", |ss| ss.height(ui::Val::Auto))
 });
 
 pub fn node_tree(cx: Cx) -> impl View {
@@ -135,13 +145,15 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
         },
         cx.props.entity,
     );
-    let selected = cx.use_resource::<SelectedEntity>();
     let info = cx.use_view_component::<NodeInfo>();
     let children = match info {
         Some(inf) => inf.children.clone(),
         None => Vec::new(),
     };
     let entity = cx.props.entity;
+    let is_expanded = cx.read_atom(expanded);
+    let state = cx.use_enter_exit(is_expanded);
+    let selected = cx.use_resource::<SelectedEntity>();
     Element::new().styled(STYLE_TREE_NODE.clone()).children((
         Element::new()
             .styled(STYLE_TREE_NODE_HEADER.clone())
@@ -174,10 +186,12 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
                     (),
                 ),
                 format!("{:?}", cx.props.entity).styled(STYLE_TREE_NODE_TITLE.clone()),
+                node_desc.bind(cx.props.clone()),
             )),
         If::new(
-            cx.read_atom(expanded),
+            state != EnterExitState::Exited,
             Element::new()
+                .class_names(state.as_class_name())
                 .styled(STYLE_TREE_NODE_CHILDREN.clone())
                 .children(For::keyed(
                     &children,
@@ -191,6 +205,23 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
                 )),
             (),
         ),
+    ))
+}
+
+pub fn node_desc(cx: Cx<EntityListNode>) -> impl View {
+    let is_node = cx.use_component::<Node>(cx.props.entity);
+    let is_text = cx.use_component::<Text>(cx.props.entity);
+    let is_mesh = cx.use_component::<Handle<Mesh>>(cx.props.entity);
+    let is_camera = cx.use_component::<Camera>(cx.props.entity);
+    let is_point_light = cx.use_component::<PointLight>(cx.props.entity);
+    let is_view_handle = cx.use_component::<ViewHandle>(cx.props.entity);
+    Fragment::new((
+        If::new(is_mesh.is_some(), " Mesh", ()),
+        If::new(is_node.is_some(), " Node", ()),
+        If::new(is_text.is_some(), " Text", ()),
+        If::new(is_camera.is_some(), " Camera", ()),
+        If::new(is_point_light.is_some(), " PointLight", ()),
+        If::new(is_view_handle.is_some(), " ViewHandle", ()),
     ))
 }
 

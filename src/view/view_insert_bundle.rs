@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use bevy::prelude::*;
 
 use crate::{View, ViewContext};
@@ -8,30 +10,27 @@ use crate::node_span::NodeSpan;
 ///
 /// The Component will only be inserted once on an entity. This happens when the entity is
 /// first created, and also will happen if the output entity is replaced by a different entity.
-pub struct ViewInsert<V: View, C: Component> {
+pub struct ViewInsertBundle<V: View, B: Bundle> {
     pub(crate) inner: V,
-    pub(crate) component: C,
+    pub(crate) component: Cell<Option<B>>,
 }
 
-impl<V: View, C: Component + Clone> ViewInsert<V, C> {
-    fn insert_component(component: &C, nodes: &NodeSpan, vc: &mut ViewContext) {
+impl<V: View, B: Bundle> ViewInsertBundle<V, B> {
+    fn insert_component(&self, nodes: &NodeSpan, vc: &mut ViewContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
                 let em = &mut vc.entity_mut(*entity);
-                em.insert(component.clone());
+                em.insert(self.component.take().unwrap());
             }
-            NodeSpan::Fragment(ref nodes) => {
-                for node in nodes.iter() {
-                    // Recurse
-                    Self::insert_component(component, node, vc);
-                }
+            NodeSpan::Fragment(ref _nodes) => {
+                panic!("Can only insert into a singular node")
             }
         }
     }
 }
 
-impl<V: View, C: Component + Clone> View for ViewInsert<V, C> {
+impl<V: View, B: Bundle> View for ViewInsertBundle<V, B> {
     type State = (V::State, NodeSpan);
 
     fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
@@ -41,7 +40,7 @@ impl<V: View, C: Component + Clone> View for ViewInsert<V, C> {
     fn build(&self, vc: &mut ViewContext) -> Self::State {
         let state = self.inner.build(vc);
         let mut nodes = self.inner.nodes(vc, &state);
-        Self::insert_component(&self.component, &mut nodes, vc);
+        self.insert_component(&mut nodes, vc);
         (state, nodes)
     }
 
@@ -51,7 +50,7 @@ impl<V: View, C: Component + Clone> View for ViewInsert<V, C> {
         // Only insert the component when the output entity has changed.
         if state.1 != nodes {
             state.1 = nodes;
-            Self::insert_component(&self.component, &mut state.1, vc);
+            self.insert_component(&mut state.1, vc);
         }
     }
 

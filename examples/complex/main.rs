@@ -231,19 +231,17 @@ fn ui_main(mut cx: Cx) -> impl View {
                     STYLE_ASIDE.clone(),
                     StyleHandle::build(|b| b.width(width.value.floor())),
                 ))
-                .once(move |mut e| {
-                    e.insert(On::<Clicked>::run(
-                        move |ev: Listener<Clicked>,
-                              mut atoms: AtomStore,
-                              mut log: ResMut<ClickLog>| {
-                            if ev.id == "save" {
-                                atoms.set(open, true);
-                            }
-                            log.0
-                                .push(format!("Button Clicked: id='{}'", ev.id).to_string());
-                        },
-                    ));
-                })
+                .insert(On::<Clicked>::run(
+                    move |ev: Listener<Clicked>,
+                          mut atoms: AtomStore,
+                          mut log: ResMut<ClickLog>| {
+                        if ev.id == "save" {
+                            atoms.set(open, true);
+                        }
+                        log.0
+                            .push(format!("Button Clicked: id='{}'", ev.id).to_string());
+                    },
+                ))
                 .children((
                     button.bind(ButtonProps {
                         id: "save",
@@ -297,22 +295,20 @@ fn color_edit(cx: Cx) -> impl View {
     let edit_color = cx.use_resource::<EditColor>();
     Element::new()
         .styled(COLOR_EDIT.clone())
-        .once(|mut e| {
-            e.insert((On::<OnChange<f32>>::run(
-                move |ev: Listener<OnChange<f32>>, mut color: ResMut<EditColor>| match ev.id {
-                    "r" => {
-                        color.as_mut().color.set_r(ev.value / 255.0);
-                    }
-                    "g" => {
-                        color.as_mut().color.set_g(ev.value / 255.0);
-                    }
-                    "b" => {
-                        color.as_mut().color.set_b(ev.value / 255.0);
-                    }
-                    _ => (),
-                },
-            ),));
-        })
+        .insert((On::<OnChange<f32>>::run(
+            move |ev: Listener<OnChange<f32>>, mut color: ResMut<EditColor>| match ev.id {
+                "r" => {
+                    color.as_mut().color.set_r(ev.value / 255.0);
+                }
+                "g" => {
+                    color.as_mut().color.set_g(ev.value / 255.0);
+                }
+                "b" => {
+                    color.as_mut().color.set_b(ev.value / 255.0);
+                }
+                _ => (),
+            },
+        ),))
         .children((
             swatch.bind(SwatchProps {
                 color: edit_color.color,
