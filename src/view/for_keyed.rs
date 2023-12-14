@@ -123,6 +123,7 @@ where
                 )
             } else {
                 // Deletions
+                println!("Razing before");
                 for i in prev_range.start..prev_start {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
@@ -166,7 +167,7 @@ where
                 )
             } else {
                 // Deletions
-                for i in next_end..next_range.end {
+                for i in prev_end..prev_range.end {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
                         view.raze(vc, prev.state.as_mut().unwrap());
