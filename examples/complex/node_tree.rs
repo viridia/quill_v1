@@ -107,7 +107,6 @@ static STYLE_TREE_NODE_CHILDREN: StyleHandle = StyleHandle::build(|ss| {
 });
 
 pub fn node_tree(cx: Cx) -> impl View {
-    println!("Node tree");
     let roots = cx.use_resource::<RootEntityList>();
     scroll_view.bind(ScrollViewProps {
         children: ViewParam::new(
@@ -127,7 +126,6 @@ pub fn node_tree(cx: Cx) -> impl View {
 }
 
 pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
-    println!("Node items");
     let expanded = cx.create_atom_init(|| false);
     cx.use_effect(
         |mut ve| {

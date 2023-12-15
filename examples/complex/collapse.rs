@@ -45,8 +45,6 @@ pub fn collapse<V: View + Clone>(mut cx: Cx<CollapseProps<V>>) -> impl View {
     let rect = cx.use_element_rect(id_inner);
     let height = if cx.props.expanded { rect.height() } else { 0. };
 
-    println!("Height {height}");
-
     Element::new()
         .styled((
             STYLE_COLLAPSE.clone(),
