@@ -49,7 +49,7 @@ pub struct NodeInfo {
 }
 
 #[dynamic]
-static STYLE_BOTTOM_PANE: StyleHandle = StyleHandle::build(|ss| {
+static STYLE_TREE: StyleHandle = StyleHandle::build(|ss| {
     ss.border(1)
         .border_color("#080808")
         .background_color("#171717")
@@ -58,7 +58,7 @@ static STYLE_BOTTOM_PANE: StyleHandle = StyleHandle::build(|ss| {
 });
 
 #[dynamic]
-static STYLE_BOTTOM_PANE_INNER: StyleHandle = StyleHandle::build(|ss| {
+static STYLE_TREE_INNER: StyleHandle = StyleHandle::build(|ss| {
     ss.flex_direction(ui::FlexDirection::Column)
         .height(ui::Val::Auto)
 });
@@ -109,18 +109,12 @@ static STYLE_TREE_NODE_CHILDREN: StyleHandle = StyleHandle::build(|ss| {
 pub fn node_tree(cx: Cx) -> impl View {
     let roots = cx.use_resource::<RootEntityList>();
     scroll_view.bind(ScrollViewProps {
-        children: ViewParam::new(
-            Element::new()
-                .styled(STYLE_BOTTOM_PANE_INNER.clone())
-                .children(For::keyed(
-                    &roots.0,
-                    |e| e.entity,
-                    |e| node_item.bind(e.clone()),
-                )),
-        ),
+        children: ViewParam::new(Element::new().styled(STYLE_TREE_INNER.clone()).children(
+            For::keyed(&roots.0, |e| e.entity, |e| node_item.bind(e.clone())),
+        )),
         scroll_enable_x: true,
         scroll_enable_y: true,
-        style: STYLE_BOTTOM_PANE.clone(),
+        style: STYLE_TREE.clone(),
         content_style: STYLE_CONTENT.clone(),
     })
 }

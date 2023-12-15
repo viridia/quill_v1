@@ -11,7 +11,7 @@ static STYLE_COLLAPSE: StyleHandle = StyleHandle::build(|ss| {
         .align_items(ui::AlignItems::Stretch)
         .margin_left(16)
         .height(0)
-        .overflow(ui::OverflowAxis::Clip)
+        .overflow_y(ui::OverflowAxis::Clip)
         .transition(&vec![Transition {
             property: TransitionProperty::Height,
             duration: 0.3,
