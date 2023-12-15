@@ -9,7 +9,8 @@ use bevy_mod_picking::{
 };
 
 use crate::{
-    animate_bg_colors, animate_border_colors, animate_transforms, handle_scroll_events,
+    animate_bg_colors, animate_border_colors, animate_layout, animate_transforms,
+    handle_scroll_events,
     presenter_state::{PresenterGraphChanged, PresenterStateChanged},
     style::{ComputedStyle, UpdateComputedStyle},
     tracked_resources::TrackedResources,
@@ -31,6 +32,7 @@ impl Plugin for QuillPlugin {
                 animate_transforms,
                 animate_bg_colors,
                 animate_border_colors,
+                animate_layout,
             )
                 .chain(),
         )

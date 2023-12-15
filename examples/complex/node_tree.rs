@@ -4,6 +4,7 @@ use bevy_quill::prelude::*;
 use static_init::dynamic;
 
 use crate::{
+    collapse::{collapse, CollapseProps},
     disclosure::{disclosure_triangle, DisclosureTriangleProps, ToggleExpand},
     enter_exit::{EnterExitApi, EnterExitState},
     scrollview::{scroll_view, ScrollViewProps},
@@ -72,7 +73,6 @@ static STYLE_CONTENT: StyleHandle = StyleHandle::build(|ss| {
 static STYLE_TREE_NODE: StyleHandle = StyleHandle::build(|ss| {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
-        .flex_grow(1.)
         .align_items(ui::AlignItems::Stretch)
 });
 
@@ -80,8 +80,8 @@ static STYLE_TREE_NODE: StyleHandle = StyleHandle::build(|ss| {
 static STYLE_TREE_NODE_HEADER: StyleHandle = StyleHandle::build(|ss| {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
-        .flex_grow(1.)
         .align_items(ui::AlignItems::Center)
+        .justify_content(ui::JustifyContent::Start)
         .height(24)
         .padding(ui::UiRect::horizontal(ui::Val::Px(4.)))
         .padding_left(16)
@@ -104,18 +104,10 @@ static STYLE_TREE_NODE_CHILDREN: StyleHandle = StyleHandle::build(|ss| {
         .flex_grow(1.)
         .align_items(ui::AlignItems::Stretch)
         .margin_left(16)
-        .height(10)
-        .overflow_y(ui::OverflowAxis::Clip)
-        .transition(&vec![Transition {
-            property: TransitionProperty::Transform,
-            duration: 0.3,
-            timing: timing::EASE_IN_OUT,
-            ..default()
-        }])
-        .selector(".entering,.entered", |ss| ss.height(ui::Val::Auto))
 });
 
 pub fn node_tree(cx: Cx) -> impl View {
+    println!("Node tree");
     let roots = cx.use_resource::<RootEntityList>();
     scroll_view.bind(ScrollViewProps {
         children: ViewParam::new(
@@ -135,6 +127,7 @@ pub fn node_tree(cx: Cx) -> impl View {
 }
 
 pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
+    println!("Node items");
     let expanded = cx.create_atom_init(|| false);
     cx.use_effect(
         |mut ve| {
@@ -151,8 +144,7 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
         None => Vec::new(),
     };
     let entity = cx.props.entity;
-    let is_expanded = cx.read_atom(expanded);
-    let state = cx.use_enter_exit(is_expanded);
+    let state = cx.use_enter_exit(cx.read_atom(expanded), 0.3);
     let selected = cx.use_resource::<SelectedEntity>();
     Element::new().styled(STYLE_TREE_NODE.clone()).children((
         Element::new()
@@ -190,10 +182,10 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
             )),
         If::new(
             state != EnterExitState::Exited,
-            Element::new()
-                .class_names(state.as_class_name())
-                .styled(STYLE_TREE_NODE_CHILDREN.clone())
-                .children(For::keyed(
+            collapse.bind(CollapseProps {
+                expanded: state == EnterExitState::Entering || state == EnterExitState::Entered,
+                style: STYLE_TREE_NODE_CHILDREN.clone(),
+                children: ViewParam::new(For::keyed(
                     &children,
                     |e| e.clone(),
                     |e| {
@@ -203,6 +195,7 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
                         })
                     },
                 )),
+            }),
             (),
         ),
     ))

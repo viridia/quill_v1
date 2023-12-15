@@ -18,6 +18,7 @@ pub use style::StyleSet;
 pub use style_expr::StyleExpr;
 pub use transition::animate_bg_colors;
 pub use transition::animate_border_colors;
+pub use transition::animate_layout;
 pub use transition::animate_transforms;
 pub use transition::timing;
 pub use transition::Transition;

@@ -104,7 +104,7 @@ pub struct RequestClose {
 pub fn dialog(mut cx: Cx<DemoDialogProps>) -> impl View {
     let open = cx.props.open;
     let target = cx.props.target;
-    let state = cx.use_enter_exit(open);
+    let state = cx.use_enter_exit(open, 0.3);
     If::new(
         state != EnterExitState::Exited,
         Portal::new().children(

@@ -1,7 +1,9 @@
 //! Complex example with multiple views
 mod button;
+mod collapse;
 mod dialog;
 mod disclosure;
+mod element_rect;
 mod enter_exit;
 mod node_tree;
 mod scrollview;
@@ -260,21 +262,6 @@ fn ui_main(mut cx: Cx) -> impl View {
                     }),
                     color_edit,
                     node_tree,
-                    // scroll_view.bind(ScrollViewProps {
-                    //     children: ViewParam::new(
-                    //         Element::new().styled(STYLE_BOTTOM_PANE_INNER.clone()).children((
-                    //             For::keyed(&roots.0, |e| e.entity, |e| e.name.clone()),
-                    //             "Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message. Hello, World! This is a very long message.",
-                    //             swatch_list.bind(SwatchGridProps {
-                    //                 colors: &COLORS,
-                    //                 row_span: 4,
-                    //             }),
-                    //         )),
-                    //     ),
-                    //     scroll_enable_x: true,
-                    //     scroll_enable_y: true,
-                    //     style: STYLE_BOTTOM_PANE.clone(),
-                    // }),
                 )),
             v_splitter.bind(SplitterProps {
                 id: "",

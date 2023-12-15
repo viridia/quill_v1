@@ -43,6 +43,13 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         self.vc.world.entity(entity).get::<C>()
     }
 
+    /// Return a reference to the Component `C` on the given entity. This version does not
+    /// add the component to the tracking scope, and is intended for components that update
+    /// frequently.
+    pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
+        self.vc.world.entity(entity).get::<C>()
+    }
+
     /// Return a reference to the Component `C` on the entity that contains the current
     /// presenter invocation.
     pub fn use_view_component<C: Component>(&self) -> Option<&C> {
@@ -51,7 +58,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     }
 
     /// Run a function on the view entity. Will only re-run when [`deps`] changes.
-    pub fn use_effect<F: Fn(EntityWorldMut), D: Clone + PartialEq + Send + Sync + 'static>(
+    pub fn use_effect<F: FnOnce(EntityWorldMut), D: Clone + PartialEq + Send + Sync + 'static>(
         &mut self,
         effect: F,
         deps: D,
@@ -76,6 +83,11 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// Return a reference to the entity that holds the current presenter invocation.
     pub fn use_view_entity(&self) -> EntityRef<'_> {
         self.vc.world.entity(self.vc.entity)
+    }
+
+    /// Return a mutable reference to the entity that holds the current presenter invocation.
+    pub fn use_view_entity_mut(&mut self) -> EntityWorldMut<'_> {
+        self.vc.world.entity_mut(self.vc.entity)
     }
 
     /// Spawn an empty [`Entity`] which is owned by this presenter. The entity will be

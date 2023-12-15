@@ -50,6 +50,7 @@ impl EnterExitState {
 #[derive(Component, Default)]
 pub struct EnterExit {
     pub open: bool,
+    pub delay: f32,
     pub state: EnterExitState,
 }
 
@@ -60,11 +61,11 @@ pub struct EnterExitTimer {
 
 /// Trait which adds `use_enter_exit` to [`Cx`].
 pub trait EnterExitApi {
-    fn use_enter_exit(&mut self, open: bool) -> EnterExitState;
+    fn use_enter_exit(&mut self, open: bool, delay: f32) -> EnterExitState;
 }
 
 impl<'w, 'p, Props> EnterExitApi for Cx<'w, 'p, Props> {
-    fn use_enter_exit(&mut self, open: bool) -> EnterExitState {
+    fn use_enter_exit(&mut self, open: bool, delay: f32) -> EnterExitState {
         self.use_effect(
             |mut ve| {
                 match ve.get_mut::<EnterExit>() {
@@ -73,7 +74,11 @@ impl<'w, 'p, Props> EnterExitApi for Cx<'w, 'p, Props> {
                     }
                     None => {
                         ve.insert((
-                            EnterExit { open, ..default() },
+                            EnterExit {
+                                open,
+                                delay,
+                                ..default()
+                            },
                             EnterExitTimer { ..default() },
                         ));
                     }
@@ -106,7 +111,7 @@ pub fn enter_exit_state_machine(
             EnterExitState::Entering => {
                 if ee.open {
                     tt.timer += time.delta_seconds();
-                    if tt.timer > 0.3 {
+                    if tt.timer > ee.delay {
                         ee.state = EnterExitState::Entered;
                     }
                 } else {
