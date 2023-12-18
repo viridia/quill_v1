@@ -1,5 +1,4 @@
 mod color_range;
-mod colorspace;
 mod hsla;
 mod linear_rgba;
 mod mix;

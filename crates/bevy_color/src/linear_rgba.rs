@@ -1,4 +1,5 @@
-use crate::{colorspace::SrgbColorSpace, oklaba::Oklaba, Hsla, Mix, SRgba};
+use crate::{oklaba::Oklaba, Hsla, Mix, SRgba};
+use bevy::render::color::SrgbColorSpace;
 use bevy_reflect::{Reflect, ReflectDeserialize, ReflectSerialize};
 use serde::{Deserialize, Serialize};
 
