@@ -1,7 +1,10 @@
-use crate::{oklaba::Oklaba, Hsla, LinearRgba, Mix, SRgba};
+use crate::{LinearRgba, Mix};
 
 /// Represents a range of colors that can be linearly interpolated, defined by a start and
-/// end point which must be in the same color space.
+/// end point which must be in the same color space. It works for any color type that
+/// implements [`Mix`].
+///
+/// This is useful for defining gradients or animated color transitions.
 pub struct ColorRange<T: Mix> {
     start: T,
     end: T,
@@ -23,31 +26,18 @@ where
     }
 }
 
-/// A type-erased color range that can be used to interpolate between colors in different
-/// color spaces.
+/// A type-erased color range that can be used to interpolate between colors in various
+/// color spaces. Note that both the start and end points must be in the same color space.
 pub trait AnyColorRange {
     fn at_linear(&self, factor: f32) -> LinearRgba;
 }
 
-impl AnyColorRange for ColorRange<LinearRgba> {
-    fn at_linear(&self, factor: f32) -> LinearRgba {
-        self.at(factor)
-    }
-}
-
-impl AnyColorRange for ColorRange<SRgba> {
-    fn at_linear(&self, factor: f32) -> LinearRgba {
-        self.at(factor).into()
-    }
-}
-
-impl AnyColorRange for ColorRange<Oklaba> {
-    fn at_linear(&self, factor: f32) -> LinearRgba {
-        self.at(factor).into()
-    }
-}
-
-impl AnyColorRange for ColorRange<Hsla> {
+/// Generic implementation for any type that implements [`Mix`] and can be converted into
+/// [`LinearRgba`].
+impl<T: Mix> AnyColorRange for ColorRange<T>
+where
+    T: Into<LinearRgba>,
+{
     fn at_linear(&self, factor: f32) -> LinearRgba {
         self.at(factor).into()
     }
