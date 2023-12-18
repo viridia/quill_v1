@@ -14,4 +14,5 @@ keywords = ["bevy", "color"]
 [dependencies]
 bevy = "0.12.0"
 bevy_reflect = "0.12.0"
+bevy_render = "0.12.0"
 serde = "1.0.193"

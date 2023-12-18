@@ -1,4 +1,7 @@
-use crate::{LinearRgba, Mix, SRgba};
+use crate::{
+    to_css_string::{RoundToThousandths, ToCssString},
+    LinearRgba, Mix, SRgba,
+};
 use bevy_reflect::{Reflect, ReflectDeserialize, ReflectSerialize};
 use serde::{Deserialize, Serialize};
 
@@ -18,13 +21,15 @@ impl Oklaba {
         Self { l, a, b, alpha }
     }
 
-    /// Convert the Oklaba color to a tuple of components.
+    /// Convert the Oklaba color to a tuple of components (l, a, b, alpha). This is useful
+    /// when you need to transmute the data type of a color to a different type without converting
+    /// the values.
     #[inline]
     pub const fn to_components(&self) -> (f32, f32, f32, f32) {
         (self.l, self.a, self.b, self.alpha)
     }
 
-    /// Construct a new [`Oklaba`] color from components.
+    /// Construct a new [`Oklaba`] color from a tuple of components (l, a, b, alpha).
     #[inline]
     pub const fn from_components((l, a, b, alpha): (f32, f32, f32, f32)) -> Self {
         Self::new(l, a, b, alpha)
@@ -34,6 +39,18 @@ impl Oklaba {
 impl Default for Oklaba {
     fn default() -> Self {
         Self::new(0., 0., 0., 1.)
+    }
+}
+
+impl ToCssString for Oklaba {
+    fn to_css_string(&self) -> String {
+        format!(
+            "color(oklab {}% {} {} {})",
+            (self.l * 100.0).round_to_thousandths(),
+            self.a.round_to_thousandths(),
+            self.b.round_to_thousandths(),
+            self.alpha
+        )
     }
 }
 
@@ -111,5 +128,21 @@ mod tests {
         assert_approx_eq!(oklaba.a, oklaba2.a, 0.001);
         assert_approx_eq!(oklaba.b, oklaba2.b, 0.001);
         assert_approx_eq!(oklaba.alpha, oklaba2.alpha, 0.001);
+    }
+
+    #[test]
+    fn to_css_string() {
+        assert_eq!(
+            Oklaba::from(SRgba::WHITE).to_css_string(),
+            "color(oklab 100% 0 0 1)"
+        );
+        assert_eq!(
+            Oklaba::from(SRgba::RED).to_css_string(),
+            "color(oklab 62.796% -0.005 0.123 1)"
+        );
+        assert_eq!(
+            Oklaba::from(SRgba::NONE).to_css_string(),
+            "color(oklab 0% 0 0 0)"
+        );
     }
 }

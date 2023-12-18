@@ -1,4 +1,4 @@
-use crate::{oklaba::Oklaba, Hsla, Mix, SRgba};
+use crate::{oklaba::Oklaba, to_css_string::ToCssString, Hsla, Mix, SRgba};
 use bevy::render::color::SrgbColorSpace;
 use bevy_reflect::{Reflect, ReflectDeserialize, ReflectSerialize};
 use serde::{Deserialize, Serialize};
@@ -26,13 +26,15 @@ impl LinearRgba {
         }
     }
 
-    /// Convert the [`LinearRgba`] color to a tuple of components.
+    /// Convert the [`LinearRgba`] color to a tuple of components (r, g, b, a). This is useful
+    /// when you need to transmute the data type of a color to a different type without converting
+    /// the values.
     #[inline]
     pub const fn to_components(&self) -> (f32, f32, f32, f32) {
         (self.red, self.green, self.blue, self.alpha)
     }
 
-    /// Construct a new [`LinearRgba`] color from components.
+    /// Construct a new [`LinearRgba`] color from a tuple of components (r, g, b, a).
     #[inline]
     pub const fn from_components((red, green, blue, alpha): (f32, f32, f32, f32)) -> Self {
         Self::new(red, green, blue, alpha)
@@ -47,6 +49,18 @@ impl Default for LinearRgba {
             blue: 1.,
             alpha: 1.,
         }
+    }
+}
+
+impl ToCssString for LinearRgba {
+    fn to_css_string(&self) -> String {
+        format!(
+            "color(srgb-linear {} {} {} {})",
+            self.red * 255.0,
+            self.green * 255.0,
+            self.blue * 255.0,
+            self.alpha
+        )
     }
 }
 
@@ -105,5 +119,26 @@ impl From<Hsla> for LinearRgba {
     #[inline]
     fn from(value: Hsla) -> Self {
         LinearRgba::from(SRgba::from(value))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn to_css_string() {
+        assert_eq!(
+            LinearRgba::from(SRgba::WHITE).to_css_string(),
+            "color(srgb-linear 255 255 255 1)"
+        );
+        assert_eq!(
+            LinearRgba::from(SRgba::RED).to_css_string(),
+            "color(srgb-linear 255 0 0 1)"
+        );
+        assert_eq!(
+            LinearRgba::from(SRgba::NONE).to_css_string(),
+            "color(srgb-linear 0 0 0 0)"
+        );
     }
 }
