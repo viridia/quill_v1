@@ -55,10 +55,10 @@ impl Default for Hsla {
 impl ToCssString for Hsla {
     fn to_css_string(&self) -> String {
         format!(
-            "hsla({}deg {}% {}% {})",
-            self.hue.round_to_thousandths(),
-            (self.saturation * 100.).round_to_thousandths(),
-            (self.lightness * 100.).round_to_thousandths(),
+            "hsl({}deg {}% {}% {})",
+            self.hue.round_to_decimal_places(6),
+            (self.saturation * 100.).round_to_decimal_places(3),
+            (self.lightness * 100.).round_to_decimal_places(3),
             self.alpha
         )
     }
@@ -130,19 +130,16 @@ mod tests {
     fn to_css_string() {
         assert_eq!(
             Hsla::from(SRgba::WHITE).to_css_string(),
-            "hsla(0deg 0% 100% 1)"
+            "hsl(0deg 0% 100% 1)"
         );
         assert_eq!(
             Hsla::from(SRgba::RED).to_css_string(),
-            "hsla(0deg 100% 50% 1)"
+            "hsl(0deg 100% 50% 1)"
         );
         assert_eq!(
             Hsla::from(SRgba::BLUE).to_css_string(),
-            "hsla(240deg 100% 50% 1)"
+            "hsl(240deg 100% 50% 1)"
         );
-        assert_eq!(
-            Hsla::from(SRgba::NONE).to_css_string(),
-            "hsla(0deg 0% 0% 0)"
-        );
+        assert_eq!(Hsla::from(SRgba::NONE).to_css_string(), "hsl(0deg 0% 0% 0)");
     }
 }

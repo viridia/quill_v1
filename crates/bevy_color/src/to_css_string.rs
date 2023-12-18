@@ -13,13 +13,16 @@ pub trait ToCssString {
     fn to_css_string(&self) -> String;
 }
 
-/// Helper trait for rounding a float to three decimal places.
-pub(crate) trait RoundToThousandths {
-    fn round_to_thousandths(&self) -> f32;
+/// Helper trait for rounding a float to a specified number of decimal places. Used in cases where
+/// the color component is shown as a percentage, and we want to avoid excess precision when
+/// encoding.
+pub(crate) trait RoundToDecimalPlaces {
+    fn round_to_decimal_places(&self, decimals: u32) -> f32;
 }
 
-impl RoundToThousandths for f32 {
-    fn round_to_thousandths(&self) -> f32 {
-        (self * 1000.0).round() / 1000.0
+impl RoundToDecimalPlaces for f32 {
+    fn round_to_decimal_places(&self, decimals: u32) -> f32 {
+        let factor = 10.0_f32.powi(decimals as i32);
+        (self * factor).round() / factor
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    to_css_string::{RoundToThousandths, ToCssString},
+    to_css_string::{RoundToDecimalPlaces, ToCssString},
     LinearRgba, Mix, SRgba,
 };
 use bevy_reflect::{Reflect, ReflectDeserialize, ReflectSerialize};
@@ -46,9 +46,9 @@ impl ToCssString for Oklaba {
     fn to_css_string(&self) -> String {
         format!(
             "color(oklab {}% {} {} {})",
-            (self.l * 100.0).round_to_thousandths(),
-            self.a.round_to_thousandths(),
-            self.b.round_to_thousandths(),
+            (self.l * 100.0).round_to_decimal_places(3),
+            self.a.round_to_decimal_places(6),
+            self.b.round_to_decimal_places(6),
             self.alpha
         )
     }
@@ -138,7 +138,7 @@ mod tests {
         );
         assert_eq!(
             Oklaba::from(SRgba::RED).to_css_string(),
-            "color(oklab 62.796% -0.005 0.123 1)"
+            "color(oklab 62.796% -0.005138 0.122834 1)"
         );
         assert_eq!(
             Oklaba::from(SRgba::NONE).to_css_string(),
