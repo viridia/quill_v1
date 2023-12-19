@@ -17,6 +17,13 @@ pub struct Oklaba {
 
 impl Oklaba {
     /// Construct a new [`Oklaba`] color from components.
+    ///
+    /// # Arguments
+    ///
+    /// * `l` - Lightness channel. [0.0, 1.0]
+    /// * `a` - Green-red channel. [-1.0, 1.0]
+    /// * `b` - Blue-yellow channel. [-1.0, 1.0]
+    /// * `alpha` - Alpha channel. [0.0, 1.0]
     pub const fn new(l: f32, a: f32, b: f32, alpha: f32) -> Self {
         Self { l, a, b, alpha }
     }
@@ -79,12 +86,12 @@ impl From<LinearRgba> for Oklaba {
         let l = 0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue;
         let m = 0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue;
         let s = 0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue;
-        let l = l.cbrt();
-        let m = m.cbrt();
-        let s = s.cbrt();
-        let l = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
-        let a = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
-        let b = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+        let l_ = l.cbrt();
+        let m_ = m.cbrt();
+        let s_ = s.cbrt();
+        let l = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+        let a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
+        let b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_;
         Oklaba::new(l, a, b, alpha)
     }
 }
@@ -98,18 +105,13 @@ impl From<SRgba> for Oklaba {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::SRgba;
-
-    macro_rules! assert_approx_eq {
-        ($x:expr, $y:expr, $d:expr) => {
-            if !($x - $y < $d || $y - $x < $d) {
-                panic!();
-            }
-        };
-    }
+    use crate::{testing::assert_approx_eq, SRgba};
 
     #[test]
     fn test_to_from_srgba() {
+        let oklab: Oklaba = SRgba::RED.into();
+        assert_eq!(oklab, Oklaba::new(0.6279554, 0.22486295, 0.1258463, 1.0));
+
         let oklaba = Oklaba::new(0.5, 0.5, 0.5, 1.0);
         let srgba: SRgba = oklaba.into();
         let oklaba2: Oklaba = srgba.into();
@@ -138,7 +140,7 @@ mod tests {
         );
         assert_eq!(
             Oklaba::from(SRgba::RED).to_css_string(),
-            "color(oklab 62.796% -0.005138 0.122834 1)"
+            "color(oklab 62.796% 0.224863 0.125846 1)"
         );
         assert_eq!(
             Oklaba::from(SRgba::NONE).to_css_string(),

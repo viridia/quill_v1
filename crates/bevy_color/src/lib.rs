@@ -32,6 +32,7 @@ mod linear_rgba;
 mod mix;
 mod oklaba;
 mod srgba;
+mod testing;
 mod to_css_string;
 
 pub use color_range::*;

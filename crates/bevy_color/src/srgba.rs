@@ -310,15 +310,9 @@ const fn hex_value(b: u8) -> Result<u8, u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::testing::assert_approx_eq;
 
-    macro_rules! assert_approx_eq {
-        ($x:expr, $y:expr, $d:expr) => {
-            if !($x - $y < $d || $y - $x < $d) {
-                panic!();
-            }
-        };
-    }
+    use super::*;
 
     #[test]
     fn test_to_from_linear() {
