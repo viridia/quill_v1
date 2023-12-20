@@ -208,14 +208,10 @@ fn atom_example(mut cx: Cx<&str>) -> impl View {
         .children((
             format!("The count is: {}: {}", name, cx.read_atom(counter)),
         ))
-        .once(move |entity, world| {
-            // Increment the counter when we click
-            let mut e = world.entity_mut(entity);
-            e.insert(On::<Pointer<Click>>::run(
-                move |_ev: Listener<Pointer<Click>>, atoms: AtomStore| {
-                    atoms.update(counter, |value| value + 1);
-                },
-            ));
+        .insert(On::<Pointer<Click>>::run(
+            move |_ev: Listener<Pointer<Click>>, atoms: AtomStore| {
+                atoms.update(counter, |value| value + 1);
+            },
         })
 }
 ```
