@@ -287,7 +287,15 @@ These values can be converted into strings by calling `.as_class_name()` on them
 value can be put directly on the element as a class name, and the class names can be used in
 dynamic stylesheet selectors.
 
-The actual dialog display graph will exist whenever the state is not `Exited`.
+The calling presenter should, in most cases, render the item whenever the state is not `Exited`.
+
+```rust
+let state = cx.use_enter_exit(open, 0.3);
+If::new(
+    state != EnterExitState::Exited,
+    Element::new().class_name(state.as_class_name()), // Dialog content, etc.
+    ()
+```
 
 #### `use_element_rect()`
 
