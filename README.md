@@ -364,6 +364,15 @@ However, they also differ from CSS in a number of important ways:
 
 #### Using StyleHandles
 
+`StyleHandle`s are typically created using the `.build()` method, which accepts a closure that takes
+a builder object. The builder methods are flexible in the type of arguments they accept: for
+example, methods such as `.margin_right()` and `.row_gap()` accept an `impl Length`, which can be
+an integer (i32), a float (f32), or a Bevy `ui::Val` object. In the case where no unit is specified,
+pixels is the default unit, so for example `.border(2)` specifies a border width of 2 pixels.
+
+Styles are applied to an element using the `.styled()` method, which accepts either a single style,
+or a tuple of styles.
+
 Here's an example of a widget which changes its border color when hovered:
 
 ```rust
@@ -430,6 +439,10 @@ A Quill UI is made up of individual elements called `Views`. If you are familiar
 like React.js, Solid.js or Vue, you'll recognizes that Quill views are like "components" or
 "widgets": modular, resable elements that are arranged hierarchically. However, `Views` are not the
 same as Bevy UI nodes; instead `Views` are templates which produce UI nodes.
+
+Any object can implement `View`. For example, there are implementations of `View` for both
+`String` and `&str`, which means that ordinary strings can be used as child nodes without the
+need to wrap them in a special "text" element.
 
 Views fall into two categories: built-in views, like `Element`, and user-created views. User-created
 views are created by user functions written in Rust, which are called "presenters".
@@ -600,88 +613,7 @@ built or razed as appropriate.
 Finally, there is `.each()`, which treats the actual array data as the key. This doesn't require
 the extra closure argument, but requires that your array data implement `Clone` and `PartialEq`.
 
-## Complex example
-
-```rust
-/// Define some styles as immutable static
-#[dynamic]
-static STYLE_MAIN: StyleHandle = StyleHandle::build::build(|ss| ss
-    .position(ui::PositionType::Absolute)
-    .left(10.)
-    .top(10.)
-    .bottom(20.)
-    .right(10.)
-    .border(1)
-    .border_color("#888")
-    .display(ui::Display::Flex));
-
-#[dynamic]
-static STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| ss
-    .background_color("#222")
-    .display(ui::Display::Flex)
-    .flex_direction(ui::FlexDirection::Column)
-    .width(200));
-
-/// Function to set up the view root
-fn setup_view_root(mut commands: Commands) {
-    commands.spawn(ViewHandle::new(ui_main, ()));
-}
-
-/// Top-level presenter
-fn ui_main(mut cx: Cx) -> impl View {
-    let counter = cx.use_resource::<Counter>();
-    // Render an element with children
-    Element::new()
-        .styled(STYLE_MAIN.clone())
-        .children((
-            Element::new(()).styled(STYLE_ASIDE.clone()),
-            v_splitter,
-            // A conditional element
-            If::new(
-                counter.count & 1 == 0,
-                // Strings and string slices also implement `View`.
-                "even",
-                "odd",
-            ),
-        ))
-}
-
-/// A presenter function
-fn v_splitter(mut _cx: Cx) -> impl View {
-    Element::new()
-        .styled(STYLE_VSPLITTER.clone())
-        .children(
-            Element::new().styled(STYLE_VSPLITTER_INNER.clone()))
-}
-
-```
-# Styling
-
-Quill supports CSS-like styling in the form of `StyleHandle`s. A `StyleHandle` is a sharable object
-that contains a number of style properties like `background_color`, `flex_direction` and so on.
-`StyleHandle`s can be composed - that is, multiple `StyleHandle`s can be applied to the same element,
-and the resulting style is computed by merging all the style properties together. There is no
-"cascade" as in CSS, styles are applied in the order they are declared.
-
-`StyleHandle` internally contain an  `Arc` because they are designed to be shared. Most styles are
-global constants, but nothing prevents you from creating a style dynamically in your presenter function.
-
-Styles are applied to an element using the `.styled()` method, which accepts either a single style,
-or a tuple of styles.
-
-`StyleHandle`s are typically creating using the `.build()` method, which accepts a closure that takes
-a builder object. The builder methods are flexible in the type of arguments they accept: for
-example, methods such as `.margin_right()` and `.row_gap()` accept an `impl Length`, which can be
-an integer (i32), a float (f32), or a Bevy `ui::Val` object. In the case where no unit is specified,
-pixels is the default unit, so for example `.border(2)` specifies a border width of 2 pixels.
-
-**Coming Soon**: CSS variables.
-
-# Design Notes
-
-Any object can implement `View`. For example, there are implementations of `View` for both
-`String` and `&str`, which means that ordinary strings can be used as child nodes without the
-need to wrap them in a special "text" element.
+### Deep-Dive: NodeSpans
 
 Even though the view state graph is frequently reconstructed, it's "shape" is relatively stable,
 unlike the display graph. For example, a `For` element may generate varying numbers of children
