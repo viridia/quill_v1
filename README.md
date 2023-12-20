@@ -416,7 +416,7 @@ So for example, `".bg:hover > &"` is a valid selector expression, but `"&:hover 
 
 Quill StyleHandles support CSS-like transitions for some properties (mostly layout properties
 like width, height, left and so on, as well as transform properties like scale and rotation.
-Eventually color once we get lerping figured out).
+Eventually color once we get lerping figured out.)
 
 The `transition` style attribute indicates which properties you want to be animated. Here's an
 example of how to animate a rotation:
@@ -438,6 +438,8 @@ How this works: when the styling system sees that a particular property is to be
 instead of modifying that style attribute directly, it injects an animation component that
 contains a timer and an easing function. A separate ECS system updates the timer clock and
 adjusts the style attribute.
+
+Easing functions are just functions, so you can define whatever kind of easing you want.
 
 ### Class names
 
