@@ -1,12 +1,15 @@
 # TODO:
 
 * Change style builder methods to accept `impl StyleValue`. Then define `Var("varname")`
+* React-style context
+* Theming?
 * `use` hooks for components, events, etc.
 * Implement callbacks.
 * Widgets to do:
     * Popup Menu
     * Gizmo
-    * Text Input.
+    * Text Input
+    * Button Group
 * Support for `cursor` style property.
 * Change QuillPlugin to add bevy_mod_picking plugins if needed:
 

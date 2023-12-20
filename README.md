@@ -119,12 +119,35 @@ fn event_log(mut cx: Cx) -> impl View {
 }
 ```
 
-`.with()` is called whenever the view is updated. If you only need to modify the element when it is first created, use `.once()`.
+`.with()` is called whenever the view is updated. There's another variant, `.with_memo()`, which
+takes an additional argument representing a set of dependency values (which can be anything).
+The callback will only be called when one or more of the following is true:
 
-There's also a shortcut method that lets you insert an ECS component:
+* It will be called the first time the view is built.
+* It will be called if the display entity it's being called on is different from the previous update
+  (this can happen if the underlying view rendered a different entity).
+* It will be called if the list of dependencies is different than the previous update.
 
 ```rust
-Element::new().insert(ViewportInsetElement {}),
+fn selectable_widget(mut cx: Cx<SelectableWidgetProps>) -> impl View {
+    let selected = cx.props.selected;
+    let log = cx.use_resource::<ClickLog>();
+    Element::new()
+        .with_memo(|entity, world| {
+            // Modify the component, but only when `selected` changes.
+            let mut cmp = entity.get_mut::<MyComponent>.unwrap();
+            cmp.selected = selected;
+        }, selected)),
+}
+```
+
+There's also a shortcut method that lets you insert ECS bundles:
+
+```rust
+Element::new().insert((
+    ViewportInsetElement {},
+    On::Pointer<Move>::run(callback),
+)),
 ```
 
 ### Returning multiple nodes
@@ -132,7 +155,7 @@ Element::new().insert(ViewportInsetElement {}),
 Normally a `View` renders a single UI node. If you want to return multiple nodes, use a `Fragment`:
 
 ```rust
-fn multi(mut cx: Cx) -> impl View {
+fn fragment_example(mut cx: Cx) -> impl View {
     Fragment::new((
         "Hello, ",
         "World!"
@@ -201,20 +224,23 @@ fn atom_example(mut cx: Cx<&str>) -> impl View {
 
 The typical way of updating the state of an element is by modifying the state and props of
 a presenter, which causes the elements to be rebuilt and patched. However, there are a few
-cases where you may want to directly modify an element at the component level from another element,
+cases where you may want to directly modify a display element at the ECS level from another element,
 bypassing the normal update process. In this case, it's desirable for an element to contain
 the entity id of another element, so that it access it directly.
 
-To do this, we can pre-allocated an entity id via `cx.create_entity()`. This method creates
+One use case for this is expand / collapse animations, where you need direct access to the entity
+in order to measure it's natural size before beginning the animation.
+
+To do this, we can pre-allocate an entity id via `cx.create_entity()`. This method creates
 a stable entity id which is "owned" by the presenter state, meaning that when the presenter
-is razed, all of the owned ids will be despawned as well. `create_entity` is a hook, so it returns
+is razed, all of the owned ids will be despawned as well. `create_entity()` is a hook, so it returns
 the same entity id each time the presenter function is run.
 
 Now that we have an entity id, we can do two things with it:
 
-* Render a `View` using that entity id.
+* Render a `View` using that entity id, via `RefElement`.
 * Pass that entity as a parameter to other `Views`, either as a property or as an attribute of
-  a component.
+  a component. Those views can interrogate the components of that entity in the normal way.
 
 `RefElement` is a `View` type, similar to `Element`. The only difference is that where `Element`
 automatically spawns a new entity when building the `View`, `RefElement` uses the entity id that
@@ -226,7 +252,123 @@ you pass into it.
 > placeholder which is filled in with the element reference during rendering, whereas
 > `create_entity` lets us allocate an element id before rendering happens.
 
+### Advanced hooks
+
+There are several advanced hooks in the examples directory. These hooks are not part of Quill,
+but will likely be included in "Egret" which is the planned headless widget library based on Quill.
+
+#### `use_enter_exit()`
+
+The `.use_enter_exit()` hook is useful for elements such as dialog boxes which do both an open
+and close animation. The idea is that when a dialog box closes you don't want to destroy the display
+graph until the closing animation is complete:
+
+```rust
+use super::enter_exit::EnterExitApi;
+
+let state = cx.use_enter_exit(open, 0.3);
+```
+In this example, `open` is a boolean flag which is true when we want the dialog to be open, and
+false when we want it to be closed. Changing this flag starts a timer which drives a state machine;
+the second argument is the delay time, in seconds, for the animations.
+
+The output, `state`, is an enum which can have one of six values:
+
+```rust
+#[derive(Default, Clone, PartialEq)]
+pub enum EnterExitState {
+    EnterStart,
+    Entering,
+    Entered,
+    ExitStart,
+    Exiting,
+
+    #[default]
+    Exited,
+}
+```
+These values can be converted into strings by calling `.as_class_name()` on them. The resulting
+value can be put directly on the element as a class name, and the class names can be used in
+dynamic stylesheet selectors.
+
+The actual dialog display graph will exist whenever the state is not `Exited`.
+
+#### `use_element_rect()`
+
+The `use_element_rect()` hook returns the rectangular bounds of a ui node as a reactive data source,
+meaning that it will trigger an update whenever the position or size of the element changes.
+The input is the entity id of the element we wish to measure:
+
+```rust
+let rect = cx.use_element_rect(id_inner);
+```
+
+
+
 ### Styling
+
+#### Philosophy
+
+There are several different ways to approach styling in Bevy. One is "inline styles", meaning that
+you explicitly create style components (`BackgroundColor`, `Outline` and so on) in the template
+and pass them in as parameters to the presenter.
+
+A disadvantage of this approach is that you have limited ability to compose styles from different
+sources. Rust has one mechanism for inheriting struct values from another struct, which is the
+`..` syntax; this supposes that both of the struct values are known at the point of declaration.
+
+Another disadvantage is that any dynamic style properties are strictly the responsibility of the
+presenter. Transitory state changes such as "hover" and "focus" require updating the view and
+patching the display graph. This means that widgets can only have whatever dynamic properties
+are implemented in the presenter; it's not possible for an artist to come along later and add
+hover or focus effects unless the widget is designed with hover effects in mind, and if the widget
+has multiple parts, only the parts which have explicit support for those effects can be dynamically
+styled.
+
+This also means that, since presenters are constructed within an exclusive system, all dynamic
+style changes must also happen in an exclusive system. While this will no doubt be true for most
+state changes anyway ("drag" and "select" have to be done by the presenter), autonomous states
+like "hover" and "focus" ought to be concurrently computable in a separate ECS system.
+
+An alternative to inline styles is stylesheets or "style handles", which is a rule-based approach.
+This has a number of advantages, but requires additional computation.
+
+Quill's style system is inspired by CSS, but it is not CSS. Styles are currently built either
+as constants, using a fluent syntax, or dynamically inline. A future addition should allow styles
+to be loaded from assets, using a CSS-like syntax, and in fact the data representation of styles
+has been carefully designed to allow for future serialization. Right now, however, the main focus
+is on "editor" use cases, which likely will want styles defined in code anyway.
+
+`StyleHandles` resemble CSS in the following ways:
+
+* Style attributes are sparsely represented, meaning that only those properties that you actually
+  declare are stored in the style handle.
+* Styles are composable, meaning that you can "merge" multiple styles together to produce a union
+  of all of them.
+* Styles support both "long-form" and "shortcut" syntax variations. For example, the following are
+  all equivalent:
+  * `.border(ui::UiRect::all(ui::Val::Px(10.)))` -- a border of 10px on all sides
+  * `.border(ui::Val::Px(10.))` -- Scalar is automatically converted to a rect
+  * `.border(10.)` -- `Px`` is assumed to be the default unit
+  * `.border(10)` -- Integers are automatically converted to f32 type.
+* Styles allow dynamism by defining "selectors", dynamic matching rules. These rules execute
+  in their own dedicated ECS system, and use `Commands` to update the entity's style components.
+* **Planned**: Styles will support inheritance of variables defined higher in the display graph.
+  This will allow things like contextual color schemes ("light" and "dark" modes).
+
+However, they also differ from CSS in a number of important ways:
+
+* There is no prioritization or cascade, as this tends to be a source of confusion for web
+  developers (Even CSS itself is moving away from this with the new "CSS layers" feature.) Instead
+  styles are merged strictly in the order that they appear on the element.
+* The syntax for selectors is limited, and certain CSS features which are (a) expensive to compute
+  and (b) not needed for widget development have been left out.
+* Styles can only affect the element they are assigned to, not their children. Styles can query
+  the state of parent elements, but cannot affect them. This idea is borrowed from
+  some popular CSS-in-JS frameworks, which have similar restrictions. The idea is to increase
+  maintainability by making styles more deterministic and predictable.
+
+#### Using StyleHandles
 
 Here's an example of a widget which changes its border color when hovered:
 
@@ -251,7 +393,7 @@ pub fn hoverable(cx: Cx) -> impl View {
 }
 ```
 
-An element can have multiple styles. Styles are applied in order, first-come, first-serve - there is no CSS "cascade".
+An element can have multiple styles. Styles are applied in order, first-come, first-serve.
 
 Conditional styles can be added via selectors. It supports a limited subset of CSS syntax (basically the parts of CSS that don't require backtracking):
 
@@ -261,6 +403,7 @@ Conditional styles can be added via selectors. It supports a limited subset of C
 * `>` (parent combinator, e.g. `:hover > &`)
 * `&` (current element)
 * ',' (logical-or)
+* **Planned:** `:focused`, `:focus-within`, `:not`.
 
 Note that selectors only support styling the *current* node - that is, the node that the style handle is attached to. Selectors can't affect child nodes - they need to have their own styles.
 
