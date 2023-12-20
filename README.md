@@ -8,9 +8,6 @@ Quill is an experimental library which borrows ideas from a number of popular UI
 including React.js, Solid.js, Dioxus, and Xilem. However, the way these ideas are implemented is
 quite different, owing to the need to build on the foundations of Bevy ECS.
 
-At this point in time, Quill is meant to be more of a research platform - a "proof of concept" -
-than a usable library. This means that nothing is set in stone yet.
-
 ## Getting started
 
 For now, you can run the examples. The "complex" example shows off multiple features of the
@@ -123,15 +120,14 @@ fn event_log(mut cx: Cx) -> impl View {
 takes an additional argument representing a set of dependency values (which can be anything).
 The callback will only be called when one or more of the following is true:
 
-* It will be called the first time the view is built.
-* It will be called if the display entity it's being called on is different from the previous update
+* This is the first time the view is being built.
+* The display entity it's being called on is different from the previous update
   (this can happen if the underlying view rendered a different entity).
-* It will be called if the list of dependencies is different than the previous update.
+* The list of dependencies is different than the previous update.
 
 ```rust
 fn selectable_widget(mut cx: Cx<SelectableWidgetProps>) -> impl View {
     let selected = cx.props.selected;
-    let log = cx.use_resource::<ClickLog>();
     Element::new()
         .with_memo(|entity, world| {
             // Modify the component, but only when `selected` changes.
@@ -351,7 +347,7 @@ is on "editor" use cases, which likely will want styles defined in code anyway.
   all equivalent:
   * `.border(ui::UiRect::all(ui::Val::Px(10.)))` -- a border of 10px on all sides
   * `.border(ui::Val::Px(10.))` -- Scalar is automatically converted to a rect
-  * `.border(10.)` -- `Px`` is assumed to be the default unit
+  * `.border(10.)` -- `Px` is assumed to be the default unit
   * `.border(10)` -- Integers are automatically converted to f32 type.
 * Styles allow dynamism by defining "selectors", dynamic matching rules. These rules execute
   in their own dedicated ECS system, and use `Commands` to update the entity's style components.
@@ -413,12 +409,14 @@ Conditional styles can be added via selectors. It supports a limited subset of C
 * `:first-child` and `:last-child`
 * `>` (parent combinator, e.g. `:hover > &`)
 * `&` (current element)
-* ',' (logical-or)
+* `,` (logical-or)
 * **Planned:** `:focused`, `:focus-within`, `:not`.
 
-Note that selectors only support styling the *current* node - that is, the node that the style handle is attached to. Selectors can't affect child nodes - they need to have their own styles.
+As stated previously, selectors only support styling the *current* node - that is, the node that
+the style handle is attached to. Selectors can't affect child nodes - they need to have their own styles.
 
-So for example, `".bg:hover > &"` is a valid selector expression, but `"&:hover > .bg"` is not valid. The `&` must always be on the last term. The reason for this is performance - Quill only supports those features of CSS that are lightning-fast.
+So for example, `".bg:hover > &"` is a valid selector expression, but `"&:hover > .bg"` is not valid.
+The `&` must always be on the last term. The reason for this is performance - Quill only supports those features of CSS that are lightning-fast.
 
 #### Animated Transitions
 
