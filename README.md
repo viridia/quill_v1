@@ -303,8 +303,6 @@ The input is the entity id of the element we wish to measure:
 let rect = cx.use_element_rect(id_inner);
 ```
 
-
-
 ### Styling
 
 #### Philosophy
@@ -417,7 +415,7 @@ using the `.if_true()` modifier.
 ```rust
 pub fn classnames_example(cx: Cx<Props>) -> impl View {
     Element::new()
-        .class_names("vertical", "selected".if_true(cx.props.selected))
+        .class_names(("vertical", "selected".if_true(cx.props.selected)))
 }
 ```
 
