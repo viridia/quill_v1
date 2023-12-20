@@ -412,6 +412,33 @@ Note that selectors only support styling the *current* node - that is, the node 
 
 So for example, `".bg:hover > &"` is a valid selector expression, but `"&:hover > .bg"` is not valid. The `&` must always be on the last term. The reason for this is performance - Quill only supports those features of CSS that are lightning-fast.
 
+#### Animated Transitions
+
+Quill StyleHandles support CSS-like transitions for some properties (mostly layout properties
+like width, height, left and so on, as well as transform properties like scale and rotation.
+Eventually color once we get lerping figured out).
+
+The `transition` style attribute indicates which properties you want to be animated. Here's an
+example of how to animate a rotation:
+
+```rust
+#[dynamic]
+static STYLE_DISCLOSURE_TRIANGLE: StyleHandle = StyleHandle::build(|ss| {
+    ss.display(ui::Display::Flex)
+        .transition(&vec![Transition {
+            property: TransitionProperty::Transform,
+            duration: 0.3,
+            timing: timing::EASE_IN_OUT,
+            ..default()
+        }])
+        .selector(".expanded", |ss| ss.rotation(PI / 2.))
+});
+```
+How this works: when the styling system sees that a particular property is to be animated,
+instead of modifying that style attribute directly, it injects an animation component that
+contains a timer and an easing function. A separate ECS system updates the timer clock and
+adjusts the style attribute.
+
 ### Class names
 
 The `class_names` method can add class names to an element. Class names can be added conditionally
