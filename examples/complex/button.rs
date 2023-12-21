@@ -41,6 +41,7 @@ pub fn button<V: View + Clone>(cx: Cx<ButtonProps<V>>) -> impl View {
     let id = cx.props.id;
     Element::new()
         .insert((
+            Name::new("button"),
             On::<Pointer<Click>>::run(
                 move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
                     writer.send(Clicked {

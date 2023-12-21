@@ -193,7 +193,7 @@ impl Default for PanelWidth {
 pub struct ClickLog(Vec<String>);
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn(ViewHandle::new(ui_main, ()));
+    commands.spawn((ViewHandle::new(ui_main, ()), Name::new("ViewRoot")));
 }
 
 fn ui_main(mut cx: Cx) -> impl View {
@@ -209,26 +209,31 @@ fn ui_main(mut cx: Cx) -> impl View {
     );
     let width = cx.use_resource::<PanelWidth>();
     Element::new()
+        .named("main-ui")
         .styled(STYLE_MAIN.clone())
-        .once(move |mut e| {
-            let id = e.id();
-            e.insert((On::<SplitterDragged>::run(
-                move |ev: Listener<SplitterDragged>,
-                      mut width: ResMut<PanelWidth>,
-                      query: Query<(&Node, &GlobalTransform)>| {
-                    match query.get(id) {
-                        Ok((node, transform)) => {
-                            // Measure node width and clamp split position.
-                            let node_width = node.logical_rect(transform).width();
-                            width.value = ev.value.clamp(100., node_width - 100.);
+        .with_memo(
+            move |mut e| {
+                let id = e.id();
+                e.insert((On::<SplitterDragged>::run(
+                    move |ev: Listener<SplitterDragged>,
+                          mut width: ResMut<PanelWidth>,
+                          query: Query<(&Node, &GlobalTransform)>| {
+                        match query.get(id) {
+                            Ok((node, transform)) => {
+                                // Measure node width and clamp split position.
+                                let node_width = node.logical_rect(transform).width();
+                                width.value = ev.value.clamp(100., node_width - 100.);
+                            }
+                            _ => return,
                         }
-                        _ => return,
-                    }
-                },
-            ),));
-        })
+                    },
+                ),));
+            },
+            (),
+        )
         .children((
             Element::new()
+                .named("side-panel")
                 .styled((
                     STYLE_ASIDE.clone(),
                     StyleHandle::build(|b| b.width(width.value.floor())),

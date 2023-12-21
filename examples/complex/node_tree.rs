@@ -22,17 +22,12 @@ impl Plugin for NodeTreePlugin {
 
 #[derive(Debug, PartialEq, Eq, Ord, Clone)]
 pub struct EntityListNode {
-    name: Option<String>,
     entity: Entity,
 }
 
 impl PartialOrd for EntityListNode {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match self.entity.partial_cmp(&other.entity) {
-            Some(core::cmp::Ordering::Equal) => {}
-            ord => return ord,
-        }
-        self.name.partial_cmp(&other.name)
+        self.entity.partial_cmp(&other.entity)
     }
 }
 
@@ -98,6 +93,13 @@ static STYLE_TREE_NODE_TITLE: StyleHandle = StyleHandle::build(|ss| {
 });
 
 #[dynamic]
+static STYLE_TREE_NODE_NAME: StyleHandle = StyleHandle::build(|ss| {
+    ss.font_size(16.)
+        .font(Some(AssetPath::from("fonts/Exo_2/static/Exo2-Medium.ttf")))
+        .margin_left(4)
+});
+
+#[dynamic]
 static STYLE_TREE_NODE_CHILDREN: StyleHandle = StyleHandle::build(|ss| {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
@@ -138,6 +140,7 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
     let entity = cx.props.entity;
     let state = cx.use_enter_exit(cx.read_atom(expanded), 0.3);
     let selected = cx.use_resource::<SelectedEntity>();
+    let name = cx.use_component_untracked::<Name>(entity);
     Element::new().styled(STYLE_TREE_NODE.clone()).children((
         Element::new()
             .styled(STYLE_TREE_NODE_HEADER.clone())
@@ -170,6 +173,12 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
                     (),
                 ),
                 format!("{:?}", cx.props.entity).styled(STYLE_TREE_NODE_TITLE.clone()),
+                If::new(
+                    name.is_some(),
+                    name.map_or_else(|| "".to_string(), |n| n.to_string())
+                        .styled(STYLE_TREE_NODE_NAME.clone()),
+                    (),
+                ),
                 node_desc.bind(cx.props.clone()),
             )),
         If::new(
@@ -180,12 +189,7 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
                 children: ViewParam::new(For::keyed(
                     &children,
                     |e| e.clone(),
-                    |e| {
-                        node_item.bind(EntityListNode {
-                            name: None,
-                            entity: e.clone(),
-                        })
-                    },
+                    |e| node_item.bind(EntityListNode { entity: e.clone() }),
                 )),
             }),
             (),
@@ -194,32 +198,25 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
 }
 
 pub fn node_desc(cx: Cx<EntityListNode>) -> impl View {
-    let is_node = cx.use_component::<Node>(cx.props.entity);
     let is_text = cx.use_component::<Text>(cx.props.entity);
     let is_mesh = cx.use_component::<Handle<Mesh>>(cx.props.entity);
     let is_camera = cx.use_component::<Camera>(cx.props.entity);
     let is_point_light = cx.use_component::<PointLight>(cx.props.entity);
-    let is_view_handle = cx.use_component::<ViewHandle>(cx.props.entity);
     Fragment::new((
         If::new(is_mesh.is_some(), " Mesh", ()),
-        If::new(is_node.is_some(), " Node", ()),
         If::new(is_text.is_some(), " Text", ()),
         If::new(is_camera.is_some(), " Camera", ()),
         If::new(is_point_light.is_some(), " PointLight", ()),
-        If::new(is_view_handle.is_some(), " ViewHandle", ()),
     ))
 }
 
 fn update_root_entities(
-    query: Query<(Entity, DebugName), (Without<Parent>, Without<AtomCell>)>,
+    query: Query<Entity, (Without<Parent>, Without<AtomCell>)>,
     mut roots: ResMut<RootEntityList>,
 ) {
     let mut sorted: Vec<EntityListNode> = Vec::with_capacity(query.iter().len());
-    for (entity, debug) in query.iter() {
-        let node = EntityListNode {
-            entity,
-            name: debug.name.map(|n| n.to_string()),
-        };
+    for entity in query.iter() {
+        let node = EntityListNode { entity };
         sorted.push(node);
     }
     sorted.sort();

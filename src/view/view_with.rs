@@ -11,10 +11,6 @@ pub struct ViewWith<V: View, F: Fn(EntityWorldMut) -> () + Send> {
 
     /// Callback function called for each output entity
     pub(crate) callback: F,
-
-    /// Whether the callback should only be called once when nodes are first created, or
-    /// on every rebuild.
-    pub(crate) once: bool,
 }
 
 impl<V: View, F: Fn(EntityWorldMut) -> () + Send> ViewWith<V, F> {
@@ -47,9 +43,7 @@ impl<V: View, F: Fn(EntityWorldMut) -> () + Send> View for ViewWith<V, F> {
 
     fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
         self.inner.update(vc, state);
-        if !self.once {
-            Self::with_entity(&self.callback, &mut self.nodes(vc, state), vc.world);
-        }
+        Self::with_entity(&self.callback, &mut self.nodes(vc, state), vc.world);
     }
 
     fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {

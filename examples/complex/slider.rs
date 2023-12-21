@@ -130,33 +130,20 @@ pub fn h_slider(mut cx: Cx<SliderProps>) -> impl View {
         0.
     }
     .clamp(0., 1.);
+
     Element::new()
         .styled(STYLE_SLIDER.clone())
         .with(move |mut e| {
             let eid = e.id();
             e.insert((
-                On::<Pointer<DragStart>>::run(
-                    move |ev: Listener<Pointer<DragStart>>,
-                          mut atoms: AtomStore,
-                          mut query: Query<&mut ElementClasses>| {
-                        // Save initial value to use as drag offset.
-                        atoms.set(drag_offset, value);
-                        atoms.set(is_dragging, true);
-                        if let Ok(mut classes) = query.get_mut(ev.target) {
-                            classes.add_class(CLS_DRAG)
-                        }
-                    },
-                ),
-                On::<Pointer<DragEnd>>::run(
-                    move |ev: Listener<Pointer<DragEnd>>,
-                          mut atoms: AtomStore,
-                          mut query: Query<&mut ElementClasses>| {
-                        if let Ok(mut classes) = query.get_mut(ev.target) {
-                            classes.remove_class(CLS_DRAG)
-                        }
-                        atoms.set(is_dragging, false);
-                    },
-                ),
+                On::<Pointer<DragStart>>::run(move |mut atoms: AtomStore| {
+                    // Save initial value to use as drag offset.
+                    atoms.set(drag_offset, value);
+                    atoms.set(is_dragging, true);
+                }),
+                On::<Pointer<DragEnd>>::run(move |mut atoms: AtomStore| {
+                    atoms.set(is_dragging, false);
+                }),
                 On::<Pointer<Drag>>::run(
                     move |ev: Listener<Pointer<Drag>>,
                           query: Query<(&Node, &GlobalTransform)>,
@@ -186,12 +173,10 @@ pub fn h_slider(mut cx: Cx<SliderProps>) -> impl View {
                         }
                     },
                 ),
-                On::<Pointer<PointerCancel>>::listener_component_mut::<ElementClasses>(
-                    |_, classes| {
-                        println!("Splitter Cancel");
-                        classes.remove_class(CLS_DRAG)
-                    },
-                ),
+                On::<Pointer<PointerCancel>>::run(move |mut atoms: AtomStore| {
+                    println!("Slider Cancel");
+                    atoms.set(is_dragging, false);
+                }),
             ));
         })
         .children((
@@ -202,6 +187,7 @@ pub fn h_slider(mut cx: Cx<SliderProps>) -> impl View {
             )),
             Element::new().styled(STYLE_TRACK.clone()).children(
                 Element::new()
+                    .class_names(CLS_DRAG.if_true(cx.read_atom(is_dragging)))
                     .styled((
                         STYLE_THUMB.clone(),
                         StyleHandle::build(|s| s.left(ui::Val::Percent(pos * 100.))),

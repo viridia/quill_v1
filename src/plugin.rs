@@ -27,16 +27,15 @@ impl Plugin for QuillPlugin {
         app.add_systems(
             Update,
             (
-                render_views,
-                update_styles,
+                (render_views, update_styles).chain(),
                 animate_transforms,
                 animate_bg_colors,
                 animate_border_colors,
                 animate_layout,
-            )
-                .chain(),
+                update_scroll_positions,
+                handle_scroll_events,
+            ),
         )
-        .add_systems(Update, (update_scroll_positions, handle_scroll_events))
         .add_plugins(EventListenerPlugin::<ScrollWheel>::default())
         .add_event::<ScrollWheel>();
     }
@@ -164,7 +163,7 @@ fn update_styles(
     query: Query<(
         Entity,
         Ref<'static, ElementStyles>,
-        Ref<'static, ElementClasses>,
+        Option<Ref<'static, ElementClasses>>,
         Ref<'static, Style>,
     )>,
     parent_query: Query<&'static Parent, (With<Node>, With<Visibility>)>,
@@ -177,6 +176,7 @@ fn update_styles(
     let matcher_prev =
         SelectorMatcher::new(&query, &parent_query, &children_query, &hover_map_prev.0);
     for (entity, styles, _, style) in query.iter() {
+        // Style changes only affect current element, not children.
         let mut changed = styles.is_changed();
         if !changed && styles.selector_depth > 0 {
             // Search ancestors to see if any have changed.
@@ -190,7 +190,7 @@ fn update_styles(
                         {
                             changed = true;
                         }
-                        if a_classes.is_changed() {
+                        if a_classes.map_or(false, |f| f.is_changed()) {
                             changed = true;
                             break;
                         } else {

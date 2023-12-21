@@ -12,7 +12,7 @@ pub struct SelectorMatcher<'w, 's, 'h> {
         (
             Entity,
             Ref<'static, ElementStyles>,
-            Ref<'static, ElementClasses>,
+            Option<Ref<'static, ElementClasses>>,
             Ref<'static, Style>,
         ),
     >,
@@ -29,7 +29,7 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
             (
                 Entity,
                 Ref<'static, ElementStyles>,
-                Ref<'static, ElementClasses>,
+                Option<Ref<'static, ElementClasses>>,
                 Ref<'static, Style>,
             ),
         >,
@@ -88,10 +88,11 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
         match selector {
             Selector::Accept => true,
             Selector::Class(cls, next) => match self.query.get(*entity) {
-                Ok((_, _, classes, _)) => {
+                Ok((_, _, Some(classes), _)) => {
                     classes.0.contains(cls) && self.selector_match(next, entity)
                 }
                 Err(_) => false,
+                _ => false,
             },
             Selector::Hover(next) => self.is_hovering(&entity) && self.selector_match(next, entity),
             Selector::FirstChild(next) => {

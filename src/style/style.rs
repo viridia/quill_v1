@@ -67,24 +67,6 @@ impl Default for StyleHandle {
     }
 }
 
-/// Trait that adds syntactic sugar for making lists of references to style handles.
-#[doc(hidden)]
-pub trait StyleRef: Send {
-    fn as_handle(self) -> StyleHandle;
-}
-
-impl StyleRef for StyleHandle {
-    fn as_handle(self) -> StyleHandle {
-        self
-    }
-}
-
-impl StyleRef for &StyleHandle {
-    fn as_handle(self) -> StyleHandle {
-        self.clone()
-    }
-}
-
 /// Controls behavior of bevy_mod_picking
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PointerEvents {

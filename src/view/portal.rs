@@ -25,10 +25,13 @@ impl View for Portal {
     fn build(&self, vc: &mut ViewContext) -> Self::State {
         let new_entity = vc
             .world
-            .spawn((NodeBundle {
-                visibility: Visibility::Visible,
-                ..default()
-            },))
+            .spawn((
+                NodeBundle {
+                    visibility: Visibility::Visible,
+                    ..default()
+                },
+                Name::new("Portal"),
+            ))
             .id();
         new_entity
     }

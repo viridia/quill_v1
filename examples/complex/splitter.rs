@@ -67,6 +67,7 @@ pub fn v_splitter(mut cx: Cx<SplitterProps>) -> impl View {
     let id = cx.props.id;
     let current_offset = cx.props.value;
     Element::new()
+        .named("splitter")
         .with(move |mut e| {
             e.insert((
                 On::<Pointer<DragStart>>::run(

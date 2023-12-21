@@ -1,8 +1,7 @@
 use crate::node_span::NodeSpan;
-use crate::{ElementClasses, StyleHandle, StyleRef, View, ViewContext};
+use crate::{ElementClasses, StyleHandle, StyleTuple, View, ViewContext};
 use bevy::prelude::*;
 use bevy::utils::HashSet;
-use impl_trait_for_tuples::*;
 
 /// List of style objects which are attached to a given UiNode.
 #[derive(Component, Default)]
@@ -127,32 +126,5 @@ where
 {
     fn eq(&self, other: &Self) -> bool {
         self.inner == other.inner && self.styles == other.styles
-    }
-}
-
-// StyleTuple - a variable-length tuple of styles.
-
-pub trait StyleTuple: Send {
-    fn to_vec(self) -> Vec<StyleHandle>;
-}
-
-impl StyleTuple for () {
-    fn to_vec(self) -> Vec<StyleHandle> {
-        Vec::new()
-    }
-}
-
-impl<S0: StyleRef> StyleTuple for S0 {
-    fn to_vec(self) -> Vec<StyleHandle> {
-        vec![self.as_handle()]
-    }
-}
-
-#[impl_for_tuples(1, 16)]
-impl StyleTuple for Tuple {
-    for_tuples!( where #( Tuple: StyleRef )* );
-
-    fn to_vec(self) -> Vec<StyleHandle> {
-        Vec::from([for_tuples!( #( self.Tuple.as_handle() ),* )])
     }
 }

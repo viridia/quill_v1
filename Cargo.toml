@@ -1,6 +1,8 @@
 [workspace]
 members = [
     "crates/bevy_color",
+    "crates/bevy_egret",
+    "crates/bevy_grackle",
 ]
 
 [package]
