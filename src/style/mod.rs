@@ -7,6 +7,7 @@ mod style;
 mod style_expr;
 mod style_tuple;
 mod transition;
+mod vars;
 
 pub use classes::ClassNames;
 pub use classes::ElementClasses;
@@ -17,7 +18,6 @@ pub(crate) use selector_matcher::SelectorMatcher;
 pub use style::PointerEvents;
 pub use style::StyleHandle;
 pub use style::StyleProp;
-pub use style::StyleSet;
 pub use style_expr::StyleExpr;
 pub use style_tuple::StyleTuple;
 pub use transition::animate_bg_colors;

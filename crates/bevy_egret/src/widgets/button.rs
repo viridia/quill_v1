@@ -18,13 +18,13 @@ pub struct ButtonProps<'a, V: View + Clone, S: StyleTuple = (), C: ClassNames<'a
 pub fn button<'a, V: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
     mut cx: Cx<ButtonProps<'a, V, S, C>>,
 ) -> impl View {
-    let is_dragging = cx.create_atom_init::<bool>(|| false);
+    let is_pressed = cx.create_atom_init::<bool>(|| false);
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;
     Element::new()
         .class_names((
             cx.props.class_names.clone(),
-            CLS_PRESSED.if_true(cx.read_atom(is_dragging)),
+            CLS_PRESSED.if_true(cx.read_atom(is_pressed)),
         ))
         .insert((
             On::<Pointer<Click>>::run(
@@ -36,14 +36,13 @@ pub fn button<'a, V: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
                 },
             ),
             On::<Pointer<DragStart>>::run(move |mut atoms: AtomStore| {
-                atoms.set(is_dragging, true);
+                atoms.set(is_pressed, true);
             }),
             On::<Pointer<DragEnd>>::run(move |mut atoms: AtomStore| {
-                atoms.set(is_dragging, false);
+                atoms.set(is_pressed, false);
             }),
             On::<Pointer<PointerCancel>>::run(move |mut atoms: AtomStore| {
-                println!("Cancel");
-                atoms.set(is_dragging, false);
+                atoms.set(is_pressed, false);
             }),
         ))
         .styled(cx.props.style.clone())
