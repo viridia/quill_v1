@@ -7,6 +7,7 @@ mod style;
 mod style_expr;
 mod style_tuple;
 mod transition;
+pub(crate) mod update;
 mod vars;
 
 pub use classes::ClassNames;

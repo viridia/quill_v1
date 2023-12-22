@@ -43,6 +43,15 @@ fn main() {
                 alpha: 1.0,
             },
         })
+        .add_plugins((
+            QuillPlugin,
+            SplitterPlugin,
+            SliderPlugin,
+            NodeTreePlugin,
+            EnterExitPlugin,
+            DisclosureTrianglePlugin,
+            bevy_grackle::GracklePlugin,
+        ))
         .add_plugins(
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
@@ -54,15 +63,6 @@ fn main() {
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(EventListenerPlugin::<Clicked>::default())
         .add_plugins(EventListenerPlugin::<RequestClose>::default())
-        .add_plugins((
-            QuillPlugin,
-            SplitterPlugin,
-            SliderPlugin,
-            NodeTreePlugin,
-            EnterExitPlugin,
-            DisclosureTrianglePlugin,
-            bevy_grackle::GracklePlugin,
-        ))
         .add_systems(Startup, (test_scene::setup, setup_view_root))
         .add_event::<Clicked>()
         .add_event::<RequestClose>()
@@ -89,6 +89,12 @@ static STYLE_MAIN: StyleHandle = StyleHandle::build(|ss| {
         .border_color("#888")
         .display(ui::Display::Flex)
 });
+
+#[dynamic]
+static STYLE_BUTTON_ROW: StyleHandle = StyleHandle::build(|ss| ss.gap(8));
+
+#[dynamic]
+static STYLE_BUTTON_FLEX: StyleHandle = StyleHandle::build(|ss| ss.flex_grow(1.));
 
 #[dynamic]
 static STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| {
@@ -251,12 +257,26 @@ fn ui_main(mut cx: Cx) -> impl View {
                     },
                 ))
                 .children((
-                    bevy_grackle::widgets::button.bind(bevy_grackle::widgets::ButtonProps {
-                        id: "save",
-                        children: "Save",
-                        style: (),
-                        ..default()
-                    }),
+                    Element::new()
+                        .named("button-row")
+                        .styled(STYLE_BUTTON_ROW.clone())
+                        .children((
+                            bevy_grackle::widgets::button.bind(
+                                bevy_grackle::widgets::ButtonProps {
+                                    id: "save",
+                                    children: "Save",
+                                    style: STYLE_BUTTON_FLEX.clone(),
+                                    ..default()
+                                },
+                            ),
+                            bevy_grackle::widgets::menu_button.bind(
+                                bevy_grackle::widgets::MenuButtonProps {
+                                    children: "File…",
+                                    style: STYLE_BUTTON_FLEX.clone(),
+                                    ..default()
+                                },
+                            ),
+                        )),
                     button.bind(ButtonProps {
                         id: "load",
                         children: ViewParam::new(Fragment::new((

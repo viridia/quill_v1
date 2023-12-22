@@ -15,6 +15,9 @@ static STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| {
         .min_height(32)
         .padding_left(12)
         .padding_right(12)
+        // .font(Some(AssetPath::from(
+        //     "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
+        // )))
         .selector(".pressed", |ss| ss.background_color("#404040"))
         .selector(":hover", |ss| {
             ss.border_color("#444").background_color("#2F2F2F")
@@ -54,6 +57,7 @@ pub struct ButtonProps<V: View + Clone, S: StyleTuple = ()> {
     pub variant: ButtonVariant,
     pub size: Size,
     pub style: S,
+    pub disabled: bool,
 }
 
 pub fn button<V: View + Clone + PartialEq + 'static, ST: StyleTuple + PartialEq + 'static>(
@@ -69,6 +73,6 @@ pub fn button<V: View + Clone + PartialEq + 'static, ST: StyleTuple + PartialEq 
         ),
         class_names: ("primary", cx.props.size.class_name()),
         marker: std::marker::PhantomData,
-        // ..default()
+        disabled: cx.props.disabled,
     })
 }

@@ -9,9 +9,11 @@ impl Plugin for EgretEventsPlugin {
         app.add_plugins((
             EventListenerPlugin::<Clicked>::default(),
             EventListenerPlugin::<Changed<f32>>::default(),
+            EventListenerPlugin::<MenuEvent>::default(),
         ))
         .add_event::<Clicked>()
-        .add_event::<Changed<f32>>();
+        .add_event::<Changed<f32>>()
+        .add_event::<MenuEvent>();
     }
 }
 
@@ -38,4 +40,31 @@ pub struct Changed<T: Clone + Send + Sync + 'static> {
     /// Indicates that this is the last change of a series, for example when dragging a slider,
     /// this indicates that the dragging is complete.
     pub finish: bool,
+}
+
+/// Menu keyboard actions
+#[derive(Clone, Debug)]
+pub enum MenuAction {
+    /// Toggle menu open
+    Open,
+    /// Toggle menu closed
+    Close,
+    /// Move selection up
+    Up,
+    /// Move selection down
+    Down,
+    /// Move selection to beginning
+    Home,
+    /// Move selection to end
+    End,
+    // / Trigger an action
+    // Accept,
+}
+
+/// Sent by MenuButton to toggle menu open/closed.
+#[derive(Clone, Event, EntityEvent)]
+pub struct MenuEvent {
+    #[target]
+    pub target: Entity,
+    pub action: MenuAction,
 }
