@@ -48,7 +48,7 @@ pub enum ButtonVariant {
 }
 
 #[derive(Clone, PartialEq, Default)]
-pub struct ButtonProps<V: View + Clone, S: StyleTuple> {
+pub struct ButtonProps<V: View + Clone, S: StyleTuple = ()> {
     pub id: &'static str,
     pub children: V,
     pub variant: ButtonVariant,
@@ -59,7 +59,7 @@ pub struct ButtonProps<V: View + Clone, S: StyleTuple> {
 pub fn button<V: View + Clone + PartialEq + 'static, ST: StyleTuple + PartialEq + 'static>(
     cx: Cx<ButtonProps<V, ST>>,
 ) -> impl View {
-    bevy_egret::button.bind(bevy_egret::ButtonProps {
+    bevy_egret::widgets::button.bind(bevy_egret::widgets::ButtonProps {
         id: cx.props.id,
         children: cx.props.children.clone(),
         style: (

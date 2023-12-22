@@ -9,12 +9,14 @@ use impl_trait_for_tuples::*;
 pub struct ElementClasses(pub HashSet<String>);
 
 impl ElementClasses {
-    /// Add a classname to this element.
+    /// Add a classname to this element. Be careful using this method with `.class_names()`,
+    /// because the latter will overwrite any changes you make with this method.
     pub fn add_class(&mut self, cls: &str) {
         self.0.insert(cls.to_string());
     }
 
-    /// Remove a classname from this element.
+    /// Remove a classname from this element. Be careful using this method with `.class_names()`,
+    /// because the latter will overwrite any changes you make with this method.
     pub fn remove_class(&mut self, cls: &str) {
         self.0.remove(cls);
     }

@@ -61,6 +61,7 @@ fn main() {
             NodeTreePlugin,
             EnterExitPlugin,
             DisclosureTrianglePlugin,
+            bevy_grackle::GracklePlugin,
         ))
         .add_systems(Startup, (test_scene::setup, setup_view_root))
         .add_event::<Clicked>()
@@ -250,9 +251,11 @@ fn ui_main(mut cx: Cx) -> impl View {
                     },
                 ))
                 .children((
-                    button.bind(ButtonProps {
+                    bevy_grackle::widgets::button.bind(bevy_grackle::widgets::ButtonProps {
                         id: "save",
                         children: "Save",
+                        style: (),
+                        ..default()
                     }),
                     button.bind(ButtonProps {
                         id: "load",

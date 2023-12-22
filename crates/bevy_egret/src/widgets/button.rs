@@ -2,14 +2,7 @@ use bevy::prelude::*;
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_quill::prelude::*;
 
-pub struct ButtonPlugin;
-
-impl Plugin for ButtonPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(EventListenerPlugin::<Clicked>::default())
-            .add_event::<Clicked>();
-    }
-}
+use crate::Clicked;
 
 const CLS_PRESSED: &str = "pressed";
 
@@ -20,13 +13,6 @@ pub struct ButtonProps<'a, V: View + Clone, S: StyleTuple = (), C: ClassNames<'a
     pub style: S,
     pub class_names: C,
     pub marker: std::marker::PhantomData<&'a ()>,
-}
-
-#[derive(Clone, Event, EntityEvent)]
-pub struct Clicked {
-    #[target]
-    pub target: Entity,
-    pub id: &'static str,
 }
 
 pub fn button<'a, V: View + Clone, S: StyleTuple, C: ClassNames<'a>>(

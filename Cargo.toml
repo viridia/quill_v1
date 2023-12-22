@@ -26,6 +26,9 @@ impl-trait-for-tuples = "0.2.2"
 static_init = "1.0.3"
 winnow = "0.5.19"
 
+[dev-dependencies]
+bevy_grackle = { path = "crates/bevy_grackle" }
+
 # Enable max optimizations for dependencies, but not for our code:
 [profile.dev.package."*"]
 opt-level = 3
