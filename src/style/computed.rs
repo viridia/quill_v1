@@ -1,4 +1,4 @@
-use super::style::PointerEvents;
+use super::style_props::PointerEvents;
 use super::transition::{
     AnimatedBackgroundColor, AnimatedBorderColor, AnimatedLayout, AnimatedLayoutProp,
     AnimatedTransform, Transition, TransitionProperty, TransitionState,

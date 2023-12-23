@@ -2,38 +2,59 @@ use bevy::{prelude::*, ui};
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
-use crate::Size;
+use crate::{tokens::*, Size};
 
 #[dynamic]
 static STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color("#282828")
-        .border_color("#383838")
-        .border(1)
+    ss.border(1)
         .display(ui::Display::Flex)
         .justify_content(JustifyContent::Center)
         .align_items(AlignItems::Center)
         .min_height(32)
         .padding_left(12)
         .padding_right(12)
-        // .font(Some(AssetPath::from(
-        //     "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
-        // )))
-        .selector(".pressed", |ss| ss.background_color("#404040"))
-        .selector(":hover", |ss| {
-            ss.border_color("#444").background_color("#2F2F2F")
+    // .font(Some(AssetPath::from(
+    //     "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
+    // )))
+});
+
+#[dynamic]
+static STYLE_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(BUTTON_DEFAULT_BG)
+        .border_color(BUTTON_DEFAULT_BORDER)
+        .selector(".pressed", |ss| {
+            ss.background_color(BUTTON_DEFAULT_PRESSED_BG)
         })
-        .selector(":hover.pressed", |ss| ss.background_color("#484848"))
+        .selector(":hover", |ss| ss.background_color(BUTTON_DEFAULT_HOVER_BG))
+        .selector(":hover.pressed", |ss| {
+            ss.background_color(BUTTON_DEFAULT_PRESSED_BG)
+        })
 });
 
 #[dynamic]
 static STYLE_BUTTON_PRIMARY: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color("#282828")
-        .border_color("#383838")
-        .selector(".pressed", |ss| ss.background_color("#404040"))
-        .selector(":hover", |ss| {
-            ss.border_color("#444").background_color("#2F2F2F")
+    ss.background_color(BUTTON_PRIMARY_BG)
+        .border_color(BUTTON_PRIMARY_BORDER)
+        .selector(".pressed", |ss| {
+            ss.background_color(BUTTON_PRIMARY_PRESSED_BG)
         })
-        .selector(":hover.pressed", |ss| ss.background_color("#484848"))
+        .selector(":hover", |ss| ss.background_color(BUTTON_PRIMARY_HOVER_BG))
+        .selector(":hover.pressed", |ss| {
+            ss.background_color(BUTTON_PRIMARY_PRESSED_BG)
+        })
+});
+
+#[dynamic]
+static STYLE_BUTTON_DANGER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(BUTTON_DANGER_BG)
+        .border_color(BUTTON_DANGER_BORDER)
+        .selector(".pressed", |ss| {
+            ss.background_color(BUTTON_DANGER_PRESSED_BG)
+        })
+        .selector(":hover", |ss| ss.background_color(BUTTON_DANGER_HOVER_BG))
+        .selector(":hover.pressed", |ss| {
+            ss.background_color(BUTTON_DANGER_PRESSED_BG)
+        })
 });
 
 /// The variant determines the button's color scheme
@@ -68,7 +89,11 @@ pub fn button<V: View + Clone + PartialEq + 'static, ST: StyleTuple + PartialEq 
         children: cx.props.children.clone(),
         style: (
             STYLE_BUTTON.clone(),
-            STYLE_BUTTON_PRIMARY.clone(),
+            match cx.props.variant {
+                ButtonVariant::Default => STYLE_BUTTON_DEFAULT.clone(),
+                ButtonVariant::Primary => STYLE_BUTTON_PRIMARY.clone(),
+                ButtonVariant::Danger => STYLE_BUTTON_DANGER.clone(),
+            },
             cx.props.style.clone(),
         ),
         class_names: ("primary", cx.props.size.class_name()),

@@ -2,12 +2,12 @@ use bevy::{prelude::*, ui};
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
-use crate::Size;
+use crate::{tokens::*, Size};
 
 #[dynamic]
 static STYLE_MENU_BUTTON: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color("#282828")
-        .border_color("#383838")
+    ss.background_color(BUTTON_DEFAULT_BG)
+        .border_color(BUTTON_DEFAULT_BORDER)
         .border(1)
         .display(ui::Display::Flex)
         .justify_content(JustifyContent::Center)
@@ -15,11 +15,7 @@ static STYLE_MENU_BUTTON: StyleHandle = StyleHandle::build(|ss| {
         .min_height(32)
         .padding_left(12)
         .padding_right(12)
-        .selector(".pressed", |ss| ss.background_color("#404040"))
-        .selector(":hover", |ss| {
-            ss.border_color("#444").background_color("#2F2F2F")
-        })
-        .selector(":hover.pressed", |ss| ss.background_color("#484848"))
+        .selector(":hover", |ss| ss.background_color(BUTTON_DEFAULT_HOVER_BG))
 });
 
 #[derive(Clone, PartialEq, Default)]

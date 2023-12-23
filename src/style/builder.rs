@@ -11,29 +11,42 @@ use bevy::{
 use crate::{PointerEvents, StyleProp};
 
 use super::{
-    selector::Selector, style::SelectorList, style_expr::StyleExpr, transition::Transition,
+    selector::Selector, style_expr::StyleExpr, style_props::SelectorList, tokens::StyleToken,
+    transition::Transition,
 };
 
 /// Trait that represents a CSS color
 pub trait ColorParam {
-    fn as_val(self) -> Option<Color>;
+    fn as_val(self) -> StyleExpr<Option<Color>>;
 }
 
-impl ColorParam for Option<Color> {
-    fn as_val(self) -> Option<Color> {
+impl ColorParam for StyleExpr<Option<Color>> {
+    fn as_val(self) -> StyleExpr<Option<Color>> {
         self
     }
 }
 
+impl ColorParam for StyleToken {
+    fn as_val(self) -> StyleExpr<Option<Color>> {
+        StyleExpr::Token(self)
+    }
+}
+
+impl ColorParam for Option<Color> {
+    fn as_val(self) -> StyleExpr<Option<Color>> {
+        StyleExpr::Constant(self)
+    }
+}
+
 impl ColorParam for Color {
-    fn as_val(self) -> Option<Color> {
-        Some(self)
+    fn as_val(self) -> StyleExpr<Option<Color>> {
+        StyleExpr::Constant(Some(self))
     }
 }
 
 impl ColorParam for &str {
-    fn as_val(self) -> Option<Color> {
-        Some(Color::hex(self).unwrap())
+    fn as_val(self) -> StyleExpr<Option<Color>> {
+        StyleExpr::Constant(Some(Color::hex(self).unwrap()))
     }
 }
 
@@ -113,8 +126,8 @@ impl<H: LengthParam, V: LengthParam> UiRectParam for (H, V) {
 }
 
 pub struct StyleBuilder {
-    pub(super) props: Vec<StyleProp>,
-    pub(super) selectors: SelectorList,
+    pub(crate) props: Vec<StyleProp>,
+    pub(crate) selectors: SelectorList,
 }
 
 impl StyleBuilder {
@@ -131,22 +144,17 @@ impl StyleBuilder {
     }
 
     pub fn background_color(&mut self, color: impl ColorParam) -> &mut Self {
-        self.props
-            .push(StyleProp::BackgroundColor(StyleExpr::Constant(
-                color.as_val(),
-            )));
+        self.props.push(StyleProp::BackgroundColor(color.as_val()));
         self
     }
 
     pub fn border_color(&mut self, color: impl ColorParam) -> &mut Self {
-        self.props
-            .push(StyleProp::BorderColor(StyleExpr::Constant(color.as_val())));
+        self.props.push(StyleProp::BorderColor(color.as_val()));
         self
     }
 
     pub fn color(&mut self, color: impl ColorParam) -> &mut Self {
-        self.props
-            .push(StyleProp::Color(StyleExpr::Constant(color.as_val())));
+        self.props.push(StyleProp::Color(color.as_val()));
         self
     }
 
@@ -510,8 +518,7 @@ impl StyleBuilder {
     // LineBreak(BreakLineOn),
 
     pub fn outline_color(&mut self, color: impl ColorParam) -> &mut Self {
-        self.props
-            .push(StyleProp::OutlineColor(StyleExpr::Constant(color.as_val())));
+        self.props.push(StyleProp::OutlineColor(color.as_val()));
         self
     }
 
@@ -579,6 +586,11 @@ impl StyleBuilder {
 
     pub fn transition(&mut self, transition: &Vec<Transition>) -> &mut Self {
         self.props.push(StyleProp::Transition(transition.clone()));
+        self
+    }
+
+    pub fn set_var_color(&mut self, name: StyleToken, color: impl ColorParam) -> &mut Self {
+        self.props.push(StyleProp::VarColor(name, color.as_val()));
         self
     }
 

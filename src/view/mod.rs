@@ -40,5 +40,4 @@ pub use view::PresenterFn;
 pub use view::View;
 pub use view::*;
 pub use view_param::ViewParam;
-pub use view_styled::ElementStyles;
 pub use view_tuple::ViewTuple;

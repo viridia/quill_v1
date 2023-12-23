@@ -37,6 +37,7 @@ pub fn menu_button<'a, V: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
     let is_open = cx.create_atom_init::<bool>(|| false);
     // Needs to be a local variable so that it can be captured in the event handler.
     Element::new()
+        .named("menu-button")
         .class_names((
             cx.props.class_names.clone(),
             CLS_OPEN.if_true(cx.read_atom(is_open)),
@@ -65,6 +66,7 @@ pub fn menu_popup<V: View + Clone, S: StyleTuple>(mut cx: Cx<MenuPopupProps<V, S
     // Needs to be a local variable so that it can be captured in the event handler.
     // let id = cx.props.id;
     Element::new()
+        .named("menu-popup")
         .class_names((
             // cx.props.class_names.clone(),
             CLS_OPEN.if_true(cx.read_atom(is_open)),
@@ -86,6 +88,7 @@ pub fn menu_item<'a, V: View + Clone, S: StyleTuple>(mut cx: Cx<MenuItemProps<V,
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;
     Element::new()
+        .named("menu-item")
         // .class_names((
         //     cx.props.class_names.clone(),
         //     CLS_PRESSED.if_true(cx.read_atom(is_selected)),

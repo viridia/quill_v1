@@ -13,7 +13,12 @@ mod swatch;
 mod test_scene;
 mod viewport;
 
-use bevy::{prelude::*, ui};
+use bevy::{
+    asset::io::{file::FileAssetReader, AssetSource},
+    prelude::*,
+    ui,
+};
+use bevy_grackle::{tokens::PAGE_BG, STYLE_GRACKLE_THEME};
 use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
     prelude::*,
@@ -43,6 +48,11 @@ fn main() {
                 alpha: 1.0,
             },
         })
+        .register_asset_source(
+            "grackle",
+            AssetSource::build()
+                .with_reader(|| Box::new(FileAssetReader::new("crates/bevy_grackle/assets"))),
+        )
         .add_plugins((
             QuillPlugin,
             SplitterPlugin,
@@ -98,7 +108,7 @@ static STYLE_BUTTON_FLEX: StyleHandle = StyleHandle::build(|ss| ss.flex_grow(1.)
 
 #[dynamic]
 static STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color("#222")
+    ss.background_color(PAGE_BG)
         .display(ui::Display::Flex)
         .padding(8)
         .gap(8)
@@ -192,7 +202,7 @@ pub struct EditColor {
 
 impl Default for PanelWidth {
     fn default() -> Self {
-        Self { value: 160. }
+        Self { value: 190. }
     }
 }
 
@@ -217,7 +227,7 @@ fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
     Element::new()
         .named("main-ui")
-        .styled(STYLE_MAIN.clone())
+        .styled((STYLE_MAIN.clone(), STYLE_GRACKLE_THEME.clone()))
         .with_memo(
             move |mut e| {
                 let id = e.id();

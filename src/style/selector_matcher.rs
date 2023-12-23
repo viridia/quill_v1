@@ -45,9 +45,10 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
         }
     }
 
-    /// True if the given entity is in the hover map for PointerId::Mouse. This is a separate
-    /// method because we need to be able to test hover status apart from selector matching.
-    pub(crate) fn is_hovering(&self, e: &Entity) -> bool {
+    /// True if the given entity, or a descendant of it, is in the hover map for PointerId::Mouse.
+    ///
+    /// This is used to determine whether to apply the :hover pseudo-class.
+    pub fn is_hovering(&self, e: &Entity) -> bool {
         match self.hover_map.get(&PointerId::Mouse) {
             Some(map) => map.iter().any(|(mut ha, _)| loop {
                 if ha == e {
@@ -62,7 +63,8 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
         }
     }
 
-    pub(crate) fn is_first_child(&self, entity: &Entity) -> bool {
+    /// True if this entity is the first child of its parent.
+    pub fn is_first_child(&self, entity: &Entity) -> bool {
         match self.parent_query.get(*entity) {
             Ok(parent) => match self.children_query.get(parent.get()) {
                 Ok(children) => children.first() == Some(entity),
@@ -72,7 +74,8 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
         }
     }
 
-    pub(crate) fn is_last_child(&self, entity: &Entity) -> bool {
+    /// True if this entity is the last child of its parent.
+    pub fn is_last_child(&self, entity: &Entity) -> bool {
         match self.parent_query.get(*entity) {
             Ok(parent) => match self.children_query.get(parent.get()) {
                 Ok(children) => children.last() == Some(entity),

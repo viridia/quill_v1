@@ -25,6 +25,7 @@ pub fn button<'a, V: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
     let id = cx.props.id;
     let disabled = cx.props.disabled;
     Element::new()
+        .named("button")
         .class_names((
             cx.props.class_names.clone(),
             CLS_PRESSED.if_true(cx.read_atom(is_pressed)),
