@@ -11,8 +11,7 @@ use bevy::{
 use crate::{PointerEvents, StyleProp};
 
 use super::{
-    selector::Selector, style_expr::StyleExpr, style_props::SelectorList, tokens::StyleToken,
-    transition::Transition,
+    selector::Selector, style_expr::StyleExpr, style_props::SelectorList, transition::Transition,
 };
 
 /// Trait that represents a CSS color
@@ -23,12 +22,6 @@ pub trait ColorParam {
 impl ColorParam for StyleExpr<Option<Color>> {
     fn as_val(self) -> StyleExpr<Option<Color>> {
         self
-    }
-}
-
-impl ColorParam for StyleToken {
-    fn as_val(self) -> StyleExpr<Option<Color>> {
-        StyleExpr::Token(self)
     }
 }
 
@@ -586,11 +579,6 @@ impl StyleBuilder {
 
     pub fn transition(&mut self, transition: &Vec<Transition>) -> &mut Self {
         self.props.push(StyleProp::Transition(transition.clone()));
-        self
-    }
-
-    pub fn set_var_color(&mut self, name: StyleToken, color: impl ColorParam) -> &mut Self {
-        self.props.push(StyleProp::VarColor(name, color.as_val()));
         self
     }
 

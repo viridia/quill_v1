@@ -7,7 +7,6 @@ mod style;
 mod style_expr;
 mod style_props;
 mod style_tuple;
-mod tokens;
 mod transition;
 pub(crate) mod update;
 
@@ -23,8 +22,6 @@ pub use style_expr::StyleExpr;
 pub use style_props::PointerEvents;
 pub use style_props::StyleProp;
 pub use style_tuple::StyleTuple;
-pub use tokens::ElementTokens;
-pub use tokens::StyleToken;
 pub use transition::animate_bg_colors;
 pub use transition::animate_border_colors;
 pub use transition::animate_layout;

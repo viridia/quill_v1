@@ -1,11 +1,8 @@
 #![allow(missing_docs)]
 
 use super::{
-    builder::StyleBuilder,
-    computed::ComputedStyle,
-    selector_matcher::SelectorMatcher,
+    builder::StyleBuilder, computed::ComputedStyle, selector_matcher::SelectorMatcher,
     style_props::StyleSet,
-    tokens::{TokenLookup, TokenMap},
 };
 use bevy::prelude::*;
 use std::sync::Arc;
@@ -31,20 +28,9 @@ impl StyleHandle {
         &self,
         computed: &mut ComputedStyle,
         matcher: &SelectorMatcher,
-        tokens: &TokenLookup,
         entity: &Entity,
     ) {
-        self.0.as_ref().apply_to(computed, matcher, tokens, entity);
-    }
-
-    /// Merge the style properties into a computed `Style` object.
-    pub fn update_tokens<'a>(
-        &self,
-        tokens: &mut TokenMap,
-        matcher: &SelectorMatcher,
-        entity: &Entity,
-    ) {
-        self.0.as_ref().update_tokens(tokens, matcher, entity);
+        self.0.as_ref().apply_to(computed, matcher, entity);
     }
 
     /// Return the number of UiNode levels referenced by selectors.
@@ -55,16 +41,6 @@ impl StyleHandle {
     /// Return whether any of the selectors use the ':hover' pseudo-class.
     pub fn uses_hover(&self) -> bool {
         self.0.as_ref().uses_hover()
-    }
-
-    /// Return whether this style uses any style variables.
-    pub fn uses_vars(&self) -> bool {
-        self.0.as_ref().uses_vars()
-    }
-
-    /// Return whether this style defines any style variables.
-    pub fn defines_vars(&self) -> bool {
-        self.0.as_ref().defines_vars()
     }
 }
 
@@ -92,12 +68,6 @@ pub struct ElementStyles {
 
     /// Whether any selectors use the :hover pseudo-class
     pub(crate) uses_hover: bool,
-
-    /// Whether any styles use style variables
-    pub(crate) uses_vars: bool,
-
-    /// Whether any styles define style variables
-    pub(crate) defines_vars: bool,
     // Whether any selectors use inherited properties.
     // pub(crate) uses_inherited: bool,
 }

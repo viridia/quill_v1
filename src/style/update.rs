@@ -9,8 +9,6 @@ use crate::{
     ElementClasses, ElementStyles, SelectorMatcher,
 };
 
-use super::tokens::{self, TokenMap};
-
 pub(crate) fn update_styles(
     mut commands: Commands,
     query: Query<(
@@ -19,7 +17,6 @@ pub(crate) fn update_styles(
         Option<Ref<'static, ElementClasses>>,
         Ref<'static, Style>,
     )>,
-    mut tokens_query: Query<(Entity, &'static mut tokens::ElementTokens)>,
     parent_query: Query<&'static Parent, (With<Node>, With<Visibility>)>,
     children_query: Query<&'static Children, (With<Node>, With<Visibility>)>,
     hover_map: Res<HoverMap>,
@@ -29,31 +26,6 @@ pub(crate) fn update_styles(
     let matcher = SelectorMatcher::new(&query, &parent_query, &children_query, &hover_map.0);
     let matcher_prev =
         SelectorMatcher::new(&query, &parent_query, &children_query, &hover_map_prev.0);
-
-    // Update style tokens
-    for (entity, mut tokens) in tokens_query.iter_mut() {
-        let Ok((_, styles, _, _)) = query.get(entity) else {
-            continue;
-        };
-        let changed = is_changed(
-            &styles,
-            entity,
-            &query,
-            &matcher,
-            &matcher_prev,
-            &parent_query,
-        );
-
-        if changed {
-            let mut next_tokens = TokenMap::default();
-            for ss in styles.styles.iter() {
-                ss.update_tokens(&mut next_tokens, &matcher, &entity);
-            }
-            if tokens.0 != next_tokens {
-                std::mem::swap(&mut tokens.as_mut().0, &mut next_tokens);
-            }
-        }
-    }
 
     // Update computed styles
     for (entity, styles, _, style) in query.iter() {
@@ -71,9 +43,8 @@ pub(crate) fn update_styles(
             // Compute computed style. Initialize to the current state.
             let mut computed = ComputedStyle::new();
             computed.style = style.clone();
-            let lookup = tokens::TokenLookup::new(entity, &tokens_query, &parent_query);
             for ss in styles.styles.iter() {
-                ss.apply_to(&mut computed, &matcher, &lookup, &entity);
+                ss.apply_to(&mut computed, &matcher, &entity);
             }
             computed.font_handle = match computed.font {
                 Some(ref path) => Some(assets.load(path)),

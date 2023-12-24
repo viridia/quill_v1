@@ -11,13 +11,8 @@ use bevy::{
 use crate::Cursor;
 
 use super::{
-    builder::StyleBuilder,
-    computed::ComputedStyle,
-    selector::Selector,
-    selector_matcher::SelectorMatcher,
-    style_expr::{StyleExpr, StyleExprEval},
-    tokens::{StyleToken, TokenLookup, TokenMap, TokenValue},
-    transition::Transition,
+    builder::StyleBuilder, computed::ComputedStyle, selector::Selector,
+    selector_matcher::SelectorMatcher, style_expr::StyleExpr, transition::Transition,
 };
 
 /// Controls behavior of bevy_mod_picking
@@ -137,9 +132,6 @@ pub enum StyleProp {
 
     // Transitions
     Transition(Vec<Transition>),
-
-    // Style Variables
-    VarColor(StyleToken, StyleExpr<Option<Color>>),
 }
 
 pub(crate) type SelectorList = Vec<(Box<Selector>, Vec<StyleProp>)>;
@@ -189,70 +181,42 @@ impl StyleSet {
         self.selectors.iter().any(|s| s.0.uses_hover())
     }
 
-    /// Return whether any of the style properties uses style variables.
-    pub fn uses_vars(&self) -> bool {
-        self.props_uses_vars(&self.props)
-            || self.selectors.iter().any(|s| self.props_uses_vars(&s.1))
-    }
-
-    /// Return whether this stylesheet defines any variables.
-    pub fn defines_vars(&self) -> bool {
-        if self.props.iter().any(|p| match p {
-            StyleProp::VarColor(_, _) => true,
-            _ => false,
-        }) {
-            return true;
-        }
-        self.selectors.iter().any(|s| {
-            s.1.iter().any(|f| match f {
-                StyleProp::VarColor(_, _) => true,
-                _ => false,
-            })
-        })
-    }
-
     /// Merge the style properties into a computed `Style` object.
     pub fn apply_to<'a>(
         &self,
         computed: &mut ComputedStyle,
         matcher: &SelectorMatcher,
-        tokens: &TokenLookup,
         entity: &Entity,
     ) {
         // Apply unconditional styles
-        self.apply_attrs_to(&self.props, tokens, computed);
+        self.apply_attrs_to(&self.props, computed);
 
         // Apply conditional styles
         for (selector, props) in self.selectors.iter() {
             if matcher.selector_match(selector, entity) {
-                self.apply_attrs_to(&props, tokens, computed);
+                self.apply_attrs_to(&props, computed);
             }
         }
     }
 
-    fn apply_attrs_to(
-        &self,
-        attrs: &Vec<StyleProp>,
-        tokens: &TokenLookup,
-        computed: &mut ComputedStyle,
-    ) {
+    fn apply_attrs_to(&self, attrs: &Vec<StyleProp>, computed: &mut ComputedStyle) {
         for attr in attrs.iter() {
             match attr {
                 StyleProp::BackgroundImage(image) => {
                     computed.image = image.clone();
                 }
                 StyleProp::BackgroundColor(expr) => {
-                    if let Ok(color) = expr.eval(tokens) {
+                    if let Ok(color) = expr.get() {
                         computed.background_color = color;
                     }
                 }
                 StyleProp::BorderColor(expr) => {
-                    if let Ok(color) = expr.eval(tokens) {
+                    if let Ok(color) = expr.get() {
                         computed.border_color = color;
                     }
                 }
                 StyleProp::Color(expr) => {
-                    if let Ok(color) = expr.eval(tokens) {
+                    if let Ok(color) = expr.get() {
                         computed.color = color;
                     }
                 }
@@ -294,52 +258,52 @@ impl StyleSet {
                     }
                 }
                 StyleProp::Left(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.left = length;
                     }
                 }
                 StyleProp::Right(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.right = length;
                     }
                 }
                 StyleProp::Top(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.top = length;
                     }
                 }
                 StyleProp::Bottom(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.bottom = length;
                     }
                 }
                 StyleProp::Width(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.width = length;
                     }
                 }
                 StyleProp::Height(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.height = length;
                     }
                 }
                 StyleProp::MinWidth(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.min_width = length;
                     }
                 }
                 StyleProp::MinHeight(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.min_height = length;
                     }
                 }
                 StyleProp::MaxWidth(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.max_width = length;
                     }
                 }
                 StyleProp::MaxHeight(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.max_height = length;
                     }
                 }
@@ -349,22 +313,22 @@ impl StyleSet {
                     }
                 }
                 StyleProp::MarginLeft(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.margin.left = length;
                     }
                 }
                 StyleProp::MarginRight(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.margin.right = length;
                     }
                 }
                 StyleProp::MarginTop(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.margin.top = length;
                     }
                 }
                 StyleProp::MarginBottom(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.margin.bottom = length;
                     }
                 }
@@ -374,22 +338,22 @@ impl StyleSet {
                     }
                 }
                 StyleProp::PaddingLeft(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.padding.left = length;
                     }
                 }
                 StyleProp::PaddingRight(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.padding.right = length;
                     }
                 }
                 StyleProp::PaddingTop(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.padding.top = length;
                     }
                 }
                 StyleProp::PaddingBottom(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.padding.bottom = length;
                     }
                 }
@@ -399,22 +363,22 @@ impl StyleSet {
                     }
                 }
                 StyleProp::BorderLeft(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.border.left = length;
                     }
                 }
                 StyleProp::BorderRight(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.border.right = length;
                     }
                 }
                 StyleProp::BorderTop(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.border.top = length;
                     }
                 }
                 StyleProp::BorderBottom(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.border.bottom = length;
                     }
                 }
@@ -444,17 +408,17 @@ impl StyleSet {
                     }
                 }
                 StyleProp::ColumnGap(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.column_gap = length;
                     }
                 }
                 StyleProp::RowGap(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.row_gap = length;
                     }
                 }
                 StyleProp::Gap(expr) => {
-                    if let Ok(length) = expr.eval(tokens) {
+                    if let Ok(length) = expr.get() {
                         computed.style.column_gap = length;
                         computed.style.row_gap = length;
                     }
@@ -566,13 +530,13 @@ impl StyleSet {
                 }
 
                 StyleProp::OutlineWidth(expr) => {
-                    if let Ok(width) = expr.eval(tokens) {
+                    if let Ok(width) = expr.get() {
                         computed.outline_width = width;
                     }
                 }
 
                 StyleProp::OutlineOffset(expr) => {
-                    if let Ok(offs) = expr.eval(tokens) {
+                    if let Ok(offs) = expr.get() {
                         computed.outline_offset = offs;
                     }
                 }
@@ -625,52 +589,7 @@ impl StyleSet {
                 }
 
                 StyleProp::Transition(trans) => computed.transitions.clone_from(trans),
-
-                StyleProp::VarColor(_, _) => {}
             }
         }
-    }
-    /// Merge the style properties into a computed `Style` object.
-    pub fn update_tokens<'a>(
-        &self,
-        tokens: &mut TokenMap,
-        matcher: &SelectorMatcher,
-        entity: &Entity,
-    ) {
-        // Apply unconditional styles
-        self.update_tokens_attrs(&self.props, tokens);
-
-        // Apply conditional styles
-        for (selector, props) in self.selectors.iter() {
-            if matcher.selector_match(selector, entity) {
-                self.update_tokens_attrs(&props, tokens);
-            }
-        }
-    }
-
-    fn update_tokens_attrs(&self, attrs: &Vec<StyleProp>, tokens: &mut TokenMap) {
-        for attr in attrs.iter() {
-            match attr {
-                StyleProp::VarColor(token, expr) => {
-                    if let Ok(color) = expr.get() {
-                        tokens.insert(token.clone(), TokenValue::Color(color));
-                    }
-                }
-                _ => (),
-            }
-        }
-    }
-
-    fn props_uses_vars(&self, attrs: &Vec<StyleProp>) -> bool {
-        attrs.iter().any(|a| match a {
-            StyleProp::BackgroundColor(color)
-            | StyleProp::BorderColor(color)
-            | StyleProp::Color(color)
-            | StyleProp::OutlineColor(color) => match color {
-                StyleExpr::Constant(_) => false,
-                StyleExpr::Token(_) => true,
-            },
-            _ => false,
-        })
     }
 }

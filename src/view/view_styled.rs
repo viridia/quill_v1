@@ -1,7 +1,5 @@
 use crate::node_span::NodeSpan;
-use crate::{
-    ElementClasses, ElementStyles, ElementTokens, StyleHandle, StyleTuple, View, ViewContext,
-};
+use crate::{ElementClasses, ElementStyles, StyleHandle, StyleTuple, View, ViewContext};
 
 // A wrapper view which applies styles to the output of an inner view.
 pub struct ViewStyled<V: View> {
@@ -22,38 +20,21 @@ impl<V: View> ViewStyled<V> {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
                 let em = &mut vc.entity_mut(*entity);
-                let mut selector_depth = self.styles.iter().map(|s| s.depth()).max().unwrap_or(0);
+                let selector_depth = self.styles.iter().map(|s| s.depth()).max().unwrap_or(0);
                 let uses_hover = self.styles.iter().any(|s| s.uses_hover());
-                let uses_vars = self.styles.iter().any(|s| s.uses_vars());
-                let defines_vars = self.styles.iter().any(|s| s.defines_vars());
-
-                // A style that uses variables must search all the way to the root.
-                if uses_vars {
-                    selector_depth = usize::MAX;
-                }
 
                 match em.get_mut::<ElementStyles>() {
                     Some(mut sc) => {
                         sc.styles.clone_from(&self.styles);
                         sc.selector_depth = selector_depth;
                         sc.uses_hover = uses_hover;
-                        sc.uses_vars = uses_vars;
-                        sc.defines_vars = defines_vars;
                     }
                     None => {
                         em.insert((ElementStyles {
                             styles: self.styles.clone(),
                             selector_depth,
                             uses_hover,
-                            uses_vars,
-                            defines_vars,
                         },));
-                    }
-                }
-
-                if defines_vars {
-                    if em.get_mut::<ElementTokens>().is_none() {
-                        em.insert(ElementTokens::default());
                     }
                 }
 
