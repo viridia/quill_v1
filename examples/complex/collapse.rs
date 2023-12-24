@@ -1,5 +1,5 @@
-use super::element_rect::ElementRectApi;
 use bevy::{prelude::*, ui};
+use bevy_grackle::hooks::ElementRectApi;
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 

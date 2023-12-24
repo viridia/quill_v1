@@ -2,7 +2,7 @@ use bevy::render::color::Color;
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
-use crate::tokens;
+use crate::tokens::*;
 
 pub const COLOR_BLACK: Color = Color::rgb(0.0, 0.0, 0.0);
 pub const COLOR_WHITE: Color = Color::rgb(1.0, 1.0, 1.0);
@@ -34,21 +34,38 @@ pub const COLOR_PRIMARY: Color = Color::rgb(0.220, 0.345, 0.408);
 pub const COLOR_DANGER: Color = Color::rgb(0.267, 0.000, 0.333);
 
 #[dynamic]
-pub static STYLE_GRACKLE_THEME: StyleHandle = StyleHandle::build(|ss| {
-    ss.set_var_color(tokens::PAGE_BG, COLOR_BG)
-        .set_var_color(tokens::BUTTON_PRIMARY_BG, COLOR_PRIMARY)
-        .set_var_color(tokens::BUTTON_PRIMARY_HOVER_BG, COLOR_PRIMARY)
-        .set_var_color(tokens::BUTTON_PRIMARY_PRESSED_BG, COLOR_PRIMARY)
-        .set_var_color(tokens::BUTTON_PRIMARY_BORDER, COLOR_BLACK)
-        .set_var_color(tokens::BUTTON_PRIMARY_TEXT, COLOR_WHITE)
-        .set_var_color(tokens::BUTTON_DEFAULT_BG, COLOR_G7)
-        .set_var_color(tokens::BUTTON_DEFAULT_HOVER_BG, COLOR_G6)
-        .set_var_color(tokens::BUTTON_DEFAULT_PRESSED_BG, COLOR_G5)
-        .set_var_color(tokens::BUTTON_DEFAULT_BORDER, COLOR_G9)
-        .set_var_color(tokens::BUTTON_DEFAULT_TEXT, COLOR_WHITE)
-        .set_var_color(tokens::BUTTON_DANGER_BG, COLOR_DANGER)
-        .set_var_color(tokens::BUTTON_DANGER_HOVER_BG, COLOR_DANGER)
-        .set_var_color(tokens::BUTTON_DANGER_PRESSED_BG, COLOR_DANGER)
-        .set_var_color(tokens::BUTTON_DANGER_BORDER, COLOR_BLACK)
-        .set_var_color(tokens::BUTTON_DANGER_TEXT, COLOR_WHITE)
+static STYLE_SIDEBAR: StyleHandle = StyleHandle::build(|ss| ss.background_color(COLOR_BG));
+
+#[dynamic]
+static STYLE_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_G7)
+        .border_color(COLOR_BLACK)
+        .selector(".pressed", |ss| ss.background_color(COLOR_G5))
+        .selector(":hover", |ss| ss.background_color(COLOR_G6))
+        .selector(":hover.pressed", |ss| ss.background_color(COLOR_G5))
 });
+
+#[dynamic]
+static STYLE_BUTTON_PRIMARY: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_PRIMARY)
+        .border_color(COLOR_BLACK)
+        .selector(".pressed", |ss| ss.background_color(COLOR_PRIMARY))
+        .selector(":hover", |ss| ss.background_color(COLOR_PRIMARY))
+        .selector(":hover.pressed", |ss| ss.background_color(COLOR_PRIMARY))
+});
+
+#[dynamic]
+static STYLE_BUTTON_DANGER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_DANGER)
+        .border_color(COLOR_BLACK)
+        .selector(".pressed", |ss| ss.background_color(COLOR_DANGER))
+        .selector(":hover", |ss| ss.background_color(COLOR_DANGER))
+        .selector(":hover.pressed", |ss| ss.background_color(COLOR_DANGER))
+});
+
+pub fn init_grackle_theme<T>(cx: &mut Cx<T>) {
+    cx.create_context(SIDEBAR, STYLE_SIDEBAR.clone());
+    cx.create_context(BUTTON_DEFAULT, STYLE_BUTTON_DEFAULT.clone());
+    cx.create_context(BUTTON_PRIMARY, STYLE_BUTTON_PRIMARY.clone());
+    cx.create_context(BUTTON_DANGER, STYLE_BUTTON_DANGER.clone());
+}

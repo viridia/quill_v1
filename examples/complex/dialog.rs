@@ -1,13 +1,10 @@
-use super::enter_exit::EnterExitApi;
 use bevy::{prelude::*, ui};
+use bevy_grackle::hooks::{EnterExitApi, EnterExitState};
 use bevy_mod_picking::prelude::{EntityEvent, Listener, On};
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
-use crate::{
-    button::{button, ButtonProps, Clicked},
-    enter_exit::EnterExitState,
-};
+use crate::button::{button, ButtonProps, Clicked};
 
 // Dialog background overlay
 #[dynamic]

@@ -55,10 +55,10 @@ impl StyleExprEval<Option<Color>> for StyleExpr<Option<Color>> {
         match self {
             StyleExpr::Constant(val) => Ok(*val),
             StyleExpr::Token(tok) => {
-                match  lookup.find(tok) {
+                match lookup.find(tok) {
                     Some(TokenValue::Color(val)) => Ok(val),
-                    Some(_) => todo!(),
-                    None => todo!(),
+                    Some(_) => todo!("Token wrong type {:?}", tok),
+                    None => todo!("Token not found {:?}", tok),
                 }
             }
             // StyleExpr::Expr(expr) => match expr.coerce() {

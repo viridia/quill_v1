@@ -1,4 +1,5 @@
 mod atom;
+mod context;
 mod cx;
 mod element;
 mod r#for;
@@ -24,6 +25,7 @@ mod view_with;
 mod view_with_memo;
 
 pub use atom::*;
+pub use context::ContextKey;
 pub use cx::Cx;
 pub use element::Element;
 pub use for_index::ForIndex;

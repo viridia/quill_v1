@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 use crate::node_span::NodeSpan;
 use crate::{View, ViewContext};
 
-/// A wrapper view around a view which makes it possible to pass a view as a parameter to
-/// other views.
+/// A wrapper view around a view which makes it possible to pass a non-copyable view as a
+/// parameter to other views.
 ///
 /// Currently, this will cause the view to which this parameter is passed to unconditionally
 /// render whenever it's parent renders, because we don't do proper equality comparisons.

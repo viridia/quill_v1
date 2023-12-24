@@ -3,8 +3,6 @@ mod button;
 mod collapse;
 mod dialog;
 mod disclosure;
-mod element_rect;
-mod enter_exit;
 mod node_tree;
 mod scrollview;
 mod slider;
@@ -18,16 +16,15 @@ use bevy::{
     prelude::*,
     ui,
 };
-use bevy_grackle::{tokens::PAGE_BG, STYLE_GRACKLE_THEME};
+use bevy_grackle::{theme::init_grackle_theme, tokens::SIDEBAR, widgets::ButtonProps};
 use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
     prelude::*,
 };
 use bevy_quill::prelude::*;
-use button::{button, ButtonProps, Clicked};
+use button::Clicked;
 use dialog::{dialog, RequestClose};
 use disclosure::DisclosureTrianglePlugin;
-use enter_exit::EnterExitPlugin;
 use node_tree::{node_tree, NodeTreePlugin};
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
@@ -58,7 +55,6 @@ fn main() {
             SplitterPlugin,
             SliderPlugin,
             NodeTreePlugin,
-            EnterExitPlugin,
             DisclosureTrianglePlugin,
             bevy_grackle::GracklePlugin,
         ))
@@ -108,8 +104,7 @@ static STYLE_BUTTON_FLEX: StyleHandle = StyleHandle::build(|ss| ss.flex_grow(1.)
 
 #[dynamic]
 static STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color(PAGE_BG)
-        .display(ui::Display::Flex)
+    ss.display(ui::Display::Flex)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
@@ -214,6 +209,7 @@ fn setup_view_root(mut commands: Commands) {
 }
 
 fn ui_main(mut cx: Cx) -> impl View {
+    init_grackle_theme(&mut cx);
     let target = cx.use_view_entity().id();
     let open = cx.create_atom_init(|| false);
     cx.use_effect(
@@ -227,7 +223,7 @@ fn ui_main(mut cx: Cx) -> impl View {
     let width = cx.use_resource::<PanelWidth>();
     Element::new()
         .named("main-ui")
-        .styled((STYLE_MAIN.clone(), STYLE_GRACKLE_THEME.clone()))
+        .styled(STYLE_MAIN.clone())
         .with_memo(
             move |mut e| {
                 let id = e.id();
@@ -253,6 +249,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                 .named("side-panel")
                 .styled((
                     STYLE_ASIDE.clone(),
+                    cx.get_context(SIDEBAR),
                     StyleHandle::build(|b| b.width(width.value.floor())),
                 ))
                 .insert(On::<Clicked>::run(
@@ -271,32 +268,35 @@ fn ui_main(mut cx: Cx) -> impl View {
                         .named("button-row")
                         .styled(STYLE_BUTTON_ROW.clone())
                         .children((
-                            bevy_grackle::widgets::button.bind(
-                                bevy_grackle::widgets::ButtonProps {
-                                    id: "save",
-                                    children: "Save",
-                                    style: STYLE_BUTTON_FLEX.clone(),
-                                    ..default()
-                                },
-                            ),
+                            bevy_grackle::widgets::button.bind(ButtonProps {
+                                id: "save",
+                                children: "Save",
+                                style: STYLE_BUTTON_FLEX.clone(),
+                                ..default()
+                            }),
                             bevy_grackle::widgets::menu_button.bind(
-                                bevy_grackle::widgets::MenuButtonProps {
-                                    children: "File…",
-                                    style: STYLE_BUTTON_FLEX.clone(),
-                                    ..default()
-                                },
+                                bevy_grackle::widgets::MenuButtonProps::new()
+                                    .children("File…")
+                                    .items(ViewParam::new(Fragment::new((
+                                        "Save",
+                                        "Save As…",
+                                        "Export…",
+                                        "Import…",
+                                    ))))
+                                    .style(STYLE_BUTTON_FLEX.clone()),
                             ),
                         )),
-                    button.bind(ButtonProps {
-                        id: "load",
-                        children: ViewParam::new(Fragment::new((
+                    bevy_grackle::widgets::button.bind(ButtonProps::new("load").children(
+                        ViewParam::new(Fragment::new((
                             "Load",
                             swatch.bind(SwatchProps { color: Color::RED }),
                         ))),
-                    }),
-                    button.bind(ButtonProps {
+                    )),
+                    bevy_grackle::widgets::button.bind(ButtonProps {
                         id: "quit",
                         children: "Quit",
+                        style: (),
+                        ..default()
                     }),
                     color_edit,
                     node_tree,

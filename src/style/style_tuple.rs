@@ -36,6 +36,18 @@ impl StyleTuple for StyleHandle {
     }
 }
 
+impl StyleTuple for Option<StyleHandle> {
+    fn len(&self) -> usize {
+        1
+    }
+
+    fn collect(&self, v: &mut Vec<StyleHandle>) {
+        if let Some(st) = self {
+            v.push(st.clone());
+        }
+    }
+}
+
 #[impl_for_tuples(1, 16)]
 impl StyleTuple for Tuple {
     for_tuples!( where #( Tuple: StyleTuple )* );

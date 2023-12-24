@@ -5,6 +5,11 @@ pub struct GracklePlugin;
 
 impl Plugin for GracklePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(bevy_egret::EgretEventsPlugin);
+        app.add_plugins((
+            bevy_egret::EgretEventsPlugin,
+            bevy_egret::hooks::EnterExitPlugin,
+        ));
+        // .add_plugin(bevy_egret::widgets::EgretWidgetsPlugin)
+        // .add_plugin(bevy_egret::floating::EgretFloatingPlugin);
     }
 }

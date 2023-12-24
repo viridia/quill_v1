@@ -2,9 +2,12 @@ use std::{cell::RefCell, marker::PhantomData};
 
 use bevy::prelude::*;
 
-use crate::{tracked_resources::TrackedResource, TrackingContext, ViewContext};
+use crate::{tracked_resources::TrackedResource, ContextKey, TrackingContext, ViewContext};
 
-use super::atom::{AtomCell, AtomHandle, AtomMethods};
+use super::{
+    atom::{AtomCell, AtomHandle, AtomMethods},
+    context::ContextMap,
+};
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's
 /// properties (passed from the parent presenter), plus other context information needed
@@ -162,6 +165,48 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         value: T,
     ) {
         self.vc.world.set_atom(handle, value);
+    }
+
+    /// Create a context variable. This can be used to pass data to child presenters.
+    pub fn create_context<T: Clone + Send + Sync + 'static>(
+        &mut self,
+        key: ContextKey<T>,
+        value: T,
+    ) {
+        let mut ec = self.vc.world.entity_mut(self.vc.entity);
+        match ec.get_mut::<ContextMap>() {
+            Some(mut ctx) => {
+                ctx.0.insert(key.id(), Box::new(value));
+            }
+            None => {
+                let mut map = ContextMap::default();
+                map.0.insert(key.id(), Box::new(value));
+                ec.insert(map);
+            }
+        }
+    }
+
+    /// Retrieve the value of a context variable.
+    pub fn get_context<T: Clone + Send + Sync + 'static>(&self, key: ContextKey<T>) -> Option<T> {
+        let mut entity = self.vc.entity;
+        loop {
+            let ec = self.vc.world.entity(entity);
+            if let Some(ctx) = ec.get::<ContextMap>() {
+                if let Some(val) = ctx.0.get(&key.id()) {
+                    let cid = self
+                        .vc
+                        .world
+                        .component_id::<ContextMap>()
+                        .expect("Unregistered component type");
+                    self.tracking.borrow_mut().components.insert((entity, cid));
+                    return val.downcast_ref::<T>().cloned();
+                }
+            }
+            match ec.get::<Parent>() {
+                Some(parent) => entity = **parent,
+                _ => return None,
+            }
+        }
     }
 
     // / Return an object which can be used to send a message to the current presenter.
