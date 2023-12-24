@@ -12,7 +12,7 @@ use crate::Cursor;
 
 use super::{
     builder::StyleBuilder, computed::ComputedStyle, selector::Selector,
-    selector_matcher::SelectorMatcher, style_expr::StyleExpr, transition::Transition,
+    selector_matcher::SelectorMatcher, transition::Transition,
 };
 
 /// Controls behavior of bevy_mod_picking
@@ -29,106 +29,106 @@ pub enum PointerEvents {
 #[derive(Debug, Clone)]
 pub enum StyleProp {
     BackgroundImage(Option<AssetPath<'static>>),
-    BackgroundColor(StyleExpr<Option<Color>>),
-    BorderColor(StyleExpr<Option<Color>>),
-    Color(StyleExpr<Option<Color>>),
+    BackgroundColor(Option<Color>),
+    BorderColor(Option<Color>),
+    Color(Option<Color>),
 
-    ZIndex(StyleExpr<Option<ui::ZIndex>>),
+    ZIndex(Option<ui::ZIndex>),
 
-    Display(StyleExpr<ui::Display>),
-    Position(StyleExpr<ui::PositionType>),
-    Overflow(StyleExpr<ui::OverflowAxis>),
-    OverflowX(StyleExpr<ui::OverflowAxis>),
-    OverflowY(StyleExpr<ui::OverflowAxis>),
-    Direction(StyleExpr<ui::Direction>),
+    Display(ui::Display),
+    Position(ui::PositionType),
+    Overflow(ui::OverflowAxis),
+    OverflowX(ui::OverflowAxis),
+    OverflowY(ui::OverflowAxis),
+    Direction(ui::Direction),
 
-    Left(StyleExpr<ui::Val>),
-    Right(StyleExpr<ui::Val>),
-    Top(StyleExpr<ui::Val>),
-    Bottom(StyleExpr<ui::Val>),
+    Left(ui::Val),
+    Right(ui::Val),
+    Top(ui::Val),
+    Bottom(ui::Val),
 
-    Width(StyleExpr<ui::Val>),
-    Height(StyleExpr<ui::Val>),
-    MinWidth(StyleExpr<ui::Val>),
-    MinHeight(StyleExpr<ui::Val>),
-    MaxWidth(StyleExpr<ui::Val>),
-    MaxHeight(StyleExpr<ui::Val>),
+    Width(ui::Val),
+    Height(ui::Val),
+    MinWidth(ui::Val),
+    MinHeight(ui::Val),
+    MaxWidth(ui::Val),
+    MaxHeight(ui::Val),
     // // pub aspect_ratio: StyleProp<f32>,
 
     // Allow margin sides to be set individually
-    Margin(StyleExpr<ui::UiRect>),
-    MarginLeft(StyleExpr<ui::Val>),
-    MarginRight(StyleExpr<ui::Val>),
-    MarginTop(StyleExpr<ui::Val>),
-    MarginBottom(StyleExpr<ui::Val>),
+    Margin(ui::UiRect),
+    MarginLeft(ui::Val),
+    MarginRight(ui::Val),
+    MarginTop(ui::Val),
+    MarginBottom(ui::Val),
 
-    Padding(StyleExpr<ui::UiRect>),
-    PaddingLeft(StyleExpr<ui::Val>),
-    PaddingRight(StyleExpr<ui::Val>),
-    PaddingTop(StyleExpr<ui::Val>),
-    PaddingBottom(StyleExpr<ui::Val>),
+    Padding(ui::UiRect),
+    PaddingLeft(ui::Val),
+    PaddingRight(ui::Val),
+    PaddingTop(ui::Val),
+    PaddingBottom(ui::Val),
 
-    Border(StyleExpr<ui::UiRect>),
-    BorderLeft(StyleExpr<ui::Val>),
-    BorderRight(StyleExpr<ui::Val>),
-    BorderTop(StyleExpr<ui::Val>),
-    BorderBottom(StyleExpr<ui::Val>),
+    Border(ui::UiRect),
+    BorderLeft(ui::Val),
+    BorderRight(ui::Val),
+    BorderTop(ui::Val),
+    BorderBottom(ui::Val),
 
-    FlexDirection(StyleExpr<ui::FlexDirection>),
-    FlexWrap(StyleExpr<ui::FlexWrap>),
+    FlexDirection(ui::FlexDirection),
+    FlexWrap(ui::FlexWrap),
     // Flex(ExprList),
-    FlexGrow(StyleExpr<f32>),
-    FlexShrink(StyleExpr<f32>),
-    FlexBasis(StyleExpr<ui::Val>),
-    RowGap(StyleExpr<ui::Val>),
-    ColumnGap(StyleExpr<ui::Val>),
-    Gap(StyleExpr<ui::Val>),
+    FlexGrow(f32),
+    FlexShrink(f32),
+    FlexBasis(ui::Val),
+    RowGap(ui::Val),
+    ColumnGap(ui::Val),
+    Gap(ui::Val),
 
-    AlignItems(StyleExpr<ui::AlignItems>),
-    AlignSelf(StyleExpr<ui::AlignSelf>),
-    AlignContent(StyleExpr<ui::AlignContent>),
-    JustifyItems(StyleExpr<ui::JustifyItems>),
-    JustifySelf(StyleExpr<ui::JustifySelf>),
-    JustifyContent(StyleExpr<ui::JustifyContent>),
+    AlignItems(ui::AlignItems),
+    AlignSelf(ui::AlignSelf),
+    AlignContent(ui::AlignContent),
+    JustifyItems(ui::JustifyItems),
+    JustifySelf(ui::JustifySelf),
+    JustifyContent(ui::JustifyContent),
 
-    GridAutoFlow(StyleExpr<ui::GridAutoFlow>),
+    GridAutoFlow(ui::GridAutoFlow),
     GridTemplateRows(Vec<ui::RepeatedGridTrack>),
     GridTemplateColumns(Vec<ui::RepeatedGridTrack>),
     GridAutoRows(Vec<ui::GridTrack>),
     GridAutoColumns(Vec<ui::GridTrack>),
-    GridRow(StyleExpr<ui::GridPlacement>),
-    GridRowStart(StyleExpr<i16>),
-    GridRowSpan(StyleExpr<u16>),
-    GridRowEnd(StyleExpr<i16>),
-    GridColumn(StyleExpr<ui::GridPlacement>),
-    GridColumnStart(StyleExpr<i16>),
-    GridColumnSpan(StyleExpr<u16>),
-    GridColumnEnd(StyleExpr<i16>),
+    GridRow(ui::GridPlacement),
+    GridRowStart(i16),
+    GridRowSpan(u16),
+    GridRowEnd(i16),
+    GridColumn(ui::GridPlacement),
+    GridColumnStart(i16),
+    GridColumnSpan(u16),
+    GridColumnEnd(i16),
 
     // TODO:
     // LineBreak(BreakLineOn),
-    PointerEvents(StyleExpr<PointerEvents>),
+    PointerEvents(PointerEvents),
 
     // Text
     Font(Option<AssetPath<'static>>),
-    FontSize(StyleExpr<f32>),
+    FontSize(f32),
 
     // Outlines
-    OutlineColor(StyleExpr<Option<Color>>),
-    OutlineWidth(StyleExpr<ui::Val>),
-    OutlineOffset(StyleExpr<ui::Val>),
+    OutlineColor(Option<Color>),
+    OutlineWidth(ui::Val),
+    OutlineOffset(ui::Val),
 
     // TODO: Future planned features
-    Cursor(StyleExpr<Cursor>),
-    CursorImage(StyleExpr<AssetPath<'static>>),
-    CursorOffset(StyleExpr<IVec2>),
+    Cursor(Cursor),
+    CursorImage(AssetPath<'static>),
+    CursorOffset(IVec2),
 
     // Transforms
-    Scale(StyleExpr<f32>),
-    ScaleX(StyleExpr<f32>),
-    ScaleY(StyleExpr<f32>),
-    Rotation(StyleExpr<f32>),
-    Translation(StyleExpr<Vec3>),
+    Scale(f32),
+    ScaleX(f32),
+    ScaleY(f32),
+    Rotation(f32),
+    Translation(Vec3),
 
     // Transitions
     Transition(Vec<Transition>),
@@ -206,259 +206,159 @@ impl StyleSet {
                     computed.image = image.clone();
                 }
                 StyleProp::BackgroundColor(expr) => {
-                    if let Ok(color) = expr.get() {
-                        computed.background_color = color;
-                    }
+                    computed.background_color = *expr;
                 }
                 StyleProp::BorderColor(expr) => {
-                    if let Ok(color) = expr.get() {
-                        computed.border_color = color;
-                    }
+                    computed.border_color = *expr;
                 }
                 StyleProp::Color(expr) => {
-                    if let Ok(color) = expr.get() {
-                        computed.color = color;
-                    }
+                    computed.color = *expr;
                 }
                 StyleProp::ZIndex(expr) => {
-                    if let Ok(val) = expr.get() {
-                        computed.z_index = val;
-                    }
+                    computed.z_index = *expr;
                 }
                 StyleProp::Display(expr) => {
-                    if let Ok(disp) = expr.get() {
-                        computed.style.display = disp;
-                    }
+                    computed.style.display = *expr;
                 }
                 StyleProp::Position(expr) => {
-                    if let Ok(pos) = expr.get() {
-                        computed.style.position_type = pos;
-                    }
+                    computed.style.position_type = *expr;
                 }
                 StyleProp::OverflowX(expr) => {
-                    if let Ok(ov) = expr.get() {
-                        computed.style.overflow.x = ov;
-                    }
+                    computed.style.overflow.x = *expr;
                 }
                 StyleProp::OverflowY(expr) => {
-                    if let Ok(ov) = expr.get() {
-                        computed.style.overflow.y = ov;
-                    }
+                    computed.style.overflow.y = *expr;
                 }
                 StyleProp::Overflow(expr) => {
-                    if let Ok(ov) = expr.get() {
-                        computed.style.overflow.x = ov;
-                        computed.style.overflow.y = ov;
-                    }
+                    computed.style.overflow.x = *expr;
+                    computed.style.overflow.y = *expr;
                 }
 
                 StyleProp::Direction(expr) => {
-                    if let Ok(dir) = expr.get() {
-                        computed.style.direction = dir;
-                    }
+                    computed.style.direction = *expr;
                 }
                 StyleProp::Left(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.left = length;
-                    }
+                    computed.style.left = *expr;
                 }
                 StyleProp::Right(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.right = length;
-                    }
+                    computed.style.right = *expr;
                 }
                 StyleProp::Top(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.top = length;
-                    }
+                    computed.style.top = *expr;
                 }
                 StyleProp::Bottom(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.bottom = length;
-                    }
+                    computed.style.bottom = *expr;
                 }
                 StyleProp::Width(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.width = length;
-                    }
+                    computed.style.width = *expr;
                 }
                 StyleProp::Height(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.height = length;
-                    }
+                    computed.style.height = *expr;
                 }
                 StyleProp::MinWidth(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.min_width = length;
-                    }
+                    computed.style.min_width = *expr;
                 }
                 StyleProp::MinHeight(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.min_height = length;
-                    }
+                    computed.style.min_height = *expr;
                 }
                 StyleProp::MaxWidth(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.max_width = length;
-                    }
+                    computed.style.max_width = *expr;
                 }
                 StyleProp::MaxHeight(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.max_height = length;
-                    }
+                    computed.style.max_height = *expr;
                 }
                 StyleProp::Margin(expr) => {
-                    if let Ok(rect) = expr.get() {
-                        computed.style.margin = rect;
-                    }
+                    computed.style.margin = *expr;
                 }
                 StyleProp::MarginLeft(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.margin.left = length;
-                    }
+                    computed.style.margin.left = *expr;
                 }
                 StyleProp::MarginRight(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.margin.right = length;
-                    }
+                    computed.style.margin.right = *expr;
                 }
                 StyleProp::MarginTop(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.margin.top = length;
-                    }
+                    computed.style.margin.top = *expr;
                 }
                 StyleProp::MarginBottom(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.margin.bottom = length;
-                    }
+                    computed.style.margin.bottom = *expr;
                 }
                 StyleProp::Padding(expr) => {
-                    if let Ok(rect) = expr.get() {
-                        computed.style.padding = rect;
-                    }
+                    computed.style.padding = *expr;
                 }
                 StyleProp::PaddingLeft(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.padding.left = length;
-                    }
+                    computed.style.padding.left = *expr;
                 }
                 StyleProp::PaddingRight(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.padding.right = length;
-                    }
+                    computed.style.padding.right = *expr;
                 }
                 StyleProp::PaddingTop(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.padding.top = length;
-                    }
+                    computed.style.padding.top = *expr;
                 }
                 StyleProp::PaddingBottom(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.padding.bottom = length;
-                    }
+                    computed.style.padding.bottom = *expr;
                 }
                 StyleProp::Border(expr) => {
-                    if let Ok(rect) = expr.get() {
-                        computed.style.border = rect;
-                    }
+                    computed.style.border = *expr;
                 }
                 StyleProp::BorderLeft(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.border.left = length;
-                    }
+                    computed.style.border.left = *expr;
                 }
                 StyleProp::BorderRight(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.border.right = length;
-                    }
+                    computed.style.border.right = *expr;
                 }
                 StyleProp::BorderTop(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.border.top = length;
-                    }
+                    computed.style.border.top = *expr;
                 }
                 StyleProp::BorderBottom(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.border.bottom = length;
-                    }
+                    computed.style.border.bottom = *expr;
                 }
                 StyleProp::FlexDirection(expr) => {
-                    if let Ok(dir) = expr.get() {
-                        computed.style.flex_direction = dir;
-                    }
+                    computed.style.flex_direction = *expr;
                 }
                 StyleProp::FlexWrap(expr) => {
-                    if let Ok(wrap) = expr.get() {
-                        computed.style.flex_wrap = wrap;
-                    }
+                    computed.style.flex_wrap = *expr;
                 }
                 StyleProp::FlexGrow(expr) => {
-                    if let Ok(amt) = expr.get() {
-                        computed.style.flex_grow = amt;
-                    }
+                    computed.style.flex_grow = *expr;
                 }
                 StyleProp::FlexShrink(expr) => {
-                    if let Ok(amt) = expr.get() {
-                        computed.style.flex_shrink = amt;
-                    }
+                    computed.style.flex_shrink = *expr;
                 }
                 StyleProp::FlexBasis(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.flex_basis = length;
-                    }
+                    computed.style.flex_basis = *expr;
                 }
                 StyleProp::ColumnGap(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.column_gap = length;
-                    }
+                    computed.style.column_gap = *expr;
                 }
                 StyleProp::RowGap(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.row_gap = length;
-                    }
+                    computed.style.row_gap = *expr;
                 }
                 StyleProp::Gap(expr) => {
-                    if let Ok(length) = expr.get() {
-                        computed.style.column_gap = length;
-                        computed.style.row_gap = length;
-                    }
+                    computed.style.column_gap = *expr;
+                    computed.style.row_gap = *expr;
                 }
 
                 StyleProp::AlignItems(expr) => {
-                    if let Ok(align) = expr.get() {
-                        computed.style.align_items = align;
-                    }
+                    computed.style.align_items = *expr;
                 }
                 StyleProp::AlignSelf(expr) => {
-                    if let Ok(align) = expr.get() {
-                        computed.style.align_self = align;
-                    }
+                    computed.style.align_self = *expr;
                 }
                 StyleProp::AlignContent(expr) => {
-                    if let Ok(align) = expr.get() {
-                        computed.style.align_content = align;
-                    }
+                    computed.style.align_content = *expr;
                 }
                 StyleProp::JustifyItems(expr) => {
-                    if let Ok(justify) = expr.get() {
-                        computed.style.justify_items = justify;
-                    }
+                    computed.style.justify_items = *expr;
                 }
                 StyleProp::JustifySelf(expr) => {
-                    if let Ok(justify) = expr.get() {
-                        computed.style.justify_self = justify;
-                    }
+                    computed.style.justify_self = *expr;
                 }
                 StyleProp::JustifyContent(expr) => {
-                    if let Ok(justify) = expr.get() {
-                        computed.style.justify_content = justify;
-                    }
+                    computed.style.justify_content = *expr;
                 }
 
                 StyleProp::GridAutoFlow(expr) => {
-                    if let Ok(af) = expr.get() {
-                        computed.style.grid_auto_flow = af;
-                    }
+                    computed.style.grid_auto_flow = *expr;
                 }
 
                 StyleProp::GridTemplateRows(expr) => {
@@ -478,73 +378,49 @@ impl StyleSet {
                 }
 
                 StyleProp::GridRow(expr) => {
-                    if let Ok(af) = expr.get() {
-                        computed.style.grid_row = af;
-                    }
+                    computed.style.grid_row = *expr;
                 }
                 StyleProp::GridRowStart(expr) => {
-                    if let Ok(val) = expr.get() {
-                        computed.style.grid_row.set_start(val);
-                    }
+                    computed.style.grid_row.set_start(*expr);
                 }
 
                 StyleProp::GridRowSpan(expr) => {
-                    if let Ok(val) = expr.get() {
-                        computed.style.grid_row.set_span(val);
-                    }
+                    computed.style.grid_row.set_span(*expr);
                 }
 
                 StyleProp::GridRowEnd(expr) => {
-                    if let Ok(val) = expr.get() {
-                        computed.style.grid_row.set_end(val);
-                    }
+                    computed.style.grid_row.set_end(*expr);
                 }
 
                 StyleProp::GridColumn(expr) => {
-                    if let Ok(af) = expr.get() {
-                        computed.style.grid_column = af;
-                    }
+                    computed.style.grid_column = *expr;
                 }
                 StyleProp::GridColumnStart(expr) => {
-                    if let Ok(val) = expr.get() {
-                        computed.style.grid_column.set_start(val);
-                    }
+                    computed.style.grid_column.set_start(*expr);
                 }
 
                 StyleProp::GridColumnSpan(expr) => {
-                    if let Ok(val) = expr.get() {
-                        computed.style.grid_column.set_span(val);
-                    }
+                    computed.style.grid_column.set_span(*expr);
                 }
 
                 StyleProp::GridColumnEnd(expr) => {
-                    if let Ok(val) = expr.get() {
-                        computed.style.grid_column.set_end(val);
-                    }
+                    computed.style.grid_column.set_end(*expr);
                 }
 
                 StyleProp::OutlineColor(expr) => {
-                    if let Ok(color) = expr.get() {
-                        computed.outline_color = color;
-                    }
+                    computed.outline_color = *expr;
                 }
 
                 StyleProp::OutlineWidth(expr) => {
-                    if let Ok(width) = expr.get() {
-                        computed.outline_width = width;
-                    }
+                    computed.outline_width = *expr;
                 }
 
                 StyleProp::OutlineOffset(expr) => {
-                    if let Ok(offs) = expr.get() {
-                        computed.outline_offset = offs;
-                    }
+                    computed.outline_offset = *expr;
                 }
 
                 StyleProp::PointerEvents(expr) => {
-                    if let Ok(pickable) = expr.get() {
-                        computed.pickable = Some(pickable);
-                    }
+                    computed.pickable = Some(*expr);
                 }
 
                 StyleProp::Font(expr) => {
@@ -552,9 +428,7 @@ impl StyleSet {
                 }
 
                 StyleProp::FontSize(expr) => {
-                    if let Ok(fsize) = expr.get() {
-                        computed.font_size = Some(fsize);
-                    }
+                    computed.font_size = Some(*expr);
                 }
 
                 StyleProp::Cursor(_) => todo!(),
@@ -562,30 +436,20 @@ impl StyleSet {
                 StyleProp::CursorOffset(_) => todo!(),
 
                 StyleProp::Scale(expr) => {
-                    if let Ok(scale) = expr.get() {
-                        computed.scale_x = Some(scale);
-                        computed.scale_y = Some(scale);
-                    }
+                    computed.scale_x = Some(*expr);
+                    computed.scale_y = Some(*expr);
                 }
                 StyleProp::ScaleX(expr) => {
-                    if let Ok(scale) = expr.get() {
-                        computed.scale_x = Some(scale);
-                    }
+                    computed.scale_x = Some(*expr);
                 }
                 StyleProp::ScaleY(expr) => {
-                    if let Ok(scale) = expr.get() {
-                        computed.scale_y = Some(scale);
-                    }
+                    computed.scale_y = Some(*expr);
                 }
                 StyleProp::Rotation(expr) => {
-                    if let Ok(rot) = expr.get() {
-                        computed.rotation = Some(rot);
-                    }
+                    computed.rotation = Some(*expr);
                 }
                 StyleProp::Translation(expr) => {
-                    if let Ok(trans) = expr.get() {
-                        computed.translation = Some(trans);
-                    }
+                    computed.translation = Some(*expr);
                 }
 
                 StyleProp::Transition(trans) => computed.transitions.clone_from(trans),
