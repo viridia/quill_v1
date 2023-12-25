@@ -35,9 +35,11 @@ pub const COLOR_DANGER: Color = Color::rgb(0.267, 0.000, 0.333);
 
 #[dynamic]
 static STYLE_LT_SIDEBAR: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color(COLOR_G2).font(Some(AssetPath::from(
-        "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
-    )))
+    ss.background_color(COLOR_G2)
+        .font_size(14.)
+        .font(Some(AssetPath::from(
+            "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
+        )))
 });
 
 #[dynamic]

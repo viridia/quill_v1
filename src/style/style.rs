@@ -79,6 +79,9 @@ pub struct TextStyles {
     /// The collection of styles associated with this element.
     pub font: Option<Handle<Font>>,
 
+    /// The size of the font.
+    pub font_size: Option<f32>,
+
     /// Text color
     pub color: Option<Color>,
 }

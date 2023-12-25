@@ -100,6 +100,7 @@ fn update_element_styles(
 
             // Inherited properties
             computed.font_handle = inherited_styles.font.clone();
+            computed.font_size = inherited_styles.font_size;
             computed.color = inherited_styles.color;
 
             // Apply styles to computed
@@ -115,8 +116,9 @@ fn update_element_styles(
             }
 
             // Update inherited text styles
-            text_styles.color = computed.color;
             text_styles.font = computed.font_handle.clone();
+            text_styles.font_size = computed.font_size;
+            text_styles.color = computed.color;
 
             // Only store the text styles if they are different than the parent's.
             if ts != Some(&text_styles) {
