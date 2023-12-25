@@ -17,6 +17,7 @@ pub(crate) use selector::Selector;
 pub(crate) use selector_matcher::SelectorMatcher;
 pub use style::ElementStyles;
 pub use style::StyleHandle;
+pub(crate) use style::TextStyles;
 pub use style_props::PointerEvents;
 pub use style_props::StyleProp;
 pub use style_tuple::StyleTuple;

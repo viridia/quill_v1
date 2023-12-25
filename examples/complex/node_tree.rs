@@ -80,10 +80,9 @@ static STYLE_TREE_NODE_HEADER: StyleHandle = StyleHandle::build(|ss| {
         .height(24)
         .padding(ui::UiRect::horizontal(ui::Val::Px(4.)))
         .padding_left(16)
-        .selector(":hover", |ss| ss.background_color("#222"))
+        .selector(":hover", |ss| ss.background_color("#222").color(Color::RED))
         .selector(".selected", |ss| ss.background_color("044"))
         .selector(".expandable", |ss| ss.padding_left(0))
-        .color(Color::RED)
 });
 
 #[dynamic]

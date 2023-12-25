@@ -57,7 +57,7 @@ impl Default for StyleHandle {
     }
 }
 
-/// List of style objects which are attached to a given UiNode.
+/// List of [`StyleHandle`]s which are attached to a given UiNode.
 #[derive(Component, Default)]
 pub struct ElementStyles {
     /// The collection of styles associated with this element.
@@ -68,6 +68,17 @@ pub struct ElementStyles {
 
     /// Whether any selectors use the :hover pseudo-class
     pub(crate) uses_hover: bool,
-    // Whether any selectors use inherited properties.
-    // pub(crate) uses_inherited: bool,
+}
+
+/// Component used to store inherited text style properties. This is set whenever an element
+/// has one or more style properties which affect text rendering, even if the element is not
+/// a text node itself. This is used to calculate the inherited text style for child nodes,
+/// and also whether or not the text style has changed.
+#[derive(Component, Default, PartialEq, Clone)]
+pub struct TextStyles {
+    /// The collection of styles associated with this element.
+    pub font: Option<Handle<Font>>,
+
+    /// Text color
+    pub color: Option<Color>,
 }

@@ -109,7 +109,7 @@ pub fn menu_button<
         }))),
         style: (
             STYLE_MENU_BUTTON.clone(),
-            cx.get_context(BUTTON_DEFAULT),
+            cx.get_scoped_value(BUTTON_DEFAULT),
             cx.props.style.clone(),
         ),
         class_names: cx.props.size.class_name(),

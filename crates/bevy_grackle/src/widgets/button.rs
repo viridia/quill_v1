@@ -19,9 +19,6 @@ static STYLE_BUTTON: StyleHandle = StyleHandle::build(|ss| {
         .selector(".size-md", |ss| ss.min_height(Size::Md.height()))
         .selector(".size-lg", |ss| ss.min_height(Size::Lg.height()))
         .selector(".size-xl", |ss| ss.min_height(Size::Xl.height()))
-    // .font(Some(AssetPath::from(
-    //     "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
-    // )))
 });
 
 /// The variant determines the button's color scheme
@@ -107,9 +104,9 @@ pub fn button<V: View + Clone + PartialEq + 'static, ST: StyleTuple + PartialEq 
         style: (
             STYLE_BUTTON.clone(),
             match cx.props.variant {
-                ButtonVariant::Default => cx.get_context(BUTTON_DEFAULT),
-                ButtonVariant::Primary => cx.get_context(BUTTON_PRIMARY),
-                ButtonVariant::Danger => cx.get_context(BUTTON_DANGER),
+                ButtonVariant::Default => cx.get_scoped_value(BUTTON_DEFAULT),
+                ButtonVariant::Primary => cx.get_scoped_value(BUTTON_PRIMARY),
+                ButtonVariant::Danger => cx.get_scoped_value(BUTTON_DANGER),
             },
             cx.props.style.clone(),
         ),

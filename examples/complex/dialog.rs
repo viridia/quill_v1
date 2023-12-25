@@ -1,10 +1,12 @@
 use bevy::{prelude::*, ui};
-use bevy_grackle::hooks::{EnterExitApi, EnterExitState};
+use bevy_grackle::{
+    events::Clicked,
+    hooks::{EnterExitApi, EnterExitState},
+    widgets::{button, ButtonProps},
+};
 use bevy_mod_picking::prelude::{EntityEvent, Listener, On};
 use bevy_quill::prelude::*;
 use static_init::dynamic;
-
-use crate::button::{button, ButtonProps, Clicked};
 
 // Dialog background overlay
 #[dynamic]
@@ -134,14 +136,8 @@ pub fn dialog(mut cx: Cx<DemoDialogProps>) -> impl View {
                                     });
                             }))
                             .children((
-                                button.bind(ButtonProps {
-                                    id: "cancel",
-                                    children: "Cancel",
-                                }),
-                                button.bind(ButtonProps {
-                                    id: "ok",
-                                    children: "OK",
-                                }),
+                                button.bind(ButtonProps::new("cancel").children("Cancel")),
+                                button.bind(ButtonProps::new("ok").children("Ok")),
                             )),
                     )),
                 ),

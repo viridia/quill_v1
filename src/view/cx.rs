@@ -2,11 +2,11 @@ use std::{cell::RefCell, marker::PhantomData};
 
 use bevy::prelude::*;
 
-use crate::{tracked_resources::TrackedResource, ContextKey, TrackingContext, ViewContext};
+use crate::{tracked_resources::TrackedResource, ScopedValueKey, TrackingContext, ViewContext};
 
 use super::{
     atom::{AtomCell, AtomHandle, AtomMethods},
-    context::ContextMap,
+    scoped_values::ScopedValueMap,
 };
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's
@@ -42,15 +42,23 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
 
     /// Return a reference to the Component `C` on the given entity.
     pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
-        self.add_tracked_component::<C>(entity);
-        self.vc.world.entity(entity).get::<C>()
+        match self.vc.world.get_entity(entity) {
+            Some(c) => {
+                self.add_tracked_component::<C>(entity);
+                c.get::<C>()
+            }
+            None => None,
+        }
     }
 
     /// Return a reference to the Component `C` on the given entity. This version does not
     /// add the component to the tracking scope, and is intended for components that update
     /// frequently.
     pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
-        self.vc.world.entity(entity).get::<C>()
+        match self.vc.world.get_entity(entity) {
+            Some(c) => c.get::<C>(),
+            None => None,
+        }
     }
 
     /// Return a reference to the Component `C` on the entity that contains the current
@@ -167,19 +175,26 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         self.vc.world.set_atom(handle, value);
     }
 
-    /// Create a context variable. This can be used to pass data to child presenters.
-    pub fn create_context<T: Clone + Send + Sync + 'static>(
+    /// Create a scoped value. This can be used to pass data to child presenters.
+    /// The value is accessible by all child presenters.
+    pub fn define_scoped_value<T: Clone + Send + Sync + PartialEq + 'static>(
         &mut self,
-        key: ContextKey<T>,
+        key: ScopedValueKey<T>,
         value: T,
     ) {
         let mut ec = self.vc.world.entity_mut(self.vc.entity);
-        match ec.get_mut::<ContextMap>() {
+        match ec.get_mut::<ScopedValueMap>() {
             Some(mut ctx) => {
+                if let Some(v) = ctx.0.get(&key.id()) {
+                    // Don't update if value hasn't changed
+                    if v.downcast_ref::<T>() == Some(&value) {
+                        return;
+                    }
+                }
                 ctx.0.insert(key.id(), Box::new(value));
             }
             None => {
-                let mut map = ContextMap::default();
+                let mut map = ScopedValueMap::default();
                 map.0.insert(key.id(), Box::new(value));
                 ec.insert(map);
             }
@@ -187,16 +202,19 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     }
 
     /// Retrieve the value of a context variable.
-    pub fn get_context<T: Clone + Send + Sync + 'static>(&self, key: ContextKey<T>) -> Option<T> {
+    pub fn get_scoped_value<T: Clone + Send + Sync + 'static>(
+        &self,
+        key: ScopedValueKey<T>,
+    ) -> Option<T> {
         let mut entity = self.vc.entity;
         loop {
             let ec = self.vc.world.entity(entity);
-            if let Some(ctx) = ec.get::<ContextMap>() {
+            if let Some(ctx) = ec.get::<ScopedValueMap>() {
                 if let Some(val) = ctx.0.get(&key.id()) {
                     let cid = self
                         .vc
                         .world
-                        .component_id::<ContextMap>()
+                        .component_id::<ScopedValueMap>()
                         .expect("Unregistered component type");
                     self.tracking.borrow_mut().components.insert((entity, cid));
                     return val.downcast_ref::<T>().cloned();

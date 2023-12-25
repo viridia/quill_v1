@@ -58,19 +58,6 @@ impl ComputedStyle {
     pub fn new() -> Self {
         Self { ..default() }
     }
-
-    // Construct a new style that inherits from a parent style. Only attributes which
-    // are inheritable will be inherited, all others will be set to the default.
-    // pub fn inherit(parent: &Self) -> Self {
-    //     Self {
-    //         alignment: parent.alignment,
-    //         color: parent.color,
-    //         font_size: parent.font_size,
-    //         font: parent.font.clone(),
-    //         line_break: parent.line_break.clone(),
-    //         ..default()
-    //     }
-    // }
 }
 
 /// Custom command that updates the style of an entity.
@@ -172,11 +159,11 @@ impl Command for UpdateComputedStyle {
 
         match e.get_mut::<Text>() {
             Some(mut text) => {
-                if let Some(color) = self.computed.color {
-                    for section in text.sections.iter_mut() {
-                        if section.style.color != color {
-                            section.style.color = color;
-                        }
+                // White is the default.
+                let color = self.computed.color.unwrap_or(Color::WHITE);
+                for section in text.sections.iter_mut() {
+                    if section.style.color != color {
+                        section.style.color = color;
                     }
                 }
 
@@ -203,7 +190,7 @@ impl Command for UpdateComputedStyle {
                 }
             }
 
-            None => {}
+            None => (),
         }
 
         if is_animated_bg_color {

@@ -7,18 +7,18 @@ use std::marker::PhantomData;
 /// A unique key for accessing a variable whose scope is the current presenter invocation
 /// and any nested presenters.
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct ContextKey<T: Clone> {
+pub struct ScopedValueKey<T: Clone> {
     name: &'static str,
     marker: PhantomData<T>,
 }
 
-impl<T: Clone> Debug for ContextKey<T> {
+impl<T: Clone> Debug for ScopedValueKey<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("#{}", self.name))
     }
 }
 
-impl<T: Clone> ContextKey<T> {
+impl<T: Clone> ScopedValueKey<T> {
     /// Construct a new variable token given a name.
     pub const fn new(name: &'static str) -> Self {
         Self {
@@ -36,4 +36,4 @@ impl<T: Clone> ContextKey<T> {
 /// Component used to store context variables.
 #[derive(Component, Default)]
 #[doc(hidden)]
-pub struct ContextMap(pub(crate) HashMap<&'static str, Box<dyn Any + Send + Sync + 'static>>);
+pub struct ScopedValueMap(pub(crate) HashMap<&'static str, Box<dyn Any + Send + Sync + 'static>>);

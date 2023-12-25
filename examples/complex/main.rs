@@ -1,5 +1,4 @@
 //! Complex example with multiple views
-mod button;
 mod collapse;
 mod dialog;
 mod disclosure;
@@ -16,13 +15,17 @@ use bevy::{
     prelude::*,
     ui,
 };
-use bevy_grackle::{theme::init_grackle_theme, tokens::SIDEBAR, widgets::ButtonProps};
+use bevy_grackle::{
+    events::Clicked,
+    theme::{init_grackle_theme, GrackleTheme},
+    tokens::SIDEBAR,
+    widgets::ButtonProps,
+};
 use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
     prelude::*,
 };
 use bevy_quill::prelude::*;
-use button::Clicked;
 use dialog::{dialog, RequestClose};
 use disclosure::DisclosureTrianglePlugin;
 use node_tree::{node_tree, NodeTreePlugin};
@@ -67,10 +70,8 @@ fn main() {
                 }),
         )
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
-        .add_plugins(EventListenerPlugin::<Clicked>::default())
         .add_plugins(EventListenerPlugin::<RequestClose>::default())
         .add_systems(Startup, (test_scene::setup, setup_view_root))
-        .add_event::<Clicked>()
         .add_event::<RequestClose>()
         .add_systems(
             Update,
@@ -209,7 +210,7 @@ fn setup_view_root(mut commands: Commands) {
 }
 
 fn ui_main(mut cx: Cx) -> impl View {
-    init_grackle_theme(&mut cx);
+    init_grackle_theme(&mut cx, GrackleTheme::Light);
     let target = cx.use_view_entity().id();
     let open = cx.create_atom_init(|| false);
     cx.use_effect(
@@ -249,7 +250,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                 .named("side-panel")
                 .styled((
                     STYLE_ASIDE.clone(),
-                    cx.get_context(SIDEBAR),
+                    cx.get_scoped_value(SIDEBAR),
                     StyleHandle::build(|b| b.width(width.value.floor())),
                 ))
                 .insert(On::<Clicked>::run(

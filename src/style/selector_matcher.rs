@@ -3,19 +3,10 @@ use bevy::{ecs::entity::Entity, utils::HashMap};
 use bevy_mod_picking::backend::HitData;
 use bevy_mod_picking::pointer::PointerId;
 
-use crate::{ElementClasses, ElementStyles, Selector};
+use crate::{ElementClasses, Selector};
 
 pub struct SelectorMatcher<'w, 's, 'h> {
-    query: &'h Query<
-        'w,
-        's,
-        (
-            Entity,
-            Ref<'static, ElementStyles>,
-            Option<Ref<'static, ElementClasses>>,
-            Ref<'static, Style>,
-        ),
-    >,
+    classes_query: &'h Query<'w, 's, Ref<'static, ElementClasses>>,
     parent_query: &'h Query<'w, 's, &'static Parent, (With<Node>, With<Visibility>)>,
     children_query: &'h Query<'w, 's, &'static Children, (With<Node>, With<Visibility>)>,
     hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
@@ -23,22 +14,13 @@ pub struct SelectorMatcher<'w, 's, 'h> {
 
 impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
     pub(crate) fn new(
-        query: &'h Query<
-            'w,
-            's,
-            (
-                Entity,
-                Ref<'static, ElementStyles>,
-                Option<Ref<'static, ElementClasses>>,
-                Ref<'static, Style>,
-            ),
-        >,
+        query: &'h Query<'w, 's, Ref<'static, ElementClasses>>,
         parent_query: &'h Query<'w, 's, &'static Parent, (With<Node>, With<Visibility>)>,
         children_query: &'h Query<'w, 's, &'static Children, (With<Node>, With<Visibility>)>,
         hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
     ) -> Self {
         Self {
-            query,
+            classes_query: query,
             parent_query,
             children_query,
             hover_map,
@@ -90,11 +72,8 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
     pub(crate) fn selector_match<'b>(&self, selector: &'b Selector, entity: &Entity) -> bool {
         match selector {
             Selector::Accept => true,
-            Selector::Class(cls, next) => match self.query.get(*entity) {
-                Ok((_, _, Some(classes), _)) => {
-                    classes.0.contains(cls) && self.selector_match(next, entity)
-                }
-                Err(_) => false,
+            Selector::Class(cls, next) => match self.classes_query.get(*entity) {
+                Ok(classes) => classes.0.contains(cls) && self.selector_match(next, entity),
                 _ => false,
             },
             Selector::Hover(next) => self.is_hovering(&entity) && self.selector_match(next, entity),

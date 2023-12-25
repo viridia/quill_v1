@@ -1,4 +1,4 @@
-use bevy::render::color::Color;
+use bevy::{asset::AssetPath, render::color::Color};
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
@@ -34,10 +34,26 @@ pub const COLOR_PRIMARY: Color = Color::rgb(0.220, 0.345, 0.408);
 pub const COLOR_DANGER: Color = Color::rgb(0.267, 0.000, 0.333);
 
 #[dynamic]
-static STYLE_SIDEBAR: StyleHandle = StyleHandle::build(|ss| ss.background_color(COLOR_BG));
+static STYLE_LT_SIDEBAR: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_G2).font(Some(AssetPath::from(
+        "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
+    )))
+});
 
 #[dynamic]
-static STYLE_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
+static STYLE_DK_SIDEBAR: StyleHandle = StyleHandle::build(|ss| ss.background_color(COLOR_BG));
+
+#[dynamic]
+static STYLE_LT_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_G5)
+        .border_color(COLOR_BLACK)
+        .selector(".pressed", |ss| ss.background_color(COLOR_G6))
+        .selector(":hover", |ss| ss.background_color(COLOR_G4))
+        .selector(":hover.pressed", |ss| ss.background_color(COLOR_G6))
+});
+
+#[dynamic]
+static STYLE_DK_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
     ss.background_color(COLOR_G7)
         .border_color(COLOR_BLACK)
         .selector(".pressed", |ss| ss.background_color(COLOR_G5))
@@ -46,7 +62,7 @@ static STYLE_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
 });
 
 #[dynamic]
-static STYLE_BUTTON_PRIMARY: StyleHandle = StyleHandle::build(|ss| {
+static STYLE_DK_BUTTON_PRIMARY: StyleHandle = StyleHandle::build(|ss| {
     ss.background_color(COLOR_PRIMARY)
         .border_color(COLOR_BLACK)
         .selector(".pressed", |ss| ss.background_color(COLOR_PRIMARY))
@@ -55,7 +71,7 @@ static STYLE_BUTTON_PRIMARY: StyleHandle = StyleHandle::build(|ss| {
 });
 
 #[dynamic]
-static STYLE_BUTTON_DANGER: StyleHandle = StyleHandle::build(|ss| {
+static STYLE_DK_BUTTON_DANGER: StyleHandle = StyleHandle::build(|ss| {
     ss.background_color(COLOR_DANGER)
         .border_color(COLOR_BLACK)
         .selector(".pressed", |ss| ss.background_color(COLOR_DANGER))
@@ -63,9 +79,24 @@ static STYLE_BUTTON_DANGER: StyleHandle = StyleHandle::build(|ss| {
         .selector(":hover.pressed", |ss| ss.background_color(COLOR_DANGER))
 });
 
-pub fn init_grackle_theme<T>(cx: &mut Cx<T>) {
-    cx.create_context(SIDEBAR, STYLE_SIDEBAR.clone());
-    cx.create_context(BUTTON_DEFAULT, STYLE_BUTTON_DEFAULT.clone());
-    cx.create_context(BUTTON_PRIMARY, STYLE_BUTTON_PRIMARY.clone());
-    cx.create_context(BUTTON_DANGER, STYLE_BUTTON_DANGER.clone());
+pub enum GrackleTheme {
+    Light,
+    Dark,
+}
+
+pub fn init_grackle_theme<T>(cx: &mut Cx<T>, theme: GrackleTheme) {
+    match theme {
+        GrackleTheme::Light => {
+            cx.define_scoped_value(SIDEBAR, STYLE_LT_SIDEBAR.clone());
+            cx.define_scoped_value(BUTTON_DEFAULT, STYLE_LT_BUTTON_DEFAULT.clone());
+            cx.define_scoped_value(BUTTON_PRIMARY, STYLE_DK_BUTTON_PRIMARY.clone());
+            cx.define_scoped_value(BUTTON_DANGER, STYLE_DK_BUTTON_DANGER.clone());
+        }
+        GrackleTheme::Dark => {
+            cx.define_scoped_value(SIDEBAR, STYLE_DK_SIDEBAR.clone());
+            cx.define_scoped_value(BUTTON_DEFAULT, STYLE_DK_BUTTON_DEFAULT.clone());
+            cx.define_scoped_value(BUTTON_PRIMARY, STYLE_DK_BUTTON_PRIMARY.clone());
+            cx.define_scoped_value(BUTTON_DANGER, STYLE_DK_BUTTON_DANGER.clone());
+        }
+    }
 }

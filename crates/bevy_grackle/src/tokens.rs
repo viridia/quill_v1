@@ -1,6 +1,6 @@
-use bevy_quill::{ContextKey, StyleHandle};
+use bevy_quill::{ScopedValueKey, StyleHandle};
 
-pub const SIDEBAR: ContextKey<StyleHandle> = ContextKey::new("sidebar");
-pub const BUTTON_DEFAULT: ContextKey<StyleHandle> = ContextKey::new("button-default");
-pub const BUTTON_PRIMARY: ContextKey<StyleHandle> = ContextKey::new("button-primary");
-pub const BUTTON_DANGER: ContextKey<StyleHandle> = ContextKey::new("button-danger");
+pub const SIDEBAR: ScopedValueKey<StyleHandle> = ScopedValueKey::new("sidebar");
+pub const BUTTON_DEFAULT: ScopedValueKey<StyleHandle> = ScopedValueKey::new("button-default");
+pub const BUTTON_PRIMARY: ScopedValueKey<StyleHandle> = ScopedValueKey::new("button-primary");
+pub const BUTTON_DANGER: ScopedValueKey<StyleHandle> = ScopedValueKey::new("button-danger");
