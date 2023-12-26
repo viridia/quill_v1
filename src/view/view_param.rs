@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use crate::node_span::NodeSpan;
-use crate::{View, ViewContext};
+use crate::{BuildContext, View};
 
 /// A wrapper view around a view which makes it possible to pass a non-copyable view as a
 /// parameter to other views.
@@ -24,23 +24,23 @@ impl<V: View> ViewParam<V> {
 impl<V: View> View for ViewParam<V> {
     type State = V::State;
 
-    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
         self.inner.lock().unwrap().nodes(vc, state)
     }
 
-    fn build(&self, vc: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut BuildContext) -> Self::State {
         self.inner.lock().unwrap().build(vc)
     }
 
-    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.lock().unwrap().update(vc, state);
     }
 
-    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
         self.inner.lock().unwrap().assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.lock().unwrap().raze(vc, state);
     }
 }

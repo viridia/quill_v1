@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{View, ViewContext, ViewTuple};
+use crate::{BuildContext, View, ViewTuple};
 
 use crate::node_span::NodeSpan;
 
@@ -16,11 +16,11 @@ pub struct ViewChildren<V: View, A: ViewTuple> {
 impl<V: View, A: ViewTuple> View for ViewChildren<V, A> {
     type State = (V::State, A::State);
 
-    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
         self.inner.nodes(vc, &state.0)
     }
 
-    fn build(&self, vc: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut BuildContext) -> Self::State {
         // Build state for inner view
         let st = self.inner.build(vc);
         // Build Views for each child element
@@ -28,12 +28,12 @@ impl<V: View, A: ViewTuple> View for ViewChildren<V, A> {
         (st, ch)
     }
 
-    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.update(vc, &mut state.0);
         self.items.update_spans(vc, &mut state.1);
     }
 
-    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
         let nodes = self.inner.assemble(vc, &mut state.0);
         let children = self.items.assemble_spans(vc, &mut state.1);
         if let NodeSpan::Node(parent) = nodes {
@@ -57,7 +57,7 @@ impl<V: View, A: ViewTuple> View for ViewChildren<V, A> {
         nodes
     }
 
-    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.items.raze_spans(vc, &mut state.1);
         self.inner.raze(vc, &mut state.0);
     }

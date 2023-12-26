@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{View, ViewContext};
+use crate::{BuildContext, View};
 
 use crate::node_span::NodeSpan;
 
@@ -18,11 +18,11 @@ impl Portal {
 impl View for Portal {
     type State = Entity;
 
-    fn nodes(&self, _vc: &ViewContext, _state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _vc: &BuildContext, _state: &Self::State) -> NodeSpan {
         return NodeSpan::Empty;
     }
 
-    fn build(&self, vc: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut BuildContext) -> Self::State {
         let new_entity = vc
             .world
             .spawn((
@@ -36,13 +36,13 @@ impl View for Portal {
         new_entity
     }
 
-    fn update(&self, _vc: &mut ViewContext, _state: &mut Self::State) {}
+    fn update(&self, _vc: &mut BuildContext, _state: &mut Self::State) {}
 
-    fn assemble(&self, _vc: &mut ViewContext, _state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, _vc: &mut BuildContext, _state: &mut Self::State) -> NodeSpan {
         return NodeSpan::Empty;
     }
 
-    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
         let mut entt = vc.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();

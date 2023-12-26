@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{View, ViewContext};
+use crate::{BuildContext, View};
 
 use crate::node_span::NodeSpan;
 
@@ -28,12 +28,12 @@ impl RefElement {
 impl View for RefElement {
     type State = ();
 
-    fn nodes(&self, _vc: &ViewContext, _state: &Self::State) -> NodeSpan {
+    fn nodes(&self, _vc: &BuildContext, _state: &Self::State) -> NodeSpan {
         // Return just the parent node.
         return NodeSpan::Node(self.id);
     }
 
-    fn build(&self, vc: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut BuildContext) -> Self::State {
         vc.world.entity_mut(self.id).insert((NodeBundle {
             visibility: Visibility::Visible,
             ..default()
@@ -41,13 +41,13 @@ impl View for RefElement {
         ()
     }
 
-    fn update(&self, _vc: &mut ViewContext, _state: &mut Self::State) {}
+    fn update(&self, _vc: &mut BuildContext, _state: &mut Self::State) {}
 
-    fn assemble(&self, _vc: &mut ViewContext, _state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, _vc: &mut BuildContext, _state: &mut Self::State) -> NodeSpan {
         return NodeSpan::Node(self.id);
     }
 
-    fn raze(&self, vc: &mut ViewContext, _state: &mut Self::State) {
+    fn raze(&self, vc: &mut BuildContext, _state: &mut Self::State) {
         let mut entt = vc.entity_mut(self.id);
         entt.remove_parent();
         // We want to remove the components but keep the id

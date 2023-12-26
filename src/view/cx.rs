@@ -2,7 +2,7 @@ use std::{cell::RefCell, marker::PhantomData};
 
 use bevy::prelude::*;
 
-use crate::{tracked_resources::TrackedResource, ScopedValueKey, TrackingContext, ViewContext};
+use crate::{tracked_resources::TrackedResource, BuildContext, ScopedValueKey, TrackingContext};
 
 use super::{
     atom::{AtomCell, AtomHandle, AtomMethods},
@@ -15,7 +15,7 @@ use super::{
 pub struct Cx<'w, 'p, Props = ()> {
     /// The properties that were passed to the presenter from it's parent.
     pub props: &'p Props,
-    pub(crate) vc: &'p mut ViewContext<'w>,
+    pub(crate) vc: &'p mut BuildContext<'w>,
     /// Set of reactive resources referenced by the presenter.
     pub(crate) tracking: RefCell<&'p mut TrackingContext>,
 }
@@ -23,7 +23,7 @@ pub struct Cx<'w, 'p, Props = ()> {
 impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     pub(crate) fn new(
         props: &'p Props,
-        vc: &'p mut ViewContext<'w>,
+        vc: &'p mut BuildContext<'w>,
         tracking: &'p mut TrackingContext,
     ) -> Self {
         Self {

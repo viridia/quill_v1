@@ -8,7 +8,7 @@ use crate::{
     tracked_resources::TrackedResources,
     tracking::TrackedComponents,
     update::update_styles,
-    update_scroll_positions, ScrollWheel, ViewContext, ViewHandle,
+    update_scroll_positions, BuildContext, ScrollWheel, ViewHandle,
 };
 
 /// Plugin which initializes the Quill library.
@@ -108,19 +108,21 @@ fn render_views(world: &mut World) {
         // phase 2
         if change_ct > 0 {
             for e in v.drain() {
+                let mut entt = world.entity_mut(e);
                 // Clear tracking lists for presenters to be re-rendered.
-                if let Some(mut tracked_resources) = world.get_mut::<TrackedResources>(e) {
+                if let Some(mut tracked_resources) = entt.get_mut::<TrackedResources>() {
                     tracked_resources.data.clear();
                 }
-                if let Some(mut tracked_components) = world.get_mut::<TrackedComponents>(e) {
+                if let Some(mut tracked_components) = entt.get_mut::<TrackedComponents>() {
                     tracked_components.data.clear();
                 }
 
-                let Some(view_handle) = world.get_mut::<ViewHandle>(e) else {
+                // Clone the ViewHandle so we can call build() on it.
+                let Some(view_handle) = entt.get_mut::<ViewHandle>() else {
                     continue;
                 };
                 let inner = view_handle.inner.clone();
-                let mut ec = ViewContext::new(world, e);
+                let mut ec = BuildContext::new(world, e);
                 inner.lock().unwrap().build(&mut ec, e);
             }
         } else {
@@ -144,7 +146,7 @@ fn render_views(world: &mut World) {
                 continue;
             };
             let inner = view_handle.inner.clone();
-            let mut vc = ViewContext::new(world, e);
+            let mut vc = BuildContext::new(world, e);
             inner.lock().unwrap().attach(&mut vc, e);
         }
     }

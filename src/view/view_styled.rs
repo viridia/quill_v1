@@ -1,5 +1,5 @@
 use crate::node_span::NodeSpan;
-use crate::{ElementClasses, ElementStyles, StyleHandle, StyleTuple, View, ViewContext};
+use crate::{BuildContext, ElementClasses, ElementStyles, StyleHandle, StyleTuple, View};
 
 // A wrapper view which applies styles to the output of an inner view.
 pub struct ViewStyled<V: View> {
@@ -15,7 +15,7 @@ impl<V: View> ViewStyled<V> {
         }
     }
 
-    fn insert_styles(&self, nodes: &NodeSpan, vc: &mut ViewContext) {
+    fn insert_styles(&self, nodes: &NodeSpan, vc: &mut BuildContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
@@ -56,26 +56,26 @@ impl<V: View> ViewStyled<V> {
 impl<V: View> View for ViewStyled<V> {
     type State = V::State;
 
-    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
         self.inner.nodes(vc, state)
     }
 
-    fn build(&self, vc: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut BuildContext) -> Self::State {
         let state = self.inner.build(vc);
         self.insert_styles(&self.nodes(vc, &state), vc);
         state
     }
 
-    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.update(vc, state);
         self.insert_styles(&mut self.nodes(vc, state), vc);
     }
 
-    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
         self.inner.assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.raze(vc, state);
     }
 }

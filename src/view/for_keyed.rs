@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, ops::Range};
 
-use crate::{view::lcs::lcs, View, ViewContext};
+use crate::{view::lcs::lcs, BuildContext, View};
 
 use crate::node_span::NodeSpan;
 
@@ -11,14 +11,14 @@ pub struct KeyedListItem<Key: Send + PartialEq, V: View> {
 }
 
 impl<Key: Send + PartialEq, V: View> KeyedListItem<Key, V> {
-    fn nodes(&self, vc: &ViewContext) -> NodeSpan {
+    fn nodes(&self, vc: &BuildContext) -> NodeSpan {
         self.view
             .as_ref()
             .unwrap()
             .nodes(vc, self.state.as_ref().unwrap())
     }
 
-    fn assemble(&mut self, vc: &mut ViewContext) -> NodeSpan {
+    fn assemble(&mut self, vc: &mut BuildContext) -> NodeSpan {
         self.view
             .as_ref()
             .unwrap()
@@ -73,7 +73,7 @@ where
     /// * `next_range` - The range of elements we are comparing in `next_state`.
     fn build_recursive(
         &self,
-        vc: &mut ViewContext,
+        vc: &mut BuildContext,
         prev_state: &mut [KeyedListItem<Key, V>],
         prev_range: Range<usize>,
         next_state: &mut [KeyedListItem<Key, V>],
@@ -197,12 +197,12 @@ where
 {
     type State = Vec<KeyedListItem<Key, V>>;
 
-    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
         let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(vc)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn build(&self, vc: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut BuildContext) -> Self::State {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
 
@@ -222,7 +222,7 @@ where
         next_state
     }
 
-    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
         let prev_len = state.len();
@@ -245,12 +245,12 @@ where
         std::mem::swap(state, &mut next_state);
     }
 
-    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
         let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.assemble(vc)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
         for i in 0..state.len() {
             let child_state = &mut state[i];
             if let Some(ref view) = child_state.view {
@@ -290,7 +290,7 @@ mod tests {
     fn test_update() {
         let mut world = World::new();
         let entity = world.spawn_empty().id();
-        let mut vc = ViewContext {
+        let mut vc = BuildContext {
             world: &mut world,
             entity,
         };

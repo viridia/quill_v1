@@ -1,5 +1,5 @@
 use crate::node_span::NodeSpan;
-use crate::{ClassNames, ElementClasses, View, ViewContext};
+use crate::{BuildContext, ClassNames, ElementClasses, View};
 use bevy::utils::HashSet;
 
 // A wrapper view which applies styles to the output of an inner view.
@@ -15,7 +15,7 @@ impl<V: View> ViewClasses<V> {
         Self { inner, class_names }
     }
 
-    fn set_class_names(&self, nodes: &NodeSpan, vc: &mut ViewContext) {
+    fn set_class_names(&self, nodes: &NodeSpan, vc: &mut BuildContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
@@ -44,26 +44,26 @@ impl<V: View> ViewClasses<V> {
 impl<V: View> View for ViewClasses<V> {
     type State = V::State;
 
-    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
         self.inner.nodes(vc, state)
     }
 
-    fn build(&self, vc: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut BuildContext) -> Self::State {
         let state = self.inner.build(vc);
         self.set_class_names(&self.nodes(vc, &state), vc);
         state
     }
 
-    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.update(vc, state);
         self.set_class_names(&mut self.nodes(vc, state), vc);
     }
 
-    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
         self.inner.assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.raze(vc, state);
     }
 }

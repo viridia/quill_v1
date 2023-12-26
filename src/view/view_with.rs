@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{View, ViewContext};
+use crate::{BuildContext, View};
 
 use crate::node_span::NodeSpan;
 
@@ -31,26 +31,26 @@ impl<V: View, F: Fn(EntityWorldMut) -> () + Send> ViewWith<V, F> {
 impl<V: View, F: Fn(EntityWorldMut) -> () + Send> View for ViewWith<V, F> {
     type State = V::State;
 
-    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
         self.inner.nodes(vc, state)
     }
 
-    fn build(&self, vc: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut BuildContext) -> Self::State {
         let state = self.inner.build(vc);
         Self::with_entity(&self.callback, &mut self.nodes(vc, &state), vc.world);
         state
     }
 
-    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.update(vc, state);
         Self::with_entity(&self.callback, &mut self.nodes(vc, state), vc.world);
     }
 
-    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
         self.inner.assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.raze(vc, state);
     }
 }

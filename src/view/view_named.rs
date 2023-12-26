@@ -1,5 +1,5 @@
 use crate::node_span::NodeSpan;
-use crate::{View, ViewContext};
+use crate::{BuildContext, View};
 use bevy::prelude::*;
 
 // A wrapper view which applies styles to the output of an inner view.
@@ -13,7 +13,7 @@ impl<'a, V: View> ViewNamed<'a, V> {
         Self { inner, name }
     }
 
-    fn set_name(&self, nodes: &NodeSpan, vc: &mut ViewContext) {
+    fn set_name(&self, nodes: &NodeSpan, vc: &mut BuildContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
@@ -34,27 +34,27 @@ impl<'a, V: View> ViewNamed<'a, V> {
 impl<'a, V: View> View for ViewNamed<'a, V> {
     type State = V::State;
 
-    fn nodes(&self, vc: &ViewContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
         self.inner.nodes(vc, state)
     }
 
-    fn build(&self, vc: &mut ViewContext) -> Self::State {
+    fn build(&self, vc: &mut BuildContext) -> Self::State {
         let state = self.inner.build(vc);
         self.set_name(&self.nodes(vc, &state), vc);
         state
     }
 
-    fn update(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.update(vc, state);
         // Don't think we need to update on rebuild
         // self.set_name(&mut self.nodes(vc, state), vc);
     }
 
-    fn assemble(&self, vc: &mut ViewContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
         self.inner.assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut ViewContext, state: &mut Self::State) {
+    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.raze(vc, state);
     }
 }
