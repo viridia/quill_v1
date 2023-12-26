@@ -1,5 +1,6 @@
 use crate::node_span::NodeSpan;
 use crate::{BuildContext, ClassNames, ElementClasses, View};
+use bevy::ecs::world::World;
 use bevy::utils::HashSet;
 
 // A wrapper view which applies styles to the output of an inner view.
@@ -63,8 +64,8 @@ impl<V: View> View for ViewClasses<V> {
         self.inner.assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.raze(vc, state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        self.inner.raze(world, state);
     }
 }
 

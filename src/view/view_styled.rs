@@ -1,3 +1,5 @@
+use bevy::ecs::world::World;
+
 use crate::node_span::NodeSpan;
 use crate::{BuildContext, ElementClasses, ElementStyles, StyleHandle, StyleTuple, View};
 
@@ -75,8 +77,8 @@ impl<V: View> View for ViewStyled<V> {
         self.inner.assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.raze(vc, state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        self.inner.raze(world, state);
     }
 }
 

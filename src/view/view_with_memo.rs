@@ -63,7 +63,7 @@ impl<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) -> () + Send> V
         self.inner.assemble(vc, &mut state.0)
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.raze(vc, &mut state.0);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        self.inner.raze(world, &mut state.0);
     }
 }

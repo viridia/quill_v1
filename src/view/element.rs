@@ -43,8 +43,8 @@ impl View for Element {
         return NodeSpan::Node(*state);
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        let mut entt = vc.entity_mut(*state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        let mut entt = world.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
     }

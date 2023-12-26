@@ -1,5 +1,6 @@
 use crate::node_span::NodeSpan;
 use crate::{BuildContext, View};
+use bevy::ecs::world::World;
 use impl_trait_for_tuples::*;
 
 // ViewTuple
@@ -25,7 +26,7 @@ pub trait ViewTuple: Send {
     fn assemble_spans(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan;
 
     /// Despawn the child views.
-    fn raze_spans(&self, vc: &mut BuildContext, state: &mut Self::State);
+    fn raze_spans(&self, world: &mut World, state: &mut Self::State);
 }
 
 impl<A: View> ViewTuple for A {
@@ -51,8 +52,8 @@ impl<A: View> ViewTuple for A {
         self.assemble(vc, state)
     }
 
-    fn raze_spans(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.raze(vc, state)
+    fn raze_spans(&self, world: &mut World, state: &mut Self::State) {
+        self.raze(world, state)
     }
 }
 
@@ -87,7 +88,7 @@ impl ViewTuple for Tuple {
         ]))
     }
 
-    fn raze_spans(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        for_tuples!(#( self.Tuple.raze(vc, &mut state.Tuple); )*)
+    fn raze_spans(&self, world: &mut World, state: &mut Self::State) {
+        for_tuples!(#( self.Tuple.raze(world, &mut state.Tuple); )*)
     }
 }

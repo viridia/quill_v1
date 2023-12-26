@@ -1,5 +1,7 @@
 use std::{marker::PhantomData, ops::Range};
 
+use bevy::ecs::world::World;
+
 use crate::{view::lcs::lcs, BuildContext, View};
 
 use crate::node_span::NodeSpan;
@@ -93,7 +95,7 @@ where
             for i in prev_range {
                 let prev = &mut prev_state[i];
                 if let Some(ref view) = prev.view {
-                    view.raze(vc, prev.state.as_mut().unwrap());
+                    view.raze(&mut vc.world, prev.state.as_mut().unwrap());
                 }
             }
             // Build new elements
@@ -126,7 +128,7 @@ where
                 for i in prev_range.start..prev_start {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(vc, prev.state.as_mut().unwrap());
+                        view.raze(&mut vc.world, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -169,7 +171,7 @@ where
                 for i in prev_end..prev_range.end {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(vc, prev.state.as_mut().unwrap());
+                        view.raze(&mut vc.world, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -250,11 +252,11 @@ where
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
         for i in 0..state.len() {
             let child_state = &mut state[i];
             if let Some(ref view) = child_state.view {
-                view.raze(vc, child_state.state.as_mut().unwrap());
+                view.raze(world, child_state.state.as_mut().unwrap());
             }
         }
     }

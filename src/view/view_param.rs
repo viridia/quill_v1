@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex};
 
+use bevy::ecs::world::World;
+
 use crate::node_span::NodeSpan;
 use crate::{BuildContext, View};
 
@@ -40,8 +42,8 @@ impl<V: View> View for ViewParam<V> {
         self.inner.lock().unwrap().assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.lock().unwrap().raze(vc, state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        self.inner.lock().unwrap().raze(world, state);
     }
 }
 

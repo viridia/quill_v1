@@ -89,7 +89,7 @@ pub trait AnyPresenterState: Send {
     fn build(&mut self, vc: &mut BuildContext, entity: Entity);
 
     /// Release all state and despawn all child entities.
-    fn raze(&mut self, vc: &mut BuildContext, entity: Entity);
+    fn raze(&mut self, world: &mut World, entity: Entity);
 
     /// Rebuild the display graph connections.
     fn attach(&mut self, vc: &mut BuildContext, entity: Entity);
@@ -158,23 +158,22 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         }
     }
 
-    fn raze(&mut self, vc: &mut BuildContext, entity: Entity) {
-        let mut child_context = vc.for_entity(entity);
+    fn raze(&mut self, world: &mut World, entity: Entity) {
         if let Some(ref view) = self.view {
             // Despawn the presenter state entity.
             if let Some(ref mut state) = self.state {
-                view.raze(&mut child_context, state);
+                view.raze(world, state);
             }
             self.view = None;
             self.state = None;
         }
 
         // Release all owned entities.
-        if let Some(mut handles) = vc.world.entity_mut(entity).get_mut::<OwnedEntities>() {
+        if let Some(mut handles) = world.entity_mut(entity).get_mut::<OwnedEntities>() {
             let mut handles_copy: Vec<Entity> = Vec::new();
             std::mem::swap(&mut handles.0, &mut handles_copy);
             for handle in handles_copy.iter() {
-                vc.world.despawn(*handle);
+                world.despawn(*handle);
             }
         }
     }

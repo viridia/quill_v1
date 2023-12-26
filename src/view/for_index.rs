@@ -1,3 +1,5 @@
+use bevy::ecs::world::World;
+
 use crate::{BuildContext, View};
 
 use crate::node_span::NodeSpan;
@@ -109,7 +111,7 @@ where
             prev_len -= 1;
             let child_state = &mut state[prev_len];
             if let Some(ref view) = child_state.view {
-                view.raze(vc, &mut child_state.state);
+                view.raze(&mut vc.world, &mut child_state.state);
             }
             state.pop();
         }
@@ -120,14 +122,14 @@ where
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
         let prev_len = state.len();
 
         let mut i = 0usize;
         while i < prev_len {
             let child_state = &mut state[i];
             if let Some(ref view) = child_state.view {
-                view.raze(vc, &mut child_state.state);
+                view.raze(world, &mut child_state.state);
             }
             i += 1;
         }

@@ -47,8 +47,8 @@ impl View for RefElement {
         return NodeSpan::Node(self.id);
     }
 
-    fn raze(&self, vc: &mut BuildContext, _state: &mut Self::State) {
-        let mut entt = vc.entity_mut(self.id);
+    fn raze(&self, world: &mut World, _state: &mut Self::State) {
+        let mut entt = world.entity_mut(self.id);
         entt.remove_parent();
         // We want to remove the components but keep the id
         entt.remove::<Node>().remove::<Visibility>();

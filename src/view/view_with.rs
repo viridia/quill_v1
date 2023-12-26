@@ -50,7 +50,7 @@ impl<V: View, F: Fn(EntityWorldMut) -> () + Send> View for ViewWith<V, F> {
         self.inner.assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.raze(vc, state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        self.inner.raze(world, state);
     }
 }

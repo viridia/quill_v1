@@ -1,3 +1,5 @@
+use bevy::ecs::world::World;
+
 use crate::BuildContext;
 use crate::View;
 
@@ -53,7 +55,7 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
 
                 _ => {
                     // Despawn old state and construct new state
-                    self.raze(vc, state);
+                    self.raze(&mut vc.world, state);
                     vc.mark_changed_shape();
                     *state = Self::State::True(self.pos.build(vc));
                 }
@@ -67,7 +69,7 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
 
                 _ => {
                     // Despawn old state and construct new state
-                    self.raze(vc, state);
+                    self.raze(&mut vc.world, state);
                     vc.mark_changed_shape();
                     *state = Self::State::False(self.neg.build(vc));
                 }
@@ -82,10 +84,10 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
         }
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
         match state {
-            Self::State::True(ref mut true_state) => self.pos.raze(vc, true_state),
-            Self::State::False(ref mut false_state) => self.neg.raze(vc, false_state),
+            Self::State::True(ref mut true_state) => self.pos.raze(world, true_state),
+            Self::State::False(ref mut false_state) => self.neg.raze(world, false_state),
         }
     }
 }

@@ -88,7 +88,7 @@ where
 
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
     /// This calls `.raze()` for any nested views within the current view state.
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State);
+    fn raze(&self, world: &mut World, state: &mut Self::State);
 
     /// Assign a human-readable debug name to the generated display node.
     fn named(self, name: &str) -> ViewNamed<Self> {
@@ -166,7 +166,7 @@ impl View for () {
 
     fn update(&self, _vc: &mut BuildContext, _state: &mut Self::State) {}
 
-    fn raze(&self, _vc: &mut BuildContext, _state: &mut Self::State) {}
+    fn raze(&self, _vc: &mut World, _state: &mut Self::State) {}
 }
 
 /// View which renders a String
@@ -217,8 +217,8 @@ impl View for String {
         *state = self.build(vc)
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        let mut entt = vc.entity_mut(*state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        let mut entt = world.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
     }
@@ -272,8 +272,8 @@ impl View for &str {
         *state = self.build(vc)
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        let mut entt = vc.entity_mut(*state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        let mut entt = world.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
     }
@@ -312,16 +312,16 @@ where
         // rebuild. Since there are no props, we don't mark the child as modified.
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        let mut entt = vc.entity_mut(*state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        let mut entt = world.entity_mut(*state);
         let Some(handle) = entt.get_mut::<ViewHandle>() else {
             return;
         };
         let inner = handle.inner.clone();
         // Raze the contents of the child ViewState.
-        inner.lock().unwrap().raze(vc, *state);
+        inner.lock().unwrap().raze(world, *state);
         // Despawn the ViewHandle.
-        let mut entt = vc.entity_mut(*state);
+        let mut entt = world.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
     }
@@ -416,16 +416,16 @@ impl View for Bind {
         }
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        let mut entt = vc.entity_mut(*state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        let mut entt = world.entity_mut(*state);
         let Some(handle) = entt.get_mut::<ViewHandle>() else {
             return;
         };
         let inner = handle.inner.clone();
         // Raze the contents of the child ViewState.
-        inner.lock().unwrap().raze(vc, *state);
+        inner.lock().unwrap().raze(world, *state);
         // Despawn the ViewHandle.
-        let mut entt = vc.entity_mut(*state);
+        let mut entt = world.entity_mut(*state);
         entt.remove_parent();
         entt.despawn();
     }

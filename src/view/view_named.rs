@@ -54,8 +54,8 @@ impl<'a, V: View> View for ViewNamed<'a, V> {
         self.inner.assemble(vc, state)
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.raze(vc, state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        self.inner.raze(world, state);
     }
 }
 

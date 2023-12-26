@@ -1,3 +1,5 @@
+use bevy::ecs::world::World;
+
 use crate::{BuildContext, View, ViewTuple};
 
 use crate::node_span::NodeSpan;
@@ -33,7 +35,7 @@ impl<A: ViewTuple> View for Fragment<A> {
         self.items.assemble_spans(vc, state)
     }
 
-    fn raze(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.items.raze_spans(vc, state);
+    fn raze(&self, world: &mut World, state: &mut Self::State) {
+        self.items.raze_spans(world, state);
     }
 }
