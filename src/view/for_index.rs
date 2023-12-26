@@ -38,7 +38,8 @@ where
     }
 }
 
-impl<Item: Send + Clone, V: View, F: Fn(&Item, usize) -> V + Send> View for ForIndex<Item, V, F>
+impl<Item: Send + Clone, V: View, F: Fn(&Item, usize) -> V + Send + Clone> View
+    for ForIndex<Item, V, F>
 where
     V::State: Clone,
 {
@@ -129,6 +130,19 @@ where
                 view.raze(vc, &mut child_state.state);
             }
             i += 1;
+        }
+    }
+}
+
+impl<Item: Send + Clone, V: View, F: Fn(&Item, usize) -> V + Send + Clone> Clone
+    for ForIndex<Item, V, F>
+where
+    V::State: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            items: self.items.clone(),
+            each: self.each.clone(),
         }
     }
 }

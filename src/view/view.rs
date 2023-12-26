@@ -394,6 +394,14 @@ impl View for Bind {
     }
 }
 
+impl Clone for Bind {
+    fn clone(&self) -> Self {
+        Self {
+            presenter_state: self.presenter_state.clone(),
+        }
+    }
+}
+
 /// A trait that allows methods to be added to presenter function references.
 pub trait PresenterFn<Marker: 'static>: Sized + Send + Copy + 'static {
     /// The type of properties expected by this presenter.

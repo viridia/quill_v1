@@ -46,8 +46,8 @@ impl<
         Item: Send + Clone,
         Key: Send + PartialEq,
         V: View,
-        K: Fn(&Item) -> Key + Send,
-        F: Fn(&Item) -> V + Send,
+        K: Fn(&Item) -> Key + Send + Clone,
+        F: Fn(&Item) -> V + Send + Clone,
     > ForKeyed<Item, Key, V, K, F>
 where
     V::State: Clone,
@@ -189,8 +189,8 @@ impl<
         Item: Send + Clone,
         Key: Send + PartialEq,
         V: View,
-        K: Fn(&Item) -> Key + Send,
-        F: Fn(&Item) -> V + Send,
+        K: Fn(&Item) -> Key + Send + Clone,
+        F: Fn(&Item) -> V + Send + Clone,
     > View for ForKeyed<Item, Key, V, K, F>
 where
     V::State: Clone,
@@ -256,6 +256,26 @@ where
             if let Some(ref view) = child_state.view {
                 view.raze(vc, child_state.state.as_mut().unwrap());
             }
+        }
+    }
+}
+
+impl<
+        Item: Send + Clone,
+        Key: Send + PartialEq,
+        V: View,
+        K: Fn(&Item) -> Key + Send + Clone,
+        F: Fn(&Item) -> V + Send + Clone,
+    > Clone for ForKeyed<Item, Key, V, K, F>
+where
+    V::State: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            items: self.items.clone(),
+            keyof: self.keyof.clone(),
+            each: self.each.clone(),
+            key: self.key.clone(),
         }
     }
 }

@@ -185,7 +185,8 @@ fn update_element_styles(
 }
 
 /// Detects whether the given entity's styles have changed, or whether any of its ancestors
-/// have changed in a way that would affect the computation of styles.
+/// have changed in a way that would affect the computation of styles (either because
+/// of class list changes or hovering).
 fn is_changed(
     element_styles: &Ref<'_, ElementStyles>,
     entity: Entity,
