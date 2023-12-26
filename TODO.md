@@ -1,10 +1,14 @@
 # TODO:
 
-* Change style builder methods to accept `impl StyleValue`. Then define `Var("varname")`
+* Fix hanging bug
 * :focus
-* Font Inheritance.
-* React-style context
-* Theming?
+* ViewTuple: Clone/PartialEq
+* Migrate to Egret/Grackle:
+    * Splitter
+    * Disclosure
+    * Dialog
+    * Swatch
+    * SwatchGrid
 * `use` hooks for components, events, etc.
 * Implement callbacks.
 * Widgets to do:

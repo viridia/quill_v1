@@ -16,9 +16,10 @@ pub(crate) fn update_styles(
     query_root: Query<Entity, (With<Node>, Without<Parent>)>,
     query_styles: Query<
         (
+            Ref<Style>,
             Option<Ref<ElementStyles>>,
             Option<&TextStyles>,
-            Ref<'static, Style>,
+            Option<Ref<Text>>,
         ),
         With<Node>,
     >,
@@ -61,7 +62,15 @@ pub(crate) fn update_styles(
 
 fn update_element_styles(
     commands: &mut Commands,
-    query_styles: &Query<(Option<Ref<ElementStyles>>, Option<&TextStyles>, Ref<Style>), With<Node>>,
+    query_styles: &Query<
+        (
+            Ref<Style>,
+            Option<Ref<ElementStyles>>,
+            Option<&TextStyles>,
+            Option<Ref<Text>>,
+        ),
+        With<Node>,
+    >,
     classes_query: &Query<Ref<'static, ElementClasses>>,
     parent_query: &Query<'_, '_, &Parent, (With<Node>, With<Visibility>)>,
     children_query: &Query<'_, '_, &Children, (With<Node>, With<Visibility>)>,
@@ -70,13 +79,13 @@ fn update_element_styles(
     assets: &Res<AssetServer>,
     entity: Entity,
     inherited_styles: &TextStyles,
-    mut inherited_styled_changed: bool,
+    mut inherited_styles_changed: bool,
 ) {
     let mut text_styles = inherited_styles.clone();
 
-    if let Ok((es, ts, style)) = query_styles.get(entity) {
+    if let Ok((style, elt_styles, prev_text_styles, txt)) = query_styles.get(entity) {
         // Check if the element styles or ancestor classes have changed.
-        let mut changed = match es {
+        let mut changed = match elt_styles {
             Some(ref element_style) => is_changed(
                 element_style,
                 entity,
@@ -88,12 +97,13 @@ fn update_element_styles(
             None => false,
         };
 
-        if !changed && inherited_styled_changed {
-            // Check if the text styles have changed.
-            changed = ts != Some(&text_styles);
+        if let Some(ref text_node) = txt {
+            if text_node.is_changed() {
+                changed = true;
+            }
         }
 
-        if changed {
+        if changed || inherited_styles_changed {
             // Compute computed style. Initialize to the current state.
             let mut computed = ComputedStyle::new();
             computed.style = style.clone();
@@ -103,16 +113,15 @@ fn update_element_styles(
             computed.font_size = inherited_styles.font_size;
             computed.color = inherited_styles.color;
 
-            // Apply styles to computed
-            if let Some(ref element_styles) = es {
+            // Apply element styles to computed
+            if let Some(ref element_styles) = elt_styles {
                 for ss in element_styles.styles.iter() {
                     ss.apply_to(&mut computed, &matcher, &entity);
                 }
-            }
-
-            // Load font asset if non-null.
-            if let Some(ref font_path) = computed.font {
-                computed.font_handle = Some(assets.load(font_path));
+                // Load font asset if non-null.
+                if let Some(ref font_path) = computed.font {
+                    computed.font_handle = Some(assets.load(font_path));
+                }
             }
 
             // Update inherited text styles
@@ -120,23 +129,39 @@ fn update_element_styles(
             text_styles.font_size = computed.font_size;
             text_styles.color = computed.color;
 
-            // Only store the text styles if they are different than the parent's.
-            if ts != Some(&text_styles) {
-                inherited_styled_changed = true;
-                commands.entity(entity).insert(text_styles.clone());
+            if text_styles == *inherited_styles && txt.is_none() {
+                // No change from parent, so we can remove the cached styles and rely on inherited
+                // styles only. Note that for text nodes, we always want to store the inherited
+                // styles, even if they are the same as the parent.
+                inherited_styles_changed = prev_text_styles != None;
+                if inherited_styles_changed {
+                    changed = true;
+                    commands.entity(entity).remove::<TextStyles>();
+                }
             } else {
-                commands.entity(entity).remove::<TextStyles>();
+                // Text styles are different from parent, so we need to store a cached copy.
+                inherited_styles_changed = prev_text_styles != Some(&text_styles);
+                if inherited_styles_changed {
+                    changed = true;
+                    commands.entity(entity).insert(text_styles.clone());
+                }
             }
 
-            computed.image_handle = match computed.image {
-                Some(ref path) => Some(
-                    assets.load_with_settings(path, |s: &mut ImageLoaderSettings| {
-                        s.sampler = ImageSampler::linear()
-                    }),
-                ),
-                None => None,
-            };
-            commands.add(UpdateComputedStyle { entity, computed });
+            if changed {
+                computed.image_handle = match computed.image {
+                    Some(ref path) => Some(
+                        assets.load_with_settings(path, |s: &mut ImageLoaderSettings| {
+                            s.sampler = ImageSampler::linear()
+                        }),
+                    ),
+                    None => None,
+                };
+
+                commands.add(UpdateComputedStyle { entity, computed });
+            }
+        } else if let Some(prev) = prev_text_styles {
+            // Styles didn't change, but we need to pass inherited text styles to children.
+            text_styles = prev.clone();
         }
     }
 
@@ -153,7 +178,7 @@ fn update_element_styles(
                 assets,
                 *child,
                 &text_styles,
-                inherited_styled_changed,
+                inherited_styles_changed,
             );
         }
     }

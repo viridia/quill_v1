@@ -34,6 +34,13 @@ pub const COLOR_PRIMARY: Color = Color::rgb(0.220, 0.345, 0.408);
 pub const COLOR_DANGER: Color = Color::rgb(0.267, 0.000, 0.333);
 
 #[dynamic]
+static STYLE_TYPOGRAPHY: StyleHandle = StyleHandle::build(|ss| {
+    ss.font_size(14.).font(Some(AssetPath::from(
+        "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
+    )))
+});
+
+#[dynamic]
 static STYLE_LT_SIDEBAR: StyleHandle = StyleHandle::build(|ss| {
     ss.background_color(COLOR_G2)
         .font_size(14.)
@@ -89,12 +96,14 @@ pub enum GrackleTheme {
 pub fn init_grackle_theme<T>(cx: &mut Cx<T>, theme: GrackleTheme) {
     match theme {
         GrackleTheme::Light => {
+            cx.define_scoped_value(TYPOGRAPHY, STYLE_TYPOGRAPHY.clone());
             cx.define_scoped_value(SIDEBAR, STYLE_LT_SIDEBAR.clone());
             cx.define_scoped_value(BUTTON_DEFAULT, STYLE_LT_BUTTON_DEFAULT.clone());
             cx.define_scoped_value(BUTTON_PRIMARY, STYLE_DK_BUTTON_PRIMARY.clone());
             cx.define_scoped_value(BUTTON_DANGER, STYLE_DK_BUTTON_DANGER.clone());
         }
         GrackleTheme::Dark => {
+            cx.define_scoped_value(TYPOGRAPHY, STYLE_TYPOGRAPHY.clone());
             cx.define_scoped_value(SIDEBAR, STYLE_DK_SIDEBAR.clone());
             cx.define_scoped_value(BUTTON_DEFAULT, STYLE_DK_BUTTON_DEFAULT.clone());
             cx.define_scoped_value(BUTTON_PRIMARY, STYLE_DK_BUTTON_PRIMARY.clone());
