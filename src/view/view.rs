@@ -326,6 +326,39 @@ where
     }
 }
 
+// struct BindState<Marker: 'static, F: PresenterFn<Marker>> {
+//     presenter: F,
+//     props: Cell<Option<F::Props>>,
+// }
+
+// impl<Marker: 'static, F: PresenterFn<Marker>> BindState<Marker, F> {
+//     fn new(presenter: F, props: F::Props) -> Self {
+//         Self {
+//             presenter,
+//             props: Cell::new(Some(props)),
+//         }
+//     }
+// }
+
+// trait AnyBindState {
+//     fn presenter(&mut self) -> Arc<Mutex<dyn AnyPresenterState>>;
+//     fn props<'a>(&'a mut self) -> &'a dyn Any;
+// }
+
+// impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker, F> {
+//     fn presenter(&mut self) -> Arc<Mutex<dyn AnyPresenterState>> {
+//         Arc::new(Mutex::new(PresenterState::new(
+//             self.presenter,
+//             self.props.take().unwrap(),
+//         )))
+//     }
+
+//     fn props<'a>(&'a mut self) -> &'a dyn Any {
+//         todo!()
+//         // self.props
+//     }
+// }
+
 /// Binds a presenter to properties and implements a view
 #[doc(hidden)]
 pub struct Bind {
@@ -373,8 +406,10 @@ impl View for Bind {
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return;
         };
-        // Update child view properties.
-        let lock = self.presenter_state.lock().unwrap();
+        // Update child view properties. This transfers the props from the 'new' presenter
+        // that is a member of the Bind, to the 'old' presenter state which is stored in the
+        // view handle. The old state is the one that will persist.
+        let mut lock = self.presenter_state.lock().unwrap();
         if handle.update_props(lock.get_props()) {
             entt.insert(PresenterStateChanged);
         }

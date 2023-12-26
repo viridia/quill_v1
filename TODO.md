@@ -21,16 +21,9 @@
 
     .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
 
-## CSS Vars: Need a way to evaluate efficiently.
 
-Need to cache vars before creating computed.
+trait Memo<T> {
+    fn update(&mut self, new_val: T) -> bool {}
 
-* CSS Var types:
-    * Color
-    * Asset Path
-    * Length
-    * f32 / Scalar
 
-## Alternate approach: React Contexts
-
-The problem with this is that it requires non-constant styles.
+}
