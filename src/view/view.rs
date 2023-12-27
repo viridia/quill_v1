@@ -9,8 +9,7 @@ use bevy::{
 };
 
 use crate::{
-    presenter_state::{AnyPresenterState, PresenterGraphChanged, PresenterState},
-    ClassNames, Cx, StyleTuple, ViewHandle, ViewTuple,
+    presenter_state::PresenterGraphChanged, ClassNames, Cx, StyleTuple, ViewHandle, ViewTuple,
 };
 
 use crate::node_span::NodeSpan;
@@ -327,49 +326,51 @@ where
     }
 }
 
-// struct BindState<Marker: 'static, F: PresenterFn<Marker>> {
-//     presenter: F,
-//     props: Cell<Option<F::Props>>,
-// }
+struct BindState<Marker: 'static, F: PresenterFn<Marker>> {
+    presenter: F,
+    props: Option<F::Props>,
+}
 
-// impl<Marker: 'static, F: PresenterFn<Marker>> BindState<Marker, F> {
-//     fn new(presenter: F, props: F::Props) -> Self {
-//         Self {
-//             presenter,
-//             props: Cell::new(Some(props)),
-//         }
-//     }
-// }
+impl<Marker: 'static, F: PresenterFn<Marker>> BindState<Marker, F> {
+    fn new(presenter: F, props: F::Props) -> Self {
+        Self {
+            presenter,
+            props: Some(props),
+        }
+    }
+}
 
-// trait AnyBindState {
-//     fn presenter(&mut self) -> Arc<Mutex<dyn AnyPresenterState>>;
-//     fn props<'a>(&'a mut self) -> &'a dyn Any;
-// }
+trait AnyBindState: Send {
+    fn create_handle(&mut self) -> ViewHandle;
+    fn update_handle(&mut self, handle: &mut ViewHandle) -> bool;
+}
 
-// impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker, F> {
-//     fn presenter(&mut self) -> Arc<Mutex<dyn AnyPresenterState>> {
-//         Arc::new(Mutex::new(PresenterState::new(
-//             self.presenter,
-//             self.props.take().unwrap(),
-//         )))
-//     }
+impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker, F> {
+    fn create_handle(&mut self) -> ViewHandle {
+        ViewHandle::new(self.presenter, self.props.take().unwrap())
+    }
 
-//     fn props<'a>(&'a mut self) -> &'a dyn Any {
-//         todo!()
-//         // self.props
-//     }
-// }
+    fn update_handle(&mut self, handle: &mut ViewHandle) -> bool {
+        if let Some(mut props) = self.props.take() {
+            handle.update_props(&mut props)
+        } else {
+            false
+        }
+    }
+}
 
-/// Binds a presenter to properties and implements a view
+/// Binds a presenter to properties and implements a view.
+/// Implementation note: It is important that this type be completely type-erased, otherwise
+/// recursive presenter invocations (like tree views) will not compile.
 #[doc(hidden)]
 pub struct Bind {
-    presenter_state: Arc<Mutex<dyn AnyPresenterState>>,
+    presenter_state: Arc<Mutex<dyn AnyBindState>>,
 }
 
 impl Bind {
     pub fn new<Marker, F: PresenterFn<Marker>>(presenter: F, props: F::Props) -> Self {
         Self {
-            presenter_state: Arc::new(Mutex::new(PresenterState::new(presenter, props))),
+            presenter_state: Arc::new(Mutex::new(BindState::new(presenter, props))),
         }
     }
 }
@@ -391,7 +392,7 @@ impl View for Bind {
         let entity = parent_ecx
             .world
             .spawn((
-                ViewHandle::from_boxed(self.presenter_state.clone()),
+                self.presenter_state.lock().unwrap().create_handle(),
                 Name::new("presenter"),
             ))
             .insert(PresenterStateChanged)
@@ -410,8 +411,12 @@ impl View for Bind {
         // Update child view properties. This transfers the props from the 'new' presenter
         // that is a member of the Bind, to the 'old' presenter state which is stored in the
         // view handle. The old state is the one that will persist.
-        let mut lock = self.presenter_state.lock().unwrap();
-        if handle.update_props(lock.get_props()) {
+        if self
+            .presenter_state
+            .lock()
+            .unwrap()
+            .update_handle(&mut handle)
+        {
             entt.insert(PresenterStateChanged);
         }
     }

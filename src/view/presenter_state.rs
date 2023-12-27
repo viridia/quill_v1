@@ -17,7 +17,7 @@ use super::{cx::Cx, View};
 #[derive(Component)]
 pub struct ViewHandle {
     /// A reference to the type-erased presenter state.
-    pub inner: Arc<Mutex<dyn AnyPresenterState>>,
+    pub(crate) inner: Arc<Mutex<dyn AnyPresenterState>>,
 }
 
 impl ViewHandle {
