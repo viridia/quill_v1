@@ -88,6 +88,34 @@ static STYLE_DK_BUTTON_DANGER: StyleHandle = StyleHandle::build(|ss| {
         .selector(":hover.pressed", |ss| ss.background_color(COLOR_DANGER))
 });
 
+#[dynamic]
+static STYLE_LT_SPLITTER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_G4)
+        .selector(".drag", |ss| ss.background_color(COLOR_G5))
+});
+
+// The decorative handle inside the splitter.
+#[dynamic]
+static STYLE_LT_SPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_G3)
+        .selector(":hover > &", |ss| ss.background_color(COLOR_G2))
+        .selector(".drag > &", |ss| ss.background_color(COLOR_G4))
+});
+
+#[dynamic]
+static STYLE_DK_SPLITTER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#181818")
+        .selector(".drag", |ss| ss.background_color("#080808"))
+});
+
+// The decorative handle inside the splitter.
+#[dynamic]
+static STYLE_DK_SPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#282828")
+        .selector(":hover > &", |ss| ss.background_color("#383838"))
+        .selector(".drag > &", |ss| ss.background_color("#484848"))
+});
+
 pub enum GrackleTheme {
     Light,
     Dark,
@@ -101,6 +129,8 @@ pub fn init_grackle_theme<T>(cx: &mut Cx<T>, theme: GrackleTheme) {
             cx.define_scoped_value(BUTTON_DEFAULT, STYLE_LT_BUTTON_DEFAULT.clone());
             cx.define_scoped_value(BUTTON_PRIMARY, STYLE_DK_BUTTON_PRIMARY.clone());
             cx.define_scoped_value(BUTTON_DANGER, STYLE_DK_BUTTON_DANGER.clone());
+            cx.define_scoped_value(SPLITTER, STYLE_LT_SPLITTER.clone());
+            cx.define_scoped_value(SPLITTER_INNER, STYLE_LT_SPLITTER_INNER.clone());
         }
         GrackleTheme::Dark => {
             cx.define_scoped_value(TYPOGRAPHY, STYLE_TYPOGRAPHY.clone());
@@ -108,6 +138,8 @@ pub fn init_grackle_theme<T>(cx: &mut Cx<T>, theme: GrackleTheme) {
             cx.define_scoped_value(BUTTON_DEFAULT, STYLE_DK_BUTTON_DEFAULT.clone());
             cx.define_scoped_value(BUTTON_PRIMARY, STYLE_DK_BUTTON_PRIMARY.clone());
             cx.define_scoped_value(BUTTON_DANGER, STYLE_DK_BUTTON_DANGER.clone());
+            cx.define_scoped_value(SPLITTER, STYLE_DK_SPLITTER.clone());
+            cx.define_scoped_value(SPLITTER_INNER, STYLE_DK_SPLITTER_INNER.clone());
         }
     }
 }

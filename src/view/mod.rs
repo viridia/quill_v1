@@ -30,6 +30,7 @@ pub use element::Element;
 pub use for_index::ForIndex;
 pub use for_keyed::ForKeyed;
 pub use fragment::Fragment;
+pub use fragment::FragmentClone;
 pub use portal::Portal;
 pub use presenter_state::ViewHandle;
 pub use r#for::For;

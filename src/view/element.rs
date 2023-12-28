@@ -6,6 +6,7 @@ use crate::node_span::NodeSpan;
 
 /// A View which renders a NodeBundle that can have multiple children, with no inherent style
 /// or behavior. Basically the equivalent of an HTML 'div'.
+#[derive(Copy)]
 pub struct Element {}
 
 impl Element {
@@ -52,12 +53,14 @@ impl View for Element {
 
 impl Clone for Element {
     fn clone(&self) -> Self {
-        Self {}
+        // Element has no state, so cloning is always the same.
+        *self
     }
 }
 
 impl PartialEq for Element {
     fn eq(&self, _other: &Self) -> bool {
+        // Element has no state, so comparison is always true.
         true
     }
 }

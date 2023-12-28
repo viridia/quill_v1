@@ -10,10 +10,12 @@ impl Plugin for EgretEventsPlugin {
             EventListenerPlugin::<Clicked>::default(),
             EventListenerPlugin::<Changed<f32>>::default(),
             EventListenerPlugin::<MenuEvent>::default(),
+            EventListenerPlugin::<SplitterEvent>::default(),
         ))
         .add_event::<Clicked>()
         .add_event::<Changed<f32>>()
-        .add_event::<MenuEvent>();
+        .add_event::<MenuEvent>()
+        .add_event::<SplitterEvent>();
     }
 }
 
@@ -67,4 +69,12 @@ pub struct MenuEvent {
     #[target]
     pub target: Entity,
     pub action: MenuAction,
+}
+
+#[derive(Clone, Event, EntityEvent)]
+pub struct SplitterEvent {
+    #[target]
+    pub target: Entity,
+    pub id: &'static str,
+    pub value: f32,
 }

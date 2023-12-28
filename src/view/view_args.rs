@@ -3,10 +3,8 @@ use crate::{BuildContext, View};
 use bevy::ecs::world::World;
 use impl_trait_for_tuples::*;
 
-// ViewTuple
-
-#[doc(hidden)]
-pub trait ViewTuple: Send {
+/// A tuple of views, possibly nested. Can be used to pass around a variable number of views.
+pub trait ViewArgs: Send {
     /// Aggregate View::State for all tuple members.
     type State: Send;
 
@@ -27,9 +25,16 @@ pub trait ViewTuple: Send {
 
     /// Despawn the child views.
     fn raze_spans(&self, world: &mut World, state: &mut Self::State);
+
+    fn clone(&self) -> Self;
+
+    fn eq(&self, other: &Self) -> bool;
 }
 
-impl<A: View> ViewTuple for A {
+impl<A: View> ViewArgs for A
+where
+    A: Clone + PartialEq,
+{
     type State = A::State;
 
     fn len(&self) -> usize {
@@ -55,12 +60,21 @@ impl<A: View> ViewTuple for A {
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {
         self.raze(world, state)
     }
+
+    fn clone(&self) -> Self {
+        self.clone()
+    }
+
+    fn eq(&self, other: &Self) -> bool {
+        self.eq(other)
+    }
 }
 
 #[impl_for_tuples(1, 16)]
 #[tuple_types_custom_trait_bound(View)]
-impl ViewTuple for Tuple {
+impl ViewArgs for Tuple {
     for_tuples!( type State = ( #( Tuple::State ),* ); );
+    for_tuples!( where #( Tuple: Clone + PartialEq )* );
 
     fn len(&self) -> usize {
         for_tuples!((#( 1 )+*))
@@ -91,31 +105,6 @@ impl ViewTuple for Tuple {
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {
         for_tuples!(#( self.Tuple.raze(world, &mut state.Tuple); )*)
     }
-}
-
-#[doc(hidden)]
-pub trait ViewTupleClone: ViewTuple {
-    fn clone(&self) -> Self;
-    fn eq(&self, other: &Self) -> bool;
-}
-
-impl<A: View> ViewTupleClone for A
-where
-    A: Clone + PartialEq,
-{
-    fn clone(&self) -> Self {
-        self.clone()
-    }
-
-    fn eq(&self, other: &Self) -> bool {
-        self.eq(other)
-    }
-}
-
-#[impl_for_tuples(1, 16)]
-#[tuple_types_custom_trait_bound(View)]
-impl ViewTupleClone for Tuple {
-    for_tuples!( where #( Tuple: Clone + PartialEq ),* );
 
     fn clone(&self) -> Self {
         for_tuples!((#( self.Tuple.clone() ),*))

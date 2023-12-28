@@ -1,4 +1,5 @@
 use std::{
+    any::Any,
     cell::Cell,
     sync::{Arc, Mutex},
 };
@@ -342,7 +343,9 @@ impl<Marker: 'static, F: PresenterFn<Marker>> BindState<Marker, F> {
 
 trait AnyBindState: Send {
     fn create_handle(&mut self) -> ViewHandle;
-    fn update_handle(&mut self, handle: &mut ViewHandle) -> bool;
+    fn update_handle_props(&mut self, handle: &mut ViewHandle) -> bool;
+    fn as_any(&self) -> &dyn Any;
+    fn eq(&self, other: &dyn AnyBindState) -> bool;
 }
 
 impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker, F> {
@@ -350,11 +353,25 @@ impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker,
         ViewHandle::new(self.presenter, self.props.take().unwrap())
     }
 
-    fn update_handle(&mut self, handle: &mut ViewHandle) -> bool {
+    fn update_handle_props(&mut self, handle: &mut ViewHandle) -> bool {
         if let Some(mut props) = self.props.take() {
             handle.update_props(&mut props)
         } else {
             false
+        }
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn eq(&self, other: &dyn AnyBindState) -> bool {
+        match other.as_any().downcast_ref::<Self>() {
+            Some(other) => {
+                &self.presenter as *const _ == &other.presenter as *const _
+                    && self.props == other.props
+            }
+            None => false,
         }
     }
 }
@@ -364,13 +381,13 @@ impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker,
 /// recursive presenter invocations (like tree views) will not compile.
 #[doc(hidden)]
 pub struct Bind {
-    presenter_state: Arc<Mutex<dyn AnyBindState>>,
+    binding: Arc<Mutex<dyn AnyBindState>>,
 }
 
 impl Bind {
     pub fn new<Marker, F: PresenterFn<Marker>>(presenter: F, props: F::Props) -> Self {
         Self {
-            presenter_state: Arc::new(Mutex::new(BindState::new(presenter, props))),
+            binding: Arc::new(Mutex::new(BindState::new(presenter, props))),
         }
     }
 }
@@ -392,7 +409,7 @@ impl View for Bind {
         let entity = parent_ecx
             .world
             .spawn((
-                self.presenter_state.lock().unwrap().create_handle(),
+                self.binding.lock().unwrap().create_handle(),
                 Name::new("presenter"),
             ))
             .insert(PresenterStateChanged)
@@ -412,10 +429,10 @@ impl View for Bind {
         // that is a member of the Bind, to the 'old' presenter state which is stored in the
         // view handle. The old state is the one that will persist.
         if self
-            .presenter_state
+            .binding
             .lock()
             .unwrap()
-            .update_handle(&mut handle)
+            .update_handle_props(&mut handle)
         {
             entt.insert(PresenterStateChanged);
         }
@@ -439,8 +456,20 @@ impl View for Bind {
 impl Clone for Bind {
     fn clone(&self) -> Self {
         Self {
-            presenter_state: self.presenter_state.clone(),
+            binding: self.binding.clone(),
         }
+    }
+}
+
+impl PartialEq for Bind {
+    fn eq(&self, other: &Self) -> bool {
+        if &self as *const _ == &other as *const _ {
+            return true;
+        }
+        self.binding
+            .lock()
+            .unwrap()
+            .eq(&*other.binding.lock().unwrap())
     }
 }
 
@@ -484,7 +513,7 @@ where
     fn call(
         &mut self,
         cx: Cx<Self::Props>,
-        // param_value: PresenterParamItem<Self::Param>,
+        // Dependency injection? How?
     ) -> Self::View {
         self(cx)
     }

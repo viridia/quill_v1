@@ -5,7 +5,7 @@ mod disclosure;
 mod node_tree;
 mod scrollview;
 mod slider;
-mod splitter;
+// mod splitter;
 mod swatch;
 mod test_scene;
 mod viewport;
@@ -16,10 +16,10 @@ use bevy::{
     ui,
 };
 use bevy_grackle::{
-    events::Clicked,
+    events::{Clicked, SplitterEvent},
     theme::{init_grackle_theme, GrackleTheme},
     tokens::SIDEBAR,
-    widgets::ButtonProps,
+    widgets::{v_splitter, ButtonProps, SplitterProps},
 };
 use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
@@ -30,7 +30,7 @@ use dialog::{dialog, RequestClose};
 use disclosure::DisclosureTrianglePlugin;
 use node_tree::{node_tree, NodeTreePlugin};
 use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
-use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
+// use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use static_init::dynamic;
 use swatch::{swatch, swatch_grid, SwatchGridProps, SwatchProps};
 use viewport::{ViewportInset, ViewportInsetElement};
@@ -55,7 +55,6 @@ fn main() {
         )
         .add_plugins((
             QuillPlugin,
-            SplitterPlugin,
             SliderPlugin,
             NodeTreePlugin,
             DisclosureTrianglePlugin,
@@ -228,8 +227,8 @@ fn ui_main(mut cx: Cx) -> impl View {
         .with_memo(
             move |mut e| {
                 let id = e.id();
-                e.insert((On::<SplitterDragged>::run(
-                    move |ev: Listener<SplitterDragged>,
+                e.insert((On::<SplitterEvent>::run(
+                    move |ev: Listener<SplitterEvent>,
                           mut width: ResMut<PanelWidth>,
                           query: Query<(&Node, &GlobalTransform)>| {
                         match query.get(id) {
@@ -278,20 +277,20 @@ fn ui_main(mut cx: Cx) -> impl View {
                             bevy_grackle::widgets::menu_button.bind(
                                 bevy_grackle::widgets::MenuButtonProps::new()
                                     .children("File…")
-                                    .items(ViewParam::new(Fragment::new((
+                                    .items(FragmentClone::new((
                                         "Save",
                                         "Save As…",
                                         "Export…",
                                         "Import…",
-                                    ))))
+                                    )))
                                     .style(STYLE_BUTTON_FLEX.clone()),
                             ),
                         )),
                     bevy_grackle::widgets::button.bind(ButtonProps::new("load").children(
-                        ViewParam::new(Fragment::new((
+                        FragmentClone::new((
                             "Load",
                             swatch.bind(SwatchProps { color: Color::RED }),
-                        ))),
+                        )),
                     )),
                     bevy_grackle::widgets::button.bind(ButtonProps {
                         id: "quit",
