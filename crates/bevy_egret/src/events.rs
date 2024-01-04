@@ -8,12 +8,12 @@ impl Plugin for EgretEventsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             EventListenerPlugin::<Clicked>::default(),
-            EventListenerPlugin::<Changed<f32>>::default(),
+            EventListenerPlugin::<ValueChanged<f32>>::default(),
             EventListenerPlugin::<MenuEvent>::default(),
             EventListenerPlugin::<SplitterEvent>::default(),
         ))
         .add_event::<Clicked>()
-        .add_event::<Changed<f32>>()
+        .add_event::<ValueChanged<f32>>()
         .add_event::<MenuEvent>()
         .add_event::<SplitterEvent>();
     }
@@ -29,7 +29,7 @@ pub struct Clicked {
 
 /// Event emitted by a widget that contains a value; indicates that the value has changed.
 #[derive(Clone, Event, EntityEvent)]
-pub struct Changed<T: Clone + Send + Sync + 'static> {
+pub struct ValueChanged<T: Clone + Send + Sync + 'static> {
     #[target]
     pub target: Entity,
 

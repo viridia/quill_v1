@@ -8,4 +8,6 @@ pub const BUTTON_DANGER: ScopedValueKey<StyleHandle> = ScopedValueKey::new("butt
 pub const SPLITTER: ScopedValueKey<StyleHandle> = ScopedValueKey::new("splitter");
 pub const SPLITTER_INNER: ScopedValueKey<StyleHandle> = ScopedValueKey::new("splitter-inner");
 pub const H_SLIDER_TRACK: ScopedValueKey<StyleHandle> = ScopedValueKey::new("h-slider-track");
+pub const H_SLIDER_TRACK_ACTIVE: ScopedValueKey<StyleHandle> =
+    ScopedValueKey::new("h-slider-track-active");
 pub const H_SLIDER_THUMB: ScopedValueKey<StyleHandle> = ScopedValueKey::new("h-slider-thumb");

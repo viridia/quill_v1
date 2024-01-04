@@ -24,6 +24,11 @@
 
 trait Memo<T> {
     fn update(&mut self, new_val: T) -> bool {}
+}
 
-
+trait Memoizable {
+    fn update(&mut self, incoming: &Self) -> bool {
+        *self = incoming;
+        true
+    }
 }

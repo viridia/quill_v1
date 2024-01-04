@@ -1,22 +1,16 @@
-use std::{
-    any::Any,
-    cell::Cell,
-    sync::{Arc, Mutex},
-};
+use std::cell::Cell;
 
 use bevy::{
     prelude::*,
     text::{Text, TextStyle},
 };
 
-use crate::{
-    presenter_state::PresenterGraphChanged, ClassNames, Cx, StyleTuple, ViewHandle, ViewTuple,
-};
+use crate::{presenter_state::*, ClassNames, Cx, StyleTuple, ViewHandle, ViewTuple};
 
 use crate::node_span::NodeSpan;
 
 use super::{
-    presenter_state::PresenterStateChanged, view_children::ViewChildren, view_classes::ViewClasses,
+    bind::Bind, view_children::ViewChildren, view_classes::ViewClasses,
     view_insert_bundle::ViewInsertBundle, view_named::ViewNamed, view_styled::ViewStyled,
     view_with::ViewWith, view_with_memo::ViewWithMemo,
 };
@@ -327,156 +321,10 @@ where
     }
 }
 
-struct BindState<Marker: 'static, F: PresenterFn<Marker>> {
-    presenter: F,
-    props: Option<F::Props>,
-}
-
-impl<Marker: 'static, F: PresenterFn<Marker>> BindState<Marker, F> {
-    fn new(presenter: F, props: F::Props) -> Self {
-        Self {
-            presenter,
-            props: Some(props),
-        }
-    }
-}
-
-trait AnyBindState: Send {
-    fn create_handle(&mut self) -> ViewHandle;
-    fn update_handle_props(&mut self, handle: &mut ViewHandle) -> bool;
-    fn as_any(&self) -> &dyn Any;
-    fn eq(&self, other: &dyn AnyBindState) -> bool;
-}
-
-impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker, F> {
-    fn create_handle(&mut self) -> ViewHandle {
-        ViewHandle::new(self.presenter, self.props.take().unwrap())
-    }
-
-    fn update_handle_props(&mut self, handle: &mut ViewHandle) -> bool {
-        if let Some(mut props) = self.props.take() {
-            handle.update_props(&mut props)
-        } else {
-            false
-        }
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn eq(&self, other: &dyn AnyBindState) -> bool {
-        match other.as_any().downcast_ref::<Self>() {
-            Some(other) => {
-                &self.presenter as *const _ == &other.presenter as *const _
-                    && self.props == other.props
-            }
-            None => false,
-        }
-    }
-}
-
-/// Binds a presenter to properties and implements a view.
-/// Implementation note: It is important that this type be completely type-erased, otherwise
-/// recursive presenter invocations (like tree views) will not compile.
-#[doc(hidden)]
-pub struct Bind {
-    binding: Arc<Mutex<dyn AnyBindState>>,
-}
-
-impl Bind {
-    pub fn new<Marker, F: PresenterFn<Marker>>(presenter: F, props: F::Props) -> Self {
-        Self {
-            binding: Arc::new(Mutex::new(BindState::new(presenter, props))),
-        }
-    }
-}
-
-impl View for Bind {
-    // State holds the PresenterState entity.
-    type State = Entity;
-
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        // get the handle from the PresenterState for this invocation.
-        let entt = vc.entity(*state);
-        let Some(ref handle) = entt.get::<ViewHandle>() else {
-            return NodeSpan::Empty;
-        };
-        handle.nodes()
-    }
-
-    fn build(&self, parent_ecx: &mut BuildContext) -> Self::State {
-        let entity = parent_ecx
-            .world
-            .spawn((
-                self.binding.lock().unwrap().create_handle(),
-                Name::new("presenter"),
-            ))
-            .insert(PresenterStateChanged)
-            .set_parent(parent_ecx.entity)
-            .id();
-        // Not calling inner build here: will be done asynchronously.
-        entity
-    }
-
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        // get the handle from the current view state
-        let mut entt = vc.entity_mut(*state);
-        let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
-            return;
-        };
-        // Update child view properties. This transfers the props from the 'new' presenter
-        // that is a member of the Bind, to the 'old' presenter state which is stored in the
-        // view handle. The old state is the one that will persist.
-        if self
-            .binding
-            .lock()
-            .unwrap()
-            .update_handle_props(&mut handle)
-        {
-            entt.insert(PresenterStateChanged);
-        }
-    }
-
-    fn raze(&self, world: &mut World, state: &mut Self::State) {
-        let mut entt = world.entity_mut(*state);
-        let Some(handle) = entt.get_mut::<ViewHandle>() else {
-            return;
-        };
-        let inner = handle.inner.clone();
-        // Raze the contents of the child ViewState.
-        inner.lock().unwrap().raze(world, *state);
-        // Despawn the ViewHandle.
-        let mut entt = world.entity_mut(*state);
-        entt.remove_parent();
-        entt.despawn();
-    }
-}
-
-impl Clone for Bind {
-    fn clone(&self) -> Self {
-        Self {
-            binding: self.binding.clone(),
-        }
-    }
-}
-
-impl PartialEq for Bind {
-    fn eq(&self, other: &Self) -> bool {
-        if &self as *const _ == &other as *const _ {
-            return true;
-        }
-        self.binding
-            .lock()
-            .unwrap()
-            .eq(&*other.binding.lock().unwrap())
-    }
-}
-
 /// A trait that allows methods to be added to presenter function references.
 pub trait PresenterFn<Marker: 'static>: Sized + Send + Copy + 'static {
     /// The type of properties expected by this presenter.
-    type Props: Send + Clone + PartialEq;
+    type Props: Send + PartialEq;
 
     /// The type of view produced by this presenter.
     type View: View;
@@ -491,15 +339,12 @@ pub trait PresenterFn<Marker: 'static>: Sized + Send + Copy + 'static {
     fn call(
         &mut self,
         cx: Cx<Self::Props>,
-        // param_value: PresenterParamItem<Self::Param>,
+        // Dependency injection? How?
     ) -> Self::View;
 }
 
-impl<
-        V: View,
-        P: Send + Clone + PartialEq + 'static,
-        F: FnMut(Cx<P>) -> V + Copy + Send + 'static,
-    > PresenterFn<fn(Cx<P>) -> V> for F
+impl<V: View, P: Send + PartialEq + 'static, F: FnMut(Cx<P>) -> V + Copy + Send + 'static>
+    PresenterFn<fn(Cx<P>) -> V> for F
 where
     V: 'static,
 {
@@ -510,11 +355,7 @@ where
         Bind::new(self, props)
     }
 
-    fn call(
-        &mut self,
-        cx: Cx<Self::Props>,
-        // Dependency injection? How?
-    ) -> Self::View {
+    fn call(&mut self, cx: Cx<Self::Props>) -> Self::View {
         self(cx)
     }
 }

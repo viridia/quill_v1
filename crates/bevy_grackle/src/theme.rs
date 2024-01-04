@@ -116,6 +116,34 @@ static STYLE_DK_SPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
         .selector(".drag > &", |ss| ss.background_color("#484848"))
 });
 
+#[dynamic]
+static STYLE_LT_SLIDER_TRACK: StyleHandle = StyleHandle::build(|ss| ss.background_color(COLOR_G4));
+
+#[dynamic]
+static STYLE_LT_SLIDER_TRACK_ACTIVE: StyleHandle =
+    StyleHandle::build(|ss| ss.background_color(COLOR_TEAL5));
+
+#[dynamic]
+static STYLE_LT_SLIDER_THUMB: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_G1)
+        .background_image(Some(AssetPath::from("grackle://icons/disc.png")))
+        .selector(":hover > &,.drag > &", |ss| ss.background_color(COLOR_G0))
+});
+
+#[dynamic]
+static STYLE_DK_SLIDER_TRACK: StyleHandle = StyleHandle::build(|ss| ss.background_color(COLOR_G4));
+
+#[dynamic]
+static STYLE_DK_SLIDER_TRACK_ACTIVE: StyleHandle =
+    StyleHandle::build(|ss| ss.background_color(COLOR_G4));
+
+#[dynamic]
+static STYLE_DK_SLIDER_THUMB: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#777")
+        .background_image(Some(AssetPath::from("grackle://icons/disc.png")))
+        .selector(":hover > &,.drag > &", |ss| ss.background_color("#aaa"))
+});
+
 pub enum GrackleTheme {
     Light,
     Dark,
@@ -131,6 +159,9 @@ pub fn init_grackle_theme<T>(cx: &mut Cx<T>, theme: GrackleTheme) {
             cx.define_scoped_value(BUTTON_DANGER, STYLE_DK_BUTTON_DANGER.clone());
             cx.define_scoped_value(SPLITTER, STYLE_LT_SPLITTER.clone());
             cx.define_scoped_value(SPLITTER_INNER, STYLE_LT_SPLITTER_INNER.clone());
+            cx.define_scoped_value(H_SLIDER_TRACK, STYLE_LT_SLIDER_TRACK.clone());
+            cx.define_scoped_value(H_SLIDER_TRACK_ACTIVE, STYLE_LT_SLIDER_TRACK_ACTIVE.clone());
+            cx.define_scoped_value(H_SLIDER_THUMB, STYLE_LT_SLIDER_THUMB.clone());
         }
         GrackleTheme::Dark => {
             cx.define_scoped_value(TYPOGRAPHY, STYLE_TYPOGRAPHY.clone());
@@ -140,6 +171,9 @@ pub fn init_grackle_theme<T>(cx: &mut Cx<T>, theme: GrackleTheme) {
             cx.define_scoped_value(BUTTON_DANGER, STYLE_DK_BUTTON_DANGER.clone());
             cx.define_scoped_value(SPLITTER, STYLE_DK_SPLITTER.clone());
             cx.define_scoped_value(SPLITTER_INNER, STYLE_DK_SPLITTER_INNER.clone());
+            cx.define_scoped_value(H_SLIDER_TRACK, STYLE_DK_SLIDER_TRACK.clone());
+            cx.define_scoped_value(H_SLIDER_TRACK_ACTIVE, STYLE_DK_SLIDER_TRACK_ACTIVE.clone());
+            cx.define_scoped_value(H_SLIDER_THUMB, STYLE_DK_SLIDER_THUMB.clone());
         }
     }
 }

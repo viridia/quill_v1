@@ -1,4 +1,5 @@
 mod atom;
+mod bind;
 mod cx;
 mod element;
 mod r#for;
@@ -25,6 +26,7 @@ mod view_with;
 mod view_with_memo;
 
 pub use atom::*;
+pub use bind::Bind;
 pub use cx::Cx;
 pub use element::Element;
 pub use for_index::ForIndex;
@@ -38,7 +40,6 @@ pub use r#if::If;
 pub use ref_element::RefElement;
 pub use scoped_values::ScopedValueKey;
 pub(crate) use tracking::TrackingContext;
-pub use view::Bind;
 pub use view::PresenterFn;
 pub use view::View;
 pub use view::*;

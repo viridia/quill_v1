@@ -2,7 +2,7 @@ use crate::StyleHandle;
 use impl_trait_for_tuples::*;
 
 /// `StyleTuple` - a variable-length tuple of [`StyleHandle`]s.
-pub trait StyleTuple: Send + Clone {
+pub trait StyleTuple: Sync + Send + Clone {
     /// Return the actual number of [`StyleHandle`]s in this tuple (including nesting).
     fn len(&self) -> usize;
 

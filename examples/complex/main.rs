@@ -4,7 +4,7 @@ mod dialog;
 mod disclosure;
 mod node_tree;
 mod scrollview;
-mod slider;
+// mod slider;
 // mod splitter;
 mod swatch;
 mod test_scene;
@@ -16,10 +16,10 @@ use bevy::{
     ui,
 };
 use bevy_grackle::{
-    events::{Clicked, SplitterEvent},
+    events::{Clicked, SplitterEvent, ValueChanged},
     theme::{init_grackle_theme, GrackleTheme},
     tokens::SIDEBAR,
-    widgets::{v_splitter, ButtonProps, SplitterProps},
+    widgets::{h_slider, v_splitter, ButtonProps, SliderProps, SplitterProps},
 };
 use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
@@ -29,7 +29,7 @@ use bevy_quill::prelude::*;
 use dialog::{dialog, RequestClose};
 use disclosure::DisclosureTrianglePlugin;
 use node_tree::{node_tree, NodeTreePlugin};
-use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
+// use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
 // use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use static_init::dynamic;
 use swatch::{swatch, swatch_grid, SwatchGridProps, SwatchProps};
@@ -55,7 +55,7 @@ fn main() {
         )
         .add_plugins((
             QuillPlugin,
-            SliderPlugin,
+            // SliderPlugin,
             NodeTreePlugin,
             DisclosureTrianglePlugin,
             bevy_grackle::GracklePlugin,
@@ -101,6 +101,9 @@ static STYLE_BUTTON_ROW: StyleHandle = StyleHandle::build(|ss| ss.gap(8));
 
 #[dynamic]
 static STYLE_BUTTON_FLEX: StyleHandle = StyleHandle::build(|ss| ss.flex_grow(1.));
+
+#[dynamic]
+static STYLE_SLIDER: StyleHandle = StyleHandle::build(|ss| ss.align_self(ui::AlignSelf::Stretch));
 
 #[dynamic]
 static STYLE_ASIDE: StyleHandle = StyleHandle::build(|ss| {
@@ -320,8 +323,8 @@ fn color_edit(cx: Cx) -> impl View {
     let edit_color = cx.use_resource::<EditColor>();
     Element::new()
         .styled(COLOR_EDIT.clone())
-        .insert((On::<OnChange<f32>>::run(
-            move |ev: Listener<OnChange<f32>>, mut color: ResMut<EditColor>| match ev.id {
+        .insert((On::<ValueChanged<f32>>::run(
+            move |ev: Listener<ValueChanged<f32>>, mut color: ResMut<EditColor>| match ev.id {
                 "r" => {
                     color.as_mut().color.set_r(ev.value / 255.0);
                 }
@@ -347,18 +350,21 @@ fn color_edit(cx: Cx) -> impl View {
                 min: 0.,
                 max: 255.,
                 value: edit_color.color.r() * 255.0,
+                style: STYLE_SLIDER.clone(),
             }),
             h_slider.bind(SliderProps {
                 id: "g",
                 min: 0.,
                 max: 255.,
                 value: edit_color.color.g() * 255.0,
+                style: STYLE_SLIDER.clone(),
             }),
             h_slider.bind(SliderProps {
                 id: "b",
                 min: 0.,
                 max: 255.,
                 value: edit_color.color.b() * 255.0,
+                style: STYLE_SLIDER.clone(),
             }),
         ))
 }
