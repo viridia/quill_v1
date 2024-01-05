@@ -3,7 +3,10 @@ use bevy_egret::widgets::{menu_popup, MenuPopupProps};
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
-use crate::{tokens::BUTTON_DEFAULT, Size};
+use crate::{
+    tokens::{BUTTON_DEFAULT, MENU_ITEM, MENU_POPUP, TYPOGRAPHY},
+    Size,
+};
 
 #[dynamic]
 static STYLE_MENU_BUTTON: StyleHandle = StyleHandle::build(|ss| {
@@ -24,13 +27,38 @@ static STYLE_MENU_BUTTON: StyleHandle = StyleHandle::build(|ss| {
 
 #[dynamic]
 static STYLE_MENU_POPUP: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color("#f00")
-        .border_color("#00f")
+    ss.position(PositionType::Absolute)
         .border(1)
         .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
         .justify_content(JustifyContent::Center)
-        .align_items(AlignItems::Center)
+        .align_items(AlignItems::Stretch)
+        .padding((0, 2))
+        .z_index(101)
+        .scale(0.5)
+        .transition(&vec![Transition {
+            property: TransitionProperty::Transform,
+            duration: 0.3,
+            timing: timing::EASE_IN_OUT,
+            ..default()
+        }])
+        .selector(".entering > &,.entered > &", |ss| ss.scale(1.))
 });
+
+#[dynamic]
+static STYLE_MENU_ITEM: StyleHandle = StyleHandle::build(|ss| {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Row)
+        .align_items(ui::AlignItems::Center)
+        .justify_content(ui::JustifyContent::Start)
+        .padding((8, 6))
+        .margin((2, 0))
+        .selector(".indent > &", |ss| ss.padding_left(24))
+});
+
+#[dynamic]
+static STYLE_MENU_DIVIDER: StyleHandle =
+    StyleHandle::build(|ss| ss.background_color("#000").height(1).margin((0, 2)));
 
 #[derive(Clone, PartialEq, Default)]
 pub struct MenuButtonProps<V: View + Clone, VI: View + Clone, S: StyleTuple = ()> {
@@ -39,6 +67,7 @@ pub struct MenuButtonProps<V: View + Clone, VI: View + Clone, S: StyleTuple = ()
     pub size: Size,
     pub style: S,
     pub disabled: bool,
+    pub indent: bool,
 }
 
 impl MenuButtonProps<(), (), ()> {
@@ -52,6 +81,15 @@ impl MenuButtonProps<(), (), ()> {
     }
 }
 
+#[derive(PartialEq, Default)]
+pub struct MenuItemProps<V: View + Clone> {
+    pub id: &'static str,
+    pub label: V,
+    pub checked: bool,
+    pub disabled: bool,
+    // icon
+}
+
 impl<V: View + Clone, VI: View + Clone, S: StyleTuple> MenuButtonProps<V, VI, S> {
     pub fn children<V2: View + Clone>(self, children: V2) -> MenuButtonProps<V2, VI, S> {
         MenuButtonProps {
@@ -60,6 +98,7 @@ impl<V: View + Clone, VI: View + Clone, S: StyleTuple> MenuButtonProps<V, VI, S>
             size: self.size,
             style: self.style,
             disabled: self.disabled,
+            indent: self.indent,
         }
     }
 
@@ -70,6 +109,7 @@ impl<V: View + Clone, VI: View + Clone, S: StyleTuple> MenuButtonProps<V, VI, S>
             size: self.size,
             style: self.style,
             disabled: self.disabled,
+            indent: self.indent,
         }
     }
 
@@ -80,6 +120,7 @@ impl<V: View + Clone, VI: View + Clone, S: StyleTuple> MenuButtonProps<V, VI, S>
             size: self.size,
             style,
             disabled: self.disabled,
+            indent: self.indent,
         }
     }
 
@@ -90,6 +131,11 @@ impl<V: View + Clone, VI: View + Clone, S: StyleTuple> MenuButtonProps<V, VI, S>
 
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
+        self
+    }
+
+    pub fn indent(mut self, indent: bool) -> Self {
+        self.indent = indent;
         self
     }
 }
@@ -103,10 +149,17 @@ pub fn menu_button<
 ) -> impl View {
     bevy_egret::widgets::menu_button.bind(bevy_egret::widgets::MenuButtonProps {
         children: cx.props.children.clone(),
-        popup: ViewParam::new(Portal::new().children(menu_popup.bind(MenuPopupProps {
+        popup: ViewParam::new(menu_popup.bind(MenuPopupProps {
             children: cx.props.items.clone(),
-            style: (STYLE_MENU_POPUP.clone(), cx.props.style.clone()),
-        }))),
+            class_names: "indent".if_true(cx.props.indent),
+            style: (
+                STYLE_MENU_POPUP.clone(),
+                cx.get_scoped_value(TYPOGRAPHY),
+                cx.get_scoped_value(MENU_POPUP),
+                cx.props.style.clone(),
+            ),
+            marker: std::marker::PhantomData,
+        })),
         style: (
             STYLE_MENU_BUTTON.clone(),
             cx.get_scoped_value(BUTTON_DEFAULT),
@@ -116,4 +169,20 @@ pub fn menu_button<
         marker: std::marker::PhantomData,
         disabled: cx.props.disabled,
     })
+}
+
+pub fn menu_item<'a, V: View + Clone + PartialEq + 'static>(cx: Cx<MenuItemProps<V>>) -> impl View {
+    bevy_egret::widgets::menu_item.bind(bevy_egret::widgets::MenuItemProps {
+        label: cx.props.label.clone(),
+        id: cx.props.id,
+        style: (STYLE_MENU_ITEM.clone(), cx.get_scoped_value(MENU_ITEM)),
+        checked: cx.props.checked,
+        disabled: cx.props.disabled,
+    })
+}
+
+pub fn menu_divider(_cx: Cx) -> impl View {
+    Element::new()
+        .named("menu-divider")
+        .styled(STYLE_MENU_DIVIDER.clone())
 }

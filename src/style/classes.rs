@@ -28,6 +28,12 @@ pub struct ConditionalClassNames<'a, C: ClassNames<'a>> {
     pub(crate) marker: std::marker::PhantomData<&'a ()>,
 }
 
+impl<'a, C: ClassNames<'a> + PartialEq> PartialEq for ConditionalClassNames<'a, C> {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner == other.inner && self.enabled == other.enabled && self.marker == other.marker
+    }
+}
+
 /// Tuple of class names, possibly conditional, possibly nested.
 pub trait ClassNames<'a>: Send + Clone {
     /// Return the number of class names.

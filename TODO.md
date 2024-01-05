@@ -1,10 +1,8 @@
 # TODO:
 
-* Fix hanging bug
 * :focus
 * ViewTuple: Clone/PartialEq
 * Migrate to Egret/Grackle:
-    * Splitter
     * Disclosure
     * Dialog
     * Swatch
@@ -20,15 +18,3 @@
 * Change QuillPlugin to add bevy_mod_picking plugins if needed:
 
     .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
-
-
-trait Memo<T> {
-    fn update(&mut self, new_val: T) -> bool {}
-}
-
-trait Memoizable {
-    fn update(&mut self, incoming: &Self) -> bool {
-        *self = incoming;
-        true
-    }
-}

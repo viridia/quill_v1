@@ -4,8 +4,6 @@ mod dialog;
 mod disclosure;
 mod node_tree;
 mod scrollview;
-// mod slider;
-// mod splitter;
 mod swatch;
 mod test_scene;
 mod viewport;
@@ -16,10 +14,10 @@ use bevy::{
     ui,
 };
 use bevy_grackle::{
-    events::{Clicked, SplitterEvent, ValueChanged},
+    events::{Clicked, MenuAction, MenuEvent, SplitterEvent, ValueChanged},
     theme::{init_grackle_theme, GrackleTheme},
     tokens::SIDEBAR,
-    widgets::{h_slider, v_splitter, ButtonProps, SliderProps, SplitterProps},
+    widgets::*,
 };
 use bevy_mod_picking::{
     picking_core::{CorePlugin, InteractionPlugin},
@@ -29,8 +27,6 @@ use bevy_quill::prelude::*;
 use dialog::{dialog, RequestClose};
 use disclosure::DisclosureTrianglePlugin;
 use node_tree::{node_tree, NodeTreePlugin};
-// use slider::{h_slider, OnChange, SliderPlugin, SliderProps};
-// use splitter::{v_splitter, SplitterDragged, SplitterPlugin, SplitterProps};
 use static_init::dynamic;
 use swatch::{swatch, swatch_grid, SwatchGridProps, SwatchProps};
 use viewport::{ViewportInset, ViewportInsetElement};
@@ -266,36 +262,69 @@ fn ui_main(mut cx: Cx) -> impl View {
                             .push(format!("Button Clicked: id='{}'", ev.id).to_string());
                     },
                 ))
+                .insert(On::<MenuEvent>::run(
+                    move |ev: Listener<MenuEvent>, mut atoms: AtomStore| {
+                        if ev.action == MenuAction::Close {
+                            atoms.set(open, false);
+                        }
+                    },
+                ))
                 .children((
                     Element::new()
                         .named("button-row")
                         .styled(STYLE_BUTTON_ROW.clone())
                         .children((
-                            bevy_grackle::widgets::button.bind(ButtonProps {
+                            button.bind(ButtonProps {
                                 id: "save",
                                 children: "Save",
                                 style: STYLE_BUTTON_FLEX.clone(),
                                 ..default()
                             }),
-                            bevy_grackle::widgets::menu_button.bind(
-                                bevy_grackle::widgets::MenuButtonProps::new()
+                            menu_button.bind(
+                                MenuButtonProps::new()
                                     .children("File…")
+                                    .indent(true)
                                     .items(FragmentClone::new((
-                                        "Save",
-                                        "Save As…",
-                                        "Export…",
-                                        "Import…",
+                                        menu_item.bind(MenuItemProps {
+                                            label: "Light Theme",
+                                            id: "light-theme",
+                                            ..default()
+                                        }),
+                                        menu_item.bind(MenuItemProps {
+                                            label: "Dark Theme",
+                                            id: "dark-theme",
+                                            ..default()
+                                        }),
+                                        menu_divider.bind(()),
+                                        menu_item.bind(MenuItemProps {
+                                            label: "Save",
+                                            id: "save",
+                                            ..default()
+                                        }),
+                                        menu_item.bind(MenuItemProps {
+                                            label: "Save As…",
+                                            id: "save-as",
+                                            ..default()
+                                        }),
+                                        menu_item.bind(MenuItemProps {
+                                            label: "Export…",
+                                            id: "export",
+                                            ..default()
+                                        }),
+                                        menu_item.bind(MenuItemProps {
+                                            label: "Import…",
+                                            id: "import",
+                                            ..default()
+                                        }),
                                     )))
                                     .style(STYLE_BUTTON_FLEX.clone()),
                             ),
                         )),
-                    bevy_grackle::widgets::button.bind(ButtonProps::new("load").children(
-                        FragmentClone::new((
-                            "Load",
-                            swatch.bind(SwatchProps { color: Color::RED }),
-                        )),
-                    )),
-                    bevy_grackle::widgets::button.bind(ButtonProps {
+                    button.bind(ButtonProps::new("load").children(FragmentClone::new((
+                        "Load",
+                        swatch.bind(SwatchProps { color: Color::RED }),
+                    )))),
+                    button.bind(ButtonProps {
                         id: "quit",
                         children: "Quit",
                         style: (),

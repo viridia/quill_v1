@@ -45,7 +45,7 @@ pub struct ValueChanged<T: Clone + Send + Sync + 'static> {
 }
 
 /// Menu keyboard actions
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MenuAction {
     /// Toggle menu open
     Open,

@@ -25,13 +25,15 @@ pub struct MenuButtonProps<
     pub marker: std::marker::PhantomData<&'a ()>,
 }
 
-#[derive(Clone, PartialEq, Default)]
-pub struct MenuPopupProps<V: View + Clone, S: StyleTuple = ()> {
+#[derive(PartialEq, Default)]
+pub struct MenuPopupProps<'a, V: View + Clone, S: StyleTuple = (), C: ClassNames<'a> = ()> {
     pub children: V,
     pub style: S,
+    pub class_names: C,
+    pub marker: std::marker::PhantomData<&'a ()>,
 }
 
-#[derive(Clone, PartialEq, Default)]
+#[derive(PartialEq, Default)]
 pub struct MenuItemProps<V: View + Clone, S: StyleTuple = ()> {
     pub id: &'static str,
     pub style: S,
@@ -84,28 +86,45 @@ pub fn menu_button<'a, V: View + Clone, VI: View + Clone, S: StyleTuple, C: Clas
         .styled(cx.props.style.clone())
         .children((
             cx.props.children.clone(),
-            If::new(state != EnterExitState::Exited, cx.props.popup.clone(), ()),
+            If::new(
+                state != EnterExitState::Exited,
+                Portal::new().children((Element::new()
+                    .class_names(state.as_class_name())
+                    .insert((
+                        On::<Pointer<Down>>::run(move |mut writer: EventWriter<MenuEvent>| {
+                            writer.send(MenuEvent {
+                                action: MenuAction::Close,
+                                target: id_anchor,
+                            });
+                        }),
+                        Style {
+                            left: Val::Px(0.),
+                            right: Val::Px(0.),
+                            top: Val::Px(0.),
+                            bottom: Val::Px(0.),
+                            position_type: PositionType::Absolute,
+                            ..default()
+                        },
+                        ZIndex::Global(100),
+                    ))
+                    .children(cx.props.popup.clone()),)),
+                (),
+            ),
         ))
 }
 
-pub fn menu_popup<V: View + Clone, S: StyleTuple>(mut cx: Cx<MenuPopupProps<V, S>>) -> impl View {
+pub fn menu_popup<'a, V: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
+    mut cx: Cx<MenuPopupProps<'a, V, S, C>>,
+) -> impl View {
     let is_open = cx.create_atom_init::<bool>(|| false);
     // Needs to be a local variable so that it can be captured in the event handler.
     // let id = cx.props.id;
     Element::new()
         .named("menu-popup")
         .class_names((
-            // cx.props.class_names.clone(),
+            cx.props.class_names.clone(),
             CLS_OPEN.if_true(cx.read_atom(is_open)),
         ))
-        // .insert((On::<Pointer<Click>>::run(
-        //     move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
-        //         writer.send(Clicked {
-        //             target: ev.target,
-        //             id,
-        //         });
-        //     },
-        // ),))
         .styled(cx.props.style.clone())
         .children(cx.props.children.clone())
 }
@@ -113,26 +132,7 @@ pub fn menu_popup<V: View + Clone, S: StyleTuple>(mut cx: Cx<MenuPopupProps<V, S
 pub fn menu_item<'a, V: View + Clone, S: StyleTuple>(mut cx: Cx<MenuItemProps<V, S>>) -> impl View {
     let is_selected = cx.create_atom_init::<bool>(|| false);
     // Needs to be a local variable so that it can be captured in the event handler.
-    let id = cx.props.id;
-    Element::new()
-        .named("menu-item")
-        // .class_names((
-        //     cx.props.class_names.clone(),
-        //     CLS_PRESSED.if_true(cx.read_atom(is_selected)),
-        // ))
-        // .insert((On::<Pointer<Click>>::run(
-        //     move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
-        //         writer.send(Clicked {
-        //             target: ev.target,
-        //             id,
-        //         });
-        //     },
-        // ),))
-        .styled(cx.props.style.clone())
-        .children(cx.props.label.clone())
-}
-
-pub fn menu_divider<'a, V: View + Clone, S: StyleTuple>(cx: Cx<MenuItemProps<V, S>>) -> impl View {
+    // let id = cx.props.id;
     Element::new()
         .named("menu-item")
         // .class_names((

@@ -11,3 +11,5 @@ pub const H_SLIDER_TRACK: ScopedValueKey<StyleHandle> = ScopedValueKey::new("h-s
 pub const H_SLIDER_TRACK_ACTIVE: ScopedValueKey<StyleHandle> =
     ScopedValueKey::new("h-slider-track-active");
 pub const H_SLIDER_THUMB: ScopedValueKey<StyleHandle> = ScopedValueKey::new("h-slider-thumb");
+pub const MENU_POPUP: ScopedValueKey<StyleHandle> = ScopedValueKey::new("menu-popup");
+pub const MENU_ITEM: ScopedValueKey<StyleHandle> = ScopedValueKey::new("menu-item");

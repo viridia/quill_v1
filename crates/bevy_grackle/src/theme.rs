@@ -4,31 +4,56 @@ use static_init::dynamic;
 
 use crate::tokens::*;
 
+// Standard colors
+
 pub const COLOR_BLACK: Color = Color::rgb(0.0, 0.0, 0.0);
 pub const COLOR_WHITE: Color = Color::rgb(1.0, 1.0, 1.0);
+
 pub const COLOR_BG: Color = Color::rgb(0.200 * 0.9, 0.200 * 0.9, 0.306 * 0.9);
 
-pub const COLOR_G0: Color = Color::rgb(0.937, 0.937, 0.996);
-pub const COLOR_G1: Color = Color::rgb(0.816, 0.816, 0.894);
+// pub const COLOR_G0: Color = Color::rgb(0.937, 0.937, 0.996);
+// pub const COLOR_G1: Color = Color::rgb(0.816, 0.816, 0.894);
 pub const COLOR_G2: Color = Color::rgb(0.702, 0.702, 0.804);
-pub const COLOR_G3: Color = Color::rgb(0.580, 0.580, 0.722);
+// pub const COLOR_G3: Color = Color::rgb(0.580, 0.580, 0.722);
 pub const COLOR_G4: Color = Color::rgb(0.459, 0.459, 0.643);
 pub const COLOR_G5: Color = Color::rgb(0.361, 0.361, 0.537);
 pub const COLOR_G6: Color = Color::rgb(0.278, 0.278, 0.420);
 pub const COLOR_G7: Color = Color::rgb(0.212, 0.212, 0.318);
-pub const COLOR_G8: Color = Color::rgb(0.118, 0.118, 0.192);
-pub const COLOR_G9: Color = Color::rgb(0.035, 0.035, 0.090);
+// pub const COLOR_G8: Color = Color::rgb(0.118, 0.118, 0.192);
+// pub const COLOR_G9: Color = Color::rgb(0.035, 0.035, 0.090);
 
-pub const COLOR_TEAL0: Color = Color::rgb(0.871, 1.000, 0.976);
-pub const COLOR_TEAL1: Color = Color::rgb(0.702, 1.000, 0.925);
-pub const COLOR_TEAL2: Color = Color::rgb(0.522, 0.996, 0.871);
-pub const COLOR_TEAL3: Color = Color::rgb(0.345, 0.996, 0.824);
-pub const COLOR_TEAL4: Color = Color::rgb(0.220, 0.996, 0.780);
-pub const COLOR_TEAL5: Color = Color::rgb(0.165, 0.898, 0.678);
-pub const COLOR_TEAL6: Color = Color::rgb(0.114, 0.698, 0.529);
-pub const COLOR_TEAL7: Color = Color::rgb(0.063, 0.502, 0.380);
-pub const COLOR_TEAL8: Color = Color::rgb(0.220, 0.282, 0.345);
-pub const COLOR_TEAL9: Color = Color::rgb(0.000, 0.106, 0.071);
+pub const COLOR_GRAY_50: Color = Color::rgb(0.980, 0.980, 0.980);
+pub const COLOR_GRAY_100: Color = Color::rgb(0.961, 0.961, 0.961);
+pub const COLOR_GRAY_200: Color = Color::rgb(0.933, 0.933, 0.933);
+pub const COLOR_GRAY_300: Color = Color::rgb(0.878, 0.878, 0.878);
+pub const COLOR_GRAY_400: Color = Color::rgb(0.741, 0.741, 0.741);
+pub const COLOR_GRAY_500: Color = Color::rgb(0.620, 0.620, 0.620);
+pub const COLOR_GRAY_600: Color = Color::rgb(0.459, 0.459, 0.459);
+pub const COLOR_GRAY_700: Color = Color::rgb(0.380, 0.380, 0.380);
+pub const COLOR_GRAY_800: Color = Color::rgb(0.259, 0.259, 0.259);
+pub const COLOR_GRAY_900: Color = Color::rgb(0.129, 0.129, 0.129);
+
+pub const COLOR_BLUEGRAY_50: Color = Color::rgb(0.925, 0.937, 0.941);
+pub const COLOR_BLUEGRAY_100: Color = Color::rgb(0.812, 0.847, 0.859);
+pub const COLOR_BLUEGRAY_200: Color = Color::rgb(0.690, 0.745, 0.773);
+pub const COLOR_BLUEGRAY_300: Color = Color::rgb(0.565, 0.643, 0.682);
+pub const COLOR_BLUEGRAY_400: Color = Color::rgb(0.471, 0.565, 0.612);
+pub const COLOR_BLUEGRAY_500: Color = Color::rgb(0.376, 0.490, 0.545);
+pub const COLOR_BLUEGRAY_600: Color = Color::rgb(0.329, 0.431, 0.478);
+pub const COLOR_BLUEGRAY_700: Color = Color::rgb(0.333, 0.353, 0.392);
+pub const COLOR_BLUEGRAY_800: Color = Color::rgb(0.216, 0.278, 0.314);
+pub const COLOR_BLUEGRAY_900: Color = Color::rgb(0.149, 0.196, 0.220);
+
+pub const COLOR_TEAL_50: Color = Color::rgb(0.878, 0.949, 0.945);
+pub const COLOR_TEAL_100: Color = Color::rgb(0.698, 0.875, 0.843);
+pub const COLOR_TEAL_200: Color = Color::rgb(0.502, 0.796, 0.768);
+pub const COLOR_TEAL_300: Color = Color::rgb(0.302, 0.714, 0.675);
+pub const COLOR_TEAL_400: Color = Color::rgb(0.149, 0.663, 0.612);
+pub const COLOR_TEAL_500: Color = Color::rgb(0.000, 0.588, 0.533);
+pub const COLOR_TEAL_600: Color = Color::rgb(0.000, 0.537, 0.478);
+pub const COLOR_TEAL_700: Color = Color::rgb(0.000, 0.475, 0.420);
+pub const COLOR_TEAL_800: Color = Color::rgb(0.000, 0.412, 0.361);
+pub const COLOR_TEAL_900: Color = Color::rgb(0.000, 0.302, 0.251);
 
 pub const COLOR_PRIMARY: Color = Color::rgb(0.220, 0.345, 0.408);
 pub const COLOR_DANGER: Color = Color::rgb(0.267, 0.000, 0.333);
@@ -40,6 +65,8 @@ static STYLE_TYPOGRAPHY: StyleHandle = StyleHandle::build(|ss| {
     )))
 });
 
+// Sidebar
+
 #[dynamic]
 static STYLE_LT_SIDEBAR: StyleHandle = StyleHandle::build(|ss| {
     ss.background_color(COLOR_G2)
@@ -50,7 +77,15 @@ static STYLE_LT_SIDEBAR: StyleHandle = StyleHandle::build(|ss| {
 });
 
 #[dynamic]
-static STYLE_DK_SIDEBAR: StyleHandle = StyleHandle::build(|ss| ss.background_color(COLOR_BG));
+static STYLE_DK_SIDEBAR: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_BG)
+        .font_size(14.)
+        .font(Some(AssetPath::from(
+            "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
+        )))
+});
+
+// Buttons
 
 #[dynamic]
 static STYLE_LT_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
@@ -88,6 +123,8 @@ static STYLE_DK_BUTTON_DANGER: StyleHandle = StyleHandle::build(|ss| {
         .selector(":hover.pressed", |ss| ss.background_color(COLOR_DANGER))
 });
 
+// Splitter
+
 #[dynamic]
 static STYLE_LT_SPLITTER: StyleHandle = StyleHandle::build(|ss| {
     ss.background_color(COLOR_G4)
@@ -97,9 +134,9 @@ static STYLE_LT_SPLITTER: StyleHandle = StyleHandle::build(|ss| {
 // The decorative handle inside the splitter.
 #[dynamic]
 static STYLE_LT_SPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color(COLOR_G3)
-        .selector(":hover > &", |ss| ss.background_color(COLOR_G2))
-        .selector(".drag > &", |ss| ss.background_color(COLOR_G4))
+    ss.background_color(COLOR_GRAY_500)
+        .selector(":hover > &", |ss| ss.background_color(COLOR_GRAY_400))
+        .selector(".drag > &", |ss| ss.background_color(COLOR_GRAY_600))
 });
 
 #[dynamic]
@@ -116,18 +153,22 @@ static STYLE_DK_SPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
         .selector(".drag > &", |ss| ss.background_color("#484848"))
 });
 
+// Slider
+
 #[dynamic]
 static STYLE_LT_SLIDER_TRACK: StyleHandle = StyleHandle::build(|ss| ss.background_color(COLOR_G4));
 
 #[dynamic]
 static STYLE_LT_SLIDER_TRACK_ACTIVE: StyleHandle =
-    StyleHandle::build(|ss| ss.background_color(COLOR_TEAL5));
+    StyleHandle::build(|ss| ss.background_color(COLOR_TEAL_500));
 
 #[dynamic]
 static STYLE_LT_SLIDER_THUMB: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color(COLOR_G1)
+    ss.background_color(COLOR_GRAY_200)
         .background_image(Some(AssetPath::from("grackle://icons/disc.png")))
-        .selector(":hover > &,.drag > &", |ss| ss.background_color(COLOR_G0))
+        .selector(":hover > &,.drag > &", |ss| {
+            ss.background_color(COLOR_GRAY_50)
+        })
 });
 
 #[dynamic]
@@ -142,6 +183,36 @@ static STYLE_DK_SLIDER_THUMB: StyleHandle = StyleHandle::build(|ss| {
     ss.background_color("#777")
         .background_image(Some(AssetPath::from("grackle://icons/disc.png")))
         .selector(":hover > &,.drag > &", |ss| ss.background_color("#aaa"))
+});
+
+// Menus
+
+#[dynamic]
+static STYLE_LT_MENU_POPUP: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color(COLOR_GRAY_300)
+        .border_color(COLOR_BLACK)
+});
+
+// The decorative handle inside the splitter.
+#[dynamic]
+static STYLE_LT_MENU_ITEM: StyleHandle = StyleHandle::build(|ss| {
+    ss.color(COLOR_BLACK)
+        .selector(":hover", |ss| ss.background_color(COLOR_GRAY_400))
+        .selector(".selected", |ss| ss.background_color(COLOR_GRAY_600))
+});
+
+#[dynamic]
+static STYLE_DK_MENU_POPUP: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#181818")
+        .selector(".drag", |ss| ss.background_color("#080808"))
+});
+
+// The decorative handle inside the splitter.
+#[dynamic]
+static STYLE_DK_MENU_ITEM: StyleHandle = StyleHandle::build(|ss| {
+    ss.background_color("#282828")
+        .selector(":hover", |ss| ss.background_color("#383838"))
+        .selector(".drag > &", |ss| ss.background_color("#484848"))
 });
 
 pub enum GrackleTheme {
@@ -162,6 +233,8 @@ pub fn init_grackle_theme<T>(cx: &mut Cx<T>, theme: GrackleTheme) {
             cx.define_scoped_value(H_SLIDER_TRACK, STYLE_LT_SLIDER_TRACK.clone());
             cx.define_scoped_value(H_SLIDER_TRACK_ACTIVE, STYLE_LT_SLIDER_TRACK_ACTIVE.clone());
             cx.define_scoped_value(H_SLIDER_THUMB, STYLE_LT_SLIDER_THUMB.clone());
+            cx.define_scoped_value(MENU_POPUP, STYLE_LT_MENU_POPUP.clone());
+            cx.define_scoped_value(MENU_ITEM, STYLE_LT_MENU_ITEM.clone());
         }
         GrackleTheme::Dark => {
             cx.define_scoped_value(TYPOGRAPHY, STYLE_TYPOGRAPHY.clone());
@@ -174,6 +247,8 @@ pub fn init_grackle_theme<T>(cx: &mut Cx<T>, theme: GrackleTheme) {
             cx.define_scoped_value(H_SLIDER_TRACK, STYLE_DK_SLIDER_TRACK.clone());
             cx.define_scoped_value(H_SLIDER_TRACK_ACTIVE, STYLE_DK_SLIDER_TRACK_ACTIVE.clone());
             cx.define_scoped_value(H_SLIDER_THUMB, STYLE_DK_SLIDER_THUMB.clone());
+            cx.define_scoped_value(MENU_POPUP, STYLE_DK_MENU_POPUP.clone());
+            cx.define_scoped_value(MENU_ITEM, STYLE_DK_MENU_ITEM.clone());
         }
     }
 }
