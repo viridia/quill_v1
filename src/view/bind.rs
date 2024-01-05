@@ -34,6 +34,9 @@ trait AnyBindState: Send {
 
 impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker, F> {
     fn create_handle(&mut self) -> ViewHandle {
+        if self.props.is_none() {
+            panic!("BindState::create_handle called twice");
+        }
         ViewHandle::new(self.presenter, self.props.take().unwrap())
     }
 
@@ -125,7 +128,7 @@ impl View for Bind {
     fn raze(&self, world: &mut World, state: &mut Self::State) {
         let mut entt = world.entity_mut(*state);
         let Some(handle) = entt.get_mut::<ViewHandle>() else {
-            return;
+            panic!("Bind::raze called without ViewHandle");
         };
         let inner = handle.inner.clone();
         // Raze the contents of the child ViewState.
