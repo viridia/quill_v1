@@ -149,7 +149,7 @@ pub fn menu_button<
 ) -> impl View {
     bevy_egret::widgets::menu_button.bind(bevy_egret::widgets::MenuButtonProps {
         children: cx.props.children.clone(),
-        popup: ViewParam::new(menu_popup.bind(MenuPopupProps {
+        popup: menu_popup.bind(MenuPopupProps {
             children: cx.props.items.clone(),
             class_names: "indent".if_true(cx.props.indent),
             style: (
@@ -159,7 +159,7 @@ pub fn menu_button<
                 cx.props.style.clone(),
             ),
             marker: std::marker::PhantomData,
-        })),
+        }),
         style: (
             STYLE_MENU_BUTTON.clone(),
             cx.get_scoped_value(BUTTON_DEFAULT),

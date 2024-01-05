@@ -25,7 +25,7 @@ pub struct MenuButtonProps<
     pub marker: std::marker::PhantomData<&'a ()>,
 }
 
-#[derive(PartialEq, Default)]
+#[derive(Clone, PartialEq, Default)]
 pub struct MenuPopupProps<'a, V: View + Clone, S: StyleTuple = (), C: ClassNames<'a> = ()> {
     pub children: V,
     pub style: S,
@@ -33,7 +33,7 @@ pub struct MenuPopupProps<'a, V: View + Clone, S: StyleTuple = (), C: ClassNames
     pub marker: std::marker::PhantomData<&'a ()>,
 }
 
-#[derive(PartialEq, Default)]
+#[derive(Clone, PartialEq, Default)]
 pub struct MenuItemProps<V: View + Clone, S: StyleTuple = ()> {
     pub id: &'static str,
     pub style: S,
@@ -88,26 +88,28 @@ pub fn menu_button<'a, V: View + Clone, VI: View + Clone, S: StyleTuple, C: Clas
             cx.props.children.clone(),
             If::new(
                 state != EnterExitState::Exited,
-                Portal::new().children((Element::new()
-                    .class_names(state.as_class_name())
-                    .insert((
-                        On::<Pointer<Down>>::run(move |mut writer: EventWriter<MenuEvent>| {
-                            writer.send(MenuEvent {
-                                action: MenuAction::Close,
-                                target: id_anchor,
-                            });
-                        }),
-                        Style {
-                            left: Val::Px(0.),
-                            right: Val::Px(0.),
-                            top: Val::Px(0.),
-                            bottom: Val::Px(0.),
-                            position_type: PositionType::Absolute,
-                            ..default()
-                        },
-                        ZIndex::Global(100),
-                    ))
-                    .children(cx.props.popup.clone()),)),
+                Portal::new().children(
+                    Element::new()
+                        .class_names(state.as_class_name())
+                        .insert((
+                            On::<Pointer<Down>>::run(move |mut writer: EventWriter<MenuEvent>| {
+                                writer.send(MenuEvent {
+                                    action: MenuAction::Close,
+                                    target: id_anchor,
+                                });
+                            }),
+                            Style {
+                                left: Val::Px(0.),
+                                right: Val::Px(0.),
+                                top: Val::Px(0.),
+                                bottom: Val::Px(0.),
+                                position_type: PositionType::Absolute,
+                                ..default()
+                            },
+                            ZIndex::Global(100),
+                        ))
+                        .children(cx.props.popup.clone()),
+                ),
                 (),
             ),
         ))
