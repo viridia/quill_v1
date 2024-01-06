@@ -12,16 +12,16 @@ use crate::node_span::NodeSpan;
 /// first created, and also will happen if the output entity is replaced by a different entity.
 pub struct ViewInsertBundle<V: View, B: Bundle> {
     pub(crate) inner: V,
-    pub(crate) component: Cell<Option<B>>,
+    pub(crate) bundle: Cell<Option<B>>,
 }
 
 impl<V: View, B: Bundle> ViewInsertBundle<V, B> {
-    fn insert_component(&self, nodes: &NodeSpan, vc: &mut BuildContext) {
+    fn insert_bundle(&self, nodes: &NodeSpan, vc: &mut BuildContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
                 let em = &mut vc.entity_mut(*entity);
-                em.insert(self.component.take().unwrap());
+                em.insert(self.bundle.take().unwrap());
             }
             NodeSpan::Fragment(ref _nodes) => {
                 panic!("Can only insert into a singular node")
@@ -40,7 +40,7 @@ impl<V: View, B: Bundle> View for ViewInsertBundle<V, B> {
     fn build(&self, vc: &mut BuildContext) -> Self::State {
         let state = self.inner.build(vc);
         let mut nodes = self.inner.nodes(vc, &state);
-        self.insert_component(&mut nodes, vc);
+        self.insert_bundle(&mut nodes, vc);
         (state, nodes)
     }
 
@@ -50,7 +50,7 @@ impl<V: View, B: Bundle> View for ViewInsertBundle<V, B> {
         // Only insert the component when the output entity has changed.
         if state.1 != nodes {
             state.1 = nodes;
-            self.insert_component(&mut state.1, vc);
+            self.insert_bundle(&mut state.1, vc);
         }
     }
 

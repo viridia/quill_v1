@@ -4,3 +4,4 @@ pub mod hooks;
 pub mod widgets;
 
 pub use events::*;
+pub use floating::*;

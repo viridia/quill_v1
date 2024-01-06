@@ -1,5 +1,8 @@
 use bevy::{prelude::*, ui};
-use bevy_egret::widgets::{menu_popup, MenuPopupProps};
+use bevy_egret::{
+    floating::{FloatAlign, FloatPosition, FloatSide, Floating},
+    widgets::{menu_popup, MenuPopupProps},
+};
 use bevy_quill::prelude::*;
 use static_init::dynamic;
 
@@ -43,6 +46,7 @@ static STYLE_MENU_POPUP: StyleHandle = StyleHandle::build(|ss| {
             ..default()
         }])
         .selector(".entering > &,.entered > &", |ss| ss.scale(1.))
+        .selector(".enter-start > &", |ss| ss.display(ui::Display::None))
 });
 
 #[dynamic]
@@ -145,21 +149,43 @@ pub fn menu_button<
     VI: View + Clone + PartialEq + 'static,
     ST: StyleTuple + PartialEq + 'static,
 >(
-    cx: Cx<MenuButtonProps<V, VI, ST>>,
+    mut cx: Cx<MenuButtonProps<V, VI, ST>>,
 ) -> impl View {
+    let id_anchor = cx.create_entity();
     bevy_egret::widgets::menu_button.bind(bevy_egret::widgets::MenuButtonProps {
+        anchor: id_anchor,
         children: cx.props.children.clone(),
-        popup: menu_popup.bind(MenuPopupProps {
-            children: cx.props.items.clone(),
-            class_names: "indent".if_true(cx.props.indent),
-            style: (
-                STYLE_MENU_POPUP.clone(),
-                cx.get_scoped_value(TYPOGRAPHY),
-                cx.get_scoped_value(MENU_POPUP),
-                cx.props.style.clone(),
-            ),
-            marker: std::marker::PhantomData,
-        }),
+        popup: ViewParam::new(
+            menu_popup
+                .bind(MenuPopupProps {
+                    children: cx.props.items.clone(),
+                    class_names: "indent".if_true(cx.props.indent),
+                    style: (
+                        STYLE_MENU_POPUP.clone(),
+                        cx.get_scoped_value(TYPOGRAPHY),
+                        cx.get_scoped_value(MENU_POPUP),
+                        cx.props.style.clone(),
+                    ),
+                    marker: std::marker::PhantomData,
+                })
+                .insert(Floating {
+                    anchor: id_anchor,
+                    position: vec![
+                        FloatPosition {
+                            side: FloatSide::Right,
+                            align: FloatAlign::Start,
+                            stretch: false,
+                            gap: 2.,
+                        },
+                        FloatPosition {
+                            side: FloatSide::Bottom,
+                            align: FloatAlign::Start,
+                            stretch: false,
+                            gap: 2.,
+                        },
+                    ],
+                }),
+        ),
         style: (
             STYLE_MENU_BUTTON.clone(),
             cx.get_scoped_value(BUTTON_DEFAULT),

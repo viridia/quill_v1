@@ -108,7 +108,7 @@ where
     fn insert<B: Bundle>(self, component: B) -> ViewInsertBundle<Self, B> {
         ViewInsertBundle {
             inner: self,
-            component: Cell::new(Some(component)),
+            bundle: Cell::new(Some(component)),
         }
     }
 

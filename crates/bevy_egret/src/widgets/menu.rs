@@ -4,12 +4,12 @@ use bevy_quill::prelude::*;
 
 use crate::{
     hooks::{EnterExitApi, EnterExitState},
-    MenuAction, MenuEvent,
+    Clicked, MenuAction, MenuEvent,
 };
 
 const CLS_OPEN: &str = "open";
 
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone, PartialEq)]
 pub struct MenuButtonProps<
     'a,
     V: View + Clone,
@@ -17,6 +17,7 @@ pub struct MenuButtonProps<
     S: StyleTuple = (),
     C: ClassNames<'a> = (),
 > {
+    pub anchor: Entity,
     pub children: V,
     pub popup: VI,
     pub style: S,
@@ -46,10 +47,10 @@ pub struct MenuItemProps<V: View + Clone, S: StyleTuple = ()> {
 pub fn menu_button<'a, V: View + Clone, VI: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
     mut cx: Cx<MenuButtonProps<'a, V, VI, S, C>>,
 ) -> impl View {
-    let id_anchor = cx.create_entity();
+    let id_anchor = cx.props.anchor;
     let is_open = cx.create_atom_init::<bool>(|| false);
     let state = cx.use_enter_exit(cx.read_atom(is_open), 0.3);
-    RefElement::new(id_anchor)
+    RefElement::new(cx.props.anchor)
         .named("menu-button")
         .class_names((
             cx.props.class_names.clone(),
@@ -132,23 +133,23 @@ pub fn menu_popup<'a, V: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
 }
 
 pub fn menu_item<'a, V: View + Clone, S: StyleTuple>(mut cx: Cx<MenuItemProps<V, S>>) -> impl View {
-    let is_selected = cx.create_atom_init::<bool>(|| false);
+    let _is_selected = cx.create_atom_init::<bool>(|| false);
     // Needs to be a local variable so that it can be captured in the event handler.
-    // let id = cx.props.id;
+    let id = cx.props.id;
     Element::new()
         .named("menu-item")
         // .class_names((
         //     cx.props.class_names.clone(),
         //     CLS_PRESSED.if_true(cx.read_atom(is_selected)),
         // ))
-        // .insert((On::<Pointer<Click>>::run(
-        //     move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
-        //         writer.send(Clicked {
-        //             target: ev.target,
-        //             id,
-        //         });
-        //     },
-        // ),))
+        .insert((On::<Pointer<Click>>::run(
+            move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
+                writer.send(Clicked {
+                    target: ev.target,
+                    id,
+                });
+            },
+        ),))
         .styled(cx.props.style.clone())
         .children(cx.props.label.clone())
 }

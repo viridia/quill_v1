@@ -8,7 +8,7 @@ impl Plugin for GracklePlugin {
         app.add_plugins((
             bevy_egret::EgretEventsPlugin,
             bevy_egret::hooks::EnterExitPlugin,
+            bevy_egret::EgretFloatingPlugin,
         ));
-        // .add_plugin(bevy_egret::floating::EgretFloatingPlugin);
     }
 }

@@ -11,14 +11,10 @@ pub const COLOR_WHITE: Color = Color::rgb(1.0, 1.0, 1.0);
 
 pub const COLOR_BG: Color = Color::rgb(0.200 * 0.9, 0.200 * 0.9, 0.306 * 0.9);
 
-// pub const COLOR_G0: Color = Color::rgb(0.937, 0.937, 0.996);
-// pub const COLOR_G1: Color = Color::rgb(0.816, 0.816, 0.894);
-pub const COLOR_G2: Color = Color::rgb(0.702, 0.702, 0.804);
-// pub const COLOR_G3: Color = Color::rgb(0.580, 0.580, 0.722);
-pub const COLOR_G4: Color = Color::rgb(0.459, 0.459, 0.643);
-pub const COLOR_G5: Color = Color::rgb(0.361, 0.361, 0.537);
-pub const COLOR_G6: Color = Color::rgb(0.278, 0.278, 0.420);
-pub const COLOR_G7: Color = Color::rgb(0.212, 0.212, 0.318);
+const COLOR_G4: Color = Color::rgb(0.459, 0.459, 0.643);
+const COLOR_G5: Color = Color::rgb(0.361, 0.361, 0.537);
+const COLOR_G6: Color = Color::rgb(0.278, 0.278, 0.420);
+const COLOR_G7: Color = Color::rgb(0.212, 0.212, 0.318);
 // pub const COLOR_G8: Color = Color::rgb(0.118, 0.118, 0.192);
 // pub const COLOR_G9: Color = Color::rgb(0.035, 0.035, 0.090);
 
@@ -69,7 +65,7 @@ static STYLE_TYPOGRAPHY: StyleHandle = StyleHandle::build(|ss| {
 
 #[dynamic]
 static STYLE_LT_SIDEBAR: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color(COLOR_G2)
+    ss.background_color(COLOR_GRAY_400)
         .font_size(14.)
         .font(Some(AssetPath::from(
             "grackle://fonts/Ubuntu/Ubuntu-Medium.ttf",
@@ -89,11 +85,12 @@ static STYLE_DK_SIDEBAR: StyleHandle = StyleHandle::build(|ss| {
 
 #[dynamic]
 static STYLE_LT_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color(COLOR_G5)
-        .border_color(COLOR_BLACK)
-        .selector(".pressed", |ss| ss.background_color(COLOR_G6))
-        .selector(":hover", |ss| ss.background_color(COLOR_G4))
-        .selector(":hover.pressed", |ss| ss.background_color(COLOR_G6))
+    ss.background_color(COLOR_GRAY_500)
+        .border_color(COLOR_GRAY_700)
+        .color(COLOR_GRAY_900)
+        .selector(".pressed", |ss| ss.background_color(COLOR_GRAY_300))
+        .selector(":hover", |ss| ss.background_color(COLOR_GRAY_400))
+        .selector(":hover.pressed", |ss| ss.background_color(COLOR_GRAY_200))
 });
 
 #[dynamic]
@@ -127,16 +124,16 @@ static STYLE_DK_BUTTON_DANGER: StyleHandle = StyleHandle::build(|ss| {
 
 #[dynamic]
 static STYLE_LT_SPLITTER: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color(COLOR_G4)
-        .selector(".drag", |ss| ss.background_color(COLOR_G5))
+    ss.background_color(COLOR_GRAY_500)
+        .selector(".drag", |ss| ss.background_color(COLOR_GRAY_600))
 });
 
 // The decorative handle inside the splitter.
 #[dynamic]
 static STYLE_LT_SPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color(COLOR_GRAY_500)
-        .selector(":hover > &", |ss| ss.background_color(COLOR_GRAY_400))
-        .selector(".drag > &", |ss| ss.background_color(COLOR_GRAY_600))
+    ss.background_color(COLOR_GRAY_600)
+        .selector(":hover > &", |ss| ss.background_color(COLOR_GRAY_700))
+        .selector(".drag > &", |ss| ss.background_color(COLOR_GRAY_700))
 });
 
 #[dynamic]
@@ -156,7 +153,8 @@ static STYLE_DK_SPLITTER_INNER: StyleHandle = StyleHandle::build(|ss| {
 // Slider
 
 #[dynamic]
-static STYLE_LT_SLIDER_TRACK: StyleHandle = StyleHandle::build(|ss| ss.background_color(COLOR_G4));
+static STYLE_LT_SLIDER_TRACK: StyleHandle =
+    StyleHandle::build(|ss| ss.background_color(COLOR_GRAY_500));
 
 #[dynamic]
 static STYLE_LT_SLIDER_TRACK_ACTIVE: StyleHandle =
@@ -189,7 +187,7 @@ static STYLE_DK_SLIDER_THUMB: StyleHandle = StyleHandle::build(|ss| {
 
 #[dynamic]
 static STYLE_LT_MENU_POPUP: StyleHandle = StyleHandle::build(|ss| {
-    ss.background_color(COLOR_GRAY_300)
+    ss.background_color(COLOR_GRAY_400)
         .border_color(COLOR_BLACK)
 });
 
@@ -197,7 +195,7 @@ static STYLE_LT_MENU_POPUP: StyleHandle = StyleHandle::build(|ss| {
 #[dynamic]
 static STYLE_LT_MENU_ITEM: StyleHandle = StyleHandle::build(|ss| {
     ss.color(COLOR_BLACK)
-        .selector(":hover", |ss| ss.background_color(COLOR_GRAY_400))
+        .selector(":hover", |ss| ss.background_color(COLOR_GRAY_500))
         .selector(".selected", |ss| ss.background_color(COLOR_GRAY_600))
 });
 
