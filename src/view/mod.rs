@@ -14,6 +14,7 @@ mod ref_element;
 mod scoped_values;
 pub(crate) mod tracked_resources;
 pub(crate) mod tracking;
+#[allow(clippy::module_inception)]
 pub(crate) mod view;
 mod view_children;
 mod view_classes;

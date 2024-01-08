@@ -263,7 +263,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                           mut theme: ResMut<ThemeSelection>| {
                         match ev.id {
                             "save" => {
-                                atoms.set(open, false);
+                                atoms.set(open, true);
                             }
                             "light-theme" => {
                                 theme.theme = GrackleTheme::Light;

@@ -53,6 +53,7 @@ pub enum Selector {
     Parent(Box<Selector>),
 
     /// List of alternate choices.
+    #[allow(clippy::vec_box)]
     Either(Vec<Box<Selector>>),
 }
 

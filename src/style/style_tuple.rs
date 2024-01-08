@@ -6,6 +6,11 @@ pub trait StyleTuple: Sync + Send + Clone {
     /// Return the actual number of [`StyleHandle`]s in this tuple (including nesting).
     fn len(&self) -> usize;
 
+    /// True if the tuple is empty.
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Insert the [`StyleHandle`]s into a vector.
     fn collect(&self, v: &mut Vec<StyleHandle>);
 

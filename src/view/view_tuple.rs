@@ -13,6 +13,11 @@ pub trait ViewTuple: Send {
     /// Return the number of child views.
     fn len(&self) -> usize;
 
+    /// True if the tuple is empty.
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Return the output nodes for all spans.
     fn span_nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan;
 
