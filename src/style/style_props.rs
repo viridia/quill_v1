@@ -182,7 +182,7 @@ impl StyleSet {
     }
 
     /// Merge the style properties into a computed `Style` object.
-    pub fn apply_to<'a>(
+    pub fn apply_to(
         &self,
         computed: &mut ComputedStyle,
         matcher: &SelectorMatcher,
@@ -194,12 +194,12 @@ impl StyleSet {
         // Apply conditional styles
         for (selector, props) in self.selectors.iter() {
             if matcher.selector_match(selector, entity) {
-                self.apply_attrs_to(&props, computed);
+                self.apply_attrs_to(props, computed);
             }
         }
     }
 
-    fn apply_attrs_to(&self, attrs: &Vec<StyleProp>, computed: &mut ComputedStyle) {
+    fn apply_attrs_to(&self, attrs: &[StyleProp], computed: &mut ComputedStyle) {
         for attr in attrs.iter() {
             match attr {
                 StyleProp::BackgroundImage(image) => {

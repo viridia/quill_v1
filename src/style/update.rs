@@ -9,8 +9,10 @@ use crate::{
     ElementClasses, ElementStyles, SelectorMatcher,
 };
 
-use super::style::TextStyles;
+use super::style_handle::TextStyles;
 
+#[allow(clippy::too_many_arguments)]
+#[allow(clippy::type_complexity)]
 pub(crate) fn update_styles(
     mut commands: Commands,
     query_root: Query<Entity, (With<Node>, Without<Parent>)>,
@@ -60,6 +62,8 @@ pub(crate) fn update_styles(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+#[allow(clippy::type_complexity)]
 fn update_element_styles(
     commands: &mut Commands,
     query_styles: &Query<
@@ -90,9 +94,9 @@ fn update_element_styles(
                 element_style,
                 entity,
                 classes_query,
-                &matcher,
-                &matcher_prev,
-                &parent_query,
+                matcher,
+                matcher_prev,
+                parent_query,
             ),
             None => false,
         };
@@ -116,7 +120,7 @@ fn update_element_styles(
             // Apply element styles to computed
             if let Some(ref element_styles) = elt_styles {
                 for ss in element_styles.styles.iter() {
-                    ss.apply_to(&mut computed, &matcher, &entity);
+                    ss.apply_to(&mut computed, matcher, &entity);
                 }
                 // Load font asset if non-null.
                 if let Some(ref font_path) = computed.font {
@@ -133,7 +137,7 @@ fn update_element_styles(
                 // No change from parent, so we can remove the cached styles and rely on inherited
                 // styles only. Note that for text nodes, we always want to store the inherited
                 // styles, even if they are the same as the parent.
-                inherited_styles_changed = prev_text_styles != None;
+                inherited_styles_changed = prev_text_styles.is_some();
                 if inherited_styles_changed {
                     changed = true;
                     commands.entity(entity).remove::<TextStyles>();
@@ -148,14 +152,11 @@ fn update_element_styles(
             }
 
             if changed {
-                computed.image_handle = match computed.image {
-                    Some(ref path) => Some(
-                        assets.load_with_settings(path, |s: &mut ImageLoaderSettings| {
-                            s.sampler = ImageSampler::linear()
-                        }),
-                    ),
-                    None => None,
-                };
+                computed.image_handle = computed.image.as_ref().map(|path| {
+                    assets.load_with_settings(path, |s: &mut ImageLoaderSettings| {
+                        s.sampler = ImageSampler::linear()
+                    })
+                });
 
                 commands.add(UpdateComputedStyle { entity, computed });
             }
@@ -170,7 +171,7 @@ fn update_element_styles(
             update_element_styles(
                 commands,
                 query_styles,
-                &classes_query,
+                classes_query,
                 parent_query,
                 children_query,
                 matcher,
@@ -203,20 +204,17 @@ fn is_changed(
     if !changed && element_styles.selector_depth > 0 {
         let mut e = entity;
         for _ in 0..element_styles.selector_depth {
-            match classes_query.get(e) {
-                Ok(a_classes) => {
-                    if element_styles.uses_hover
-                        && matcher.is_hovering(&e) != matcher_prev.is_hovering(&e)
-                    {
-                        changed = true;
-                        break;
-                    }
-                    if a_classes.is_changed() {
-                        changed = true;
-                        break;
-                    }
+            if let Ok(a_classes) = classes_query.get(e) {
+                if element_styles.uses_hover
+                    && matcher.is_hovering(&e) != matcher_prev.is_hovering(&e)
+                {
+                    changed = true;
+                    break;
                 }
-                _ => (),
+                if a_classes.is_changed() {
+                    changed = true;
+                    break;
+                }
             }
 
             match parent_query.get(e) {

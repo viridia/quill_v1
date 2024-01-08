@@ -12,7 +12,7 @@ static STYLE_COLLAPSE: StyleHandle = StyleHandle::build(|ss| {
         .margin_left(16)
         .height(0)
         .overflow_y(ui::OverflowAxis::Clip)
-        .transition(&vec![Transition {
+        .transition(&[Transition {
             property: TransitionProperty::Height,
             duration: 0.3,
             timing: timing::EASE_IN_OUT,

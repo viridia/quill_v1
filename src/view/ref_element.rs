@@ -30,7 +30,7 @@ impl View for RefElement {
 
     fn nodes(&self, _vc: &BuildContext, _state: &Self::State) -> NodeSpan {
         // Return just the parent node.
-        return NodeSpan::Node(self.id);
+        NodeSpan::Node(self.id)
     }
 
     fn build(&self, vc: &mut BuildContext) -> Self::State {
@@ -38,13 +38,12 @@ impl View for RefElement {
             visibility: Visibility::Visible,
             ..default()
         },));
-        ()
     }
 
     fn update(&self, _vc: &mut BuildContext, _state: &mut Self::State) {}
 
     fn assemble(&self, _vc: &mut BuildContext, _state: &mut Self::State) -> NodeSpan {
-        return NodeSpan::Node(self.id);
+        NodeSpan::Node(self.id)
     }
 
     fn raze(&self, world: &mut World, _state: &mut Self::State) {
@@ -57,9 +56,7 @@ impl View for RefElement {
 
 impl Clone for RefElement {
     fn clone(&self) -> Self {
-        Self {
-            id: self.id.clone(),
-        }
+        Self { id: self.id }
     }
 }
 

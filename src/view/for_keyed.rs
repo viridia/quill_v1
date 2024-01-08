@@ -29,6 +29,7 @@ impl<Key: Send + PartialEq, V: View> KeyedListItem<Key, V> {
 }
 
 #[doc(hidden)]
+#[allow(clippy::needless_range_loop)]
 pub struct ForKeyed<
     Item: Send + Clone,
     Key: Send + PartialEq,
@@ -44,6 +45,7 @@ pub struct ForKeyed<
     key: PhantomData<Key>,
 }
 
+#[allow(clippy::needless_range_loop)]
 impl<
         Item: Send + Clone,
         Key: Send + PartialEq,
@@ -95,7 +97,7 @@ where
             for i in prev_range {
                 let prev = &mut prev_state[i];
                 if let Some(ref view) = prev.view {
-                    view.raze(&mut vc.world, prev.state.as_mut().unwrap());
+                    view.raze(vc.world, prev.state.as_mut().unwrap());
                 }
             }
             // Build new elements
@@ -128,7 +130,7 @@ where
                 for i in prev_range.start..prev_start {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(&mut vc.world, prev.state.as_mut().unwrap());
+                        view.raze(vc.world, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -171,7 +173,7 @@ where
                 for i in prev_end..prev_range.end {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(&mut vc.world, prev.state.as_mut().unwrap());
+                        view.raze(vc.world, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -187,6 +189,7 @@ where
     }
 }
 
+#[allow(clippy::needless_range_loop)]
 impl<
         Item: Send + Clone,
         Key: Send + PartialEq,
@@ -253,8 +256,7 @@ where
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {
-        for i in 0..state.len() {
-            let child_state = &mut state[i];
+        for child_state in state {
             if let Some(ref view) = child_state.view {
                 view.raze(world, child_state.state.as_mut().unwrap());
             }
@@ -277,7 +279,7 @@ where
             items: self.items.clone(),
             keyof: self.keyof.clone(),
             each: self.each.clone(),
-            key: self.key.clone(),
+            key: self.key,
         }
     }
 }

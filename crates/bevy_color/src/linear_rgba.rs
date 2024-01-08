@@ -89,6 +89,7 @@ impl From<SRgba> for LinearRgba {
     }
 }
 
+#[allow(clippy::excessive_precision)]
 impl From<Oklaba> for LinearRgba {
     fn from(value: Oklaba) -> Self {
         let Oklaba { l, a, b, alpha } = value;

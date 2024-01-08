@@ -41,7 +41,7 @@ impl ViewHandle {
     }
 
     /// Update the copy of props in this view state.
-    pub fn update_props<'a>(&mut self, props: &'a dyn Any) -> bool {
+    pub fn update_props(&mut self, props: &dyn Any) -> bool {
         self.inner.lock().unwrap().update_props(props)
     }
 }
@@ -95,10 +95,10 @@ pub trait AnyPresenterState: Send {
     fn attach(&mut self, vc: &mut BuildContext, entity: Entity);
 
     /// Update the copy of props in this view state.
-    fn update_props<'a>(&mut self, props: &'a dyn Any) -> bool;
+    fn update_props(&mut self, props: &dyn Any) -> bool;
 
     /// Update the copy of props in this view state.
-    fn get_props<'a>(&'a mut self) -> &'a mut dyn Any;
+    fn get_props(&mut self) -> &mut dyn Any;
 }
 
 impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker, F> {
@@ -135,7 +135,7 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         };
 
         let mut entt = vc.world.entity_mut(entity);
-        if tracking.resources.len() > 0 {
+        if !tracking.resources.is_empty() {
             entt.insert(TrackedResources {
                 data: tracking.resources,
             });
@@ -143,7 +143,7 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
             entt.remove::<TrackedResources>();
         }
 
-        if tracking.components.len() > 0 {
+        if !tracking.components.is_empty() {
             entt.insert(TrackedComponents {
                 data: tracking.components,
             });
@@ -151,7 +151,7 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
             entt.remove::<TrackedComponents>();
         }
 
-        if tracking.owned_entities.len() > 0 {
+        if !tracking.owned_entities.is_empty() {
             entt.insert(OwnedEntities(tracking.owned_entities));
         } else {
             entt.remove::<OwnedEntities>();
@@ -184,7 +184,7 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
             .view
             .as_ref()
             .unwrap()
-            .assemble(&mut child_context, &mut self.state.as_mut().unwrap());
+            .assemble(&mut child_context, self.state.as_mut().unwrap());
         if self.nodes != nodes {
             self.nodes = nodes;
             // Parent needs to rebuild children
@@ -198,7 +198,7 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         self.nodes.clone()
     }
 
-    fn update_props<'a>(&mut self, new_props: &'a dyn Any) -> bool {
+    fn update_props(&mut self, new_props: &dyn Any) -> bool {
         let new_props = new_props
             .downcast_ref::<F::Props>()
             .expect("Mismatched props type");
@@ -212,7 +212,7 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         }
     }
 
-    fn get_props<'a>(&'a mut self) -> &'a mut dyn Any {
+    fn get_props(&mut self) -> &mut dyn Any {
         &mut self.props
     }
 }

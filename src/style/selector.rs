@@ -63,7 +63,7 @@ enum SelectorToken<'s> {
     LastChild,
 }
 
-fn parent<'s>(input: &mut &'s str) -> PResult<()> {
+fn parent(input: &mut &str) -> PResult<()> {
     (space0, '>', space0).void().parse_next(input)
 }
 
@@ -109,7 +109,7 @@ fn simple_selector<'s>(input: &mut &'s str) -> PResult<(Option<char>, Vec<Select
         .parse_next(input)
 }
 
-fn combo_selector<'s, 'a>(input: &mut &'s str) -> PResult<Box<Selector>> {
+fn combo_selector(input: &mut &str) -> PResult<Box<Selector>> {
     let mut sel = Box::new(Selector::Accept);
     let (prefix, classes) = simple_selector.parse_next(input)?;
     for tok in classes {
@@ -136,12 +136,12 @@ fn combo_selector<'s, 'a>(input: &mut &'s str) -> PResult<Box<Selector>> {
     Ok(sel)
 }
 
-impl<'a> Selector {
-    pub fn parser<'s>(input: &mut &'s str) -> PResult<Box<Selector>> {
+impl Selector {
+    pub fn parser(input: &mut &str) -> PResult<Box<Selector>> {
         Self::either.parse_next(input)
     }
 
-    fn either<'s>(input: &mut &'s str) -> PResult<Box<Selector>> {
+    fn either(input: &mut &str) -> PResult<Box<Selector>> {
         separated(1.., Self::desc_selector, (space0, ',', space0))
             .map(|mut items: Vec<Box<Selector>>| {
                 if items.len() == 1 {
@@ -153,7 +153,7 @@ impl<'a> Selector {
             .parse_next(input)
     }
 
-    fn desc_selector<'s>(input: &mut &'s str) -> PResult<Box<Selector>> {
+    fn desc_selector(input: &mut &str) -> PResult<Box<Selector>> {
         let mut sel = combo_selector.parse_next(input)?;
         while parent.parse_next(input).is_ok() {
             sel = Box::new(Selector::Parent(sel));
@@ -239,10 +239,10 @@ impl fmt::Display for Selector {
                 let mut p = prev.as_ref();
                 while let Selector::Class(name, desc) = p {
                     str.insert_str(0, name);
-                    str.insert_str(0, ".");
+                    str.insert(0, '.');
                     p = desc.as_ref()
                 }
-                str.insert_str(0, "&");
+                str.insert(0, '&');
                 write!(f, "{}{}", p, str)
             }
 

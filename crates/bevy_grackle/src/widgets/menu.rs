@@ -39,7 +39,7 @@ static STYLE_MENU_POPUP: StyleHandle = StyleHandle::build(|ss| {
         .padding((0, 2))
         .z_index(101)
         .scale(0.5)
-        .transition(&vec![Transition {
+        .transition(&[Transition {
             property: TransitionProperty::Transform,
             duration: 0.3,
             timing: timing::EASE_IN_OUT,
@@ -203,7 +203,7 @@ pub fn menu_button<
     })
 }
 
-pub fn menu_item<'a, V: View + Clone + PartialEq + 'static>(cx: Cx<MenuItemProps<V>>) -> impl View {
+pub fn menu_item<V: View + Clone + PartialEq + 'static>(cx: Cx<MenuItemProps<V>>) -> impl View {
     bevy_egret::widgets::menu_item.bind(bevy_egret::widgets::MenuItemProps {
         label: cx.props.label.clone(),
         id: cx.props.id,

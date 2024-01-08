@@ -57,7 +57,7 @@ impl<V: View> View for ViewClasses<V> {
 
     fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.update(vc, state);
-        self.set_class_names(&mut self.nodes(vc, state), vc);
+        self.set_class_names(&self.nodes(vc, state), vc);
     }
 
     fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {

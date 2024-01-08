@@ -39,6 +39,9 @@ pub trait ClassNames<'a>: Send + Clone {
     /// Return the number of class names.
     fn len(&self) -> usize;
 
+    /// True if the list of class names is empty.
+    fn is_empty(&self) -> bool;
+
     /// Add all of the enabled class names to a set.
     fn add_classes(&self, classes: &mut HashSet<String>);
 
@@ -71,12 +74,20 @@ impl<'a> ClassNames<'a> for () {
         0
     }
 
+    fn is_empty(&self) -> bool {
+        true
+    }
+
     fn add_classes(&self, _classes: &mut HashSet<String>) {}
 }
 
 impl<'a> ClassNames<'a> for String {
     fn len(&self) -> usize {
         1
+    }
+
+    fn is_empty(&self) -> bool {
+        false
     }
 
     fn add_classes(&self, classes: &mut HashSet<String>) {
@@ -87,6 +98,10 @@ impl<'a> ClassNames<'a> for String {
 impl<'a> ClassNames<'a> for &str {
     fn len(&self) -> usize {
         1
+    }
+
+    fn is_empty(&self) -> bool {
+        false
     }
 
     fn add_classes(&self, classes: &mut HashSet<String>) {
@@ -100,6 +115,14 @@ impl<'a, C: ClassNames<'a>> ClassNames<'a> for ConditionalClassNames<'a, C> {
             self.inner.len()
         } else {
             0
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        if self.enabled {
+            self.inner.is_empty()
+        } else {
+            true
         }
     }
 
@@ -138,6 +161,10 @@ impl<'a> ClassNames<'a> for Tuple {
 
     fn len(&self) -> usize {
         for_tuples!( #( self.Tuple.len() )+* );
+    }
+
+    fn is_empty(&self) -> bool {
+        false
     }
 
     fn add_classes(&self, classes: &mut HashSet<String>) {

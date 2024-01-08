@@ -5,7 +5,7 @@ use crate::{BuildContext, View};
 use crate::node_span::NodeSpan;
 
 /// An implementtion of View that allows a callback to modify the generated elements.
-pub struct ViewWith<V: View, F: Fn(EntityWorldMut) -> () + Send> {
+pub struct ViewWith<V: View, F: Fn(EntityWorldMut) + Send> {
     /// Inner view that we're going to modify
     pub(crate) inner: V,
 
@@ -13,7 +13,7 @@ pub struct ViewWith<V: View, F: Fn(EntityWorldMut) -> () + Send> {
     pub(crate) callback: F,
 }
 
-impl<V: View, F: Fn(EntityWorldMut) -> () + Send> ViewWith<V, F> {
+impl<V: View, F: Fn(EntityWorldMut) + Send> ViewWith<V, F> {
     fn with_entity(callback: &F, nodes: &NodeSpan, world: &mut World) {
         match nodes {
             NodeSpan::Empty => (),
@@ -28,7 +28,7 @@ impl<V: View, F: Fn(EntityWorldMut) -> () + Send> ViewWith<V, F> {
     }
 }
 
-impl<V: View, F: Fn(EntityWorldMut) -> () + Send> View for ViewWith<V, F> {
+impl<V: View, F: Fn(EntityWorldMut) + Send> View for ViewWith<V, F> {
     type State = V::State;
 
     fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
@@ -37,13 +37,13 @@ impl<V: View, F: Fn(EntityWorldMut) -> () + Send> View for ViewWith<V, F> {
 
     fn build(&self, vc: &mut BuildContext) -> Self::State {
         let state = self.inner.build(vc);
-        Self::with_entity(&self.callback, &mut self.nodes(vc, &state), vc.world);
+        Self::with_entity(&self.callback, &self.nodes(vc, &state), vc.world);
         state
     }
 
     fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.update(vc, state);
-        Self::with_entity(&self.callback, &mut self.nodes(vc, state), vc.world);
+        Self::with_entity(&self.callback, &self.nodes(vc, state), vc.world);
     }
 
     fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {

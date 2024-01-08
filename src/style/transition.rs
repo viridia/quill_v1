@@ -65,7 +65,7 @@ pub mod timing {
 
     impl TimingFunction for EaseInOut {
         fn eval(&self, t: f32) -> f32 {
-            return -((PI * t).cos() - 1.) / 2.;
+            -((PI * t).cos() - 1.) / 2.
         }
     }
 
@@ -269,15 +269,12 @@ impl AnimatedLayoutProp {
         };
 
         // Assume that all values are in pixels, we don't try and animate in other units.
-        match (next, prev) {
-            (ui::Val::Px(next_value), ui::Val::Px(prev_value)) => {
-                if self.target != next_value {
-                    self.origin = prev_value;
-                    self.target = next_value;
-                    self.state.clock = 0.;
-                }
+        if let (ui::Val::Px(next_value), ui::Val::Px(prev_value)) = (next, prev) {
+            if self.target != next_value {
+                self.origin = prev_value;
+                self.target = next_value;
+                self.state.clock = 0.;
             }
-            _ => {}
         }
     }
 }

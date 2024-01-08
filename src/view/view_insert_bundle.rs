@@ -39,8 +39,8 @@ impl<V: View, B: Bundle> View for ViewInsertBundle<V, B> {
 
     fn build(&self, vc: &mut BuildContext) -> Self::State {
         let state = self.inner.build(vc);
-        let mut nodes = self.inner.nodes(vc, &state);
-        self.insert_bundle(&mut nodes, vc);
+        let nodes = self.inner.nodes(vc, &state);
+        self.insert_bundle(&nodes, vc);
         (state, nodes)
     }
 
@@ -50,7 +50,7 @@ impl<V: View, B: Bundle> View for ViewInsertBundle<V, B> {
         // Only insert the component when the output entity has changed.
         if state.1 != nodes {
             state.1 = nodes;
-            self.insert_bundle(&mut state.1, vc);
+            self.insert_bundle(&state.1, vc);
         }
     }
 

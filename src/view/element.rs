@@ -6,7 +6,7 @@ use crate::node_span::NodeSpan;
 
 /// A View which renders a NodeBundle that can have multiple children, with no inherent style
 /// or behavior. Basically the equivalent of an HTML 'div'.
-#[derive(Copy)]
+#[derive(Copy, Default)]
 pub struct Element {}
 
 impl Element {
@@ -21,7 +21,7 @@ impl View for Element {
 
     fn nodes(&self, _vc: &BuildContext, state: &Self::State) -> NodeSpan {
         // Return just the parent node.
-        return NodeSpan::Node(*state);
+        NodeSpan::Node(*state)
     }
 
     fn build(&self, vc: &mut BuildContext) -> Self::State {
@@ -41,7 +41,7 @@ impl View for Element {
     fn update(&self, _vc: &mut BuildContext, _state: &mut Self::State) {}
 
     fn assemble(&self, _vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        return NodeSpan::Node(*state);
+        NodeSpan::Node(*state)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {

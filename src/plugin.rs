@@ -136,7 +136,7 @@ fn render_views(world: &mut World) {
     loop {
         let mut qf = world.query_filtered::<Entity, With<PresenterGraphChanged>>();
         let changed_entities: Vec<Entity> = qf.iter(world).collect();
-        if changed_entities.len() == 0 {
+        if changed_entities.is_empty() {
             break;
         }
         // println!("Entities changed: {}", changed_entities.len());

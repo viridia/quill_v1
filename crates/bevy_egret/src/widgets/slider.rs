@@ -49,7 +49,10 @@ impl<V: View, F: Fn(SliderChildProps) -> V, S: StyleTuple> PartialEq for SliderP
             && self.min == other.min
             && self.max == other.max
             && self.value == other.value
-            && self.children.as_ref() as *const _ == other.children.as_ref() as *const _
+            && std::ptr::eq(
+                self.children.as_ref() as *const _,
+                other.children.as_ref() as *const _,
+            )
     }
 }
 
@@ -57,10 +60,10 @@ impl<V: View, F: Fn(SliderChildProps) -> V, S: StyleTuple> Clone for SliderProps
     fn clone(&self) -> Self {
         Self {
             id: self.id,
-            min: self.min.clone(),
-            max: self.max.clone(),
-            value: self.value.clone(),
-            thumb_size: self.thumb_size.clone(),
+            min: self.min,
+            max: self.max,
+            value: self.value,
+            thumb_size: self.thumb_size,
             children: self.children.clone(),
             style: self.style.clone(),
         }
@@ -77,7 +80,7 @@ struct DragState {
 pub fn h_slider<V: View, F: Fn(SliderChildProps) -> V, S: StyleTuple>(
     mut cx: Cx<SliderProps<V, F, S>>,
 ) -> impl View {
-    let drag_state = cx.create_atom_init::<DragState>(|| DragState::default());
+    let drag_state = cx.create_atom_init::<DragState>(DragState::default);
     // Pain point: Need to capture all props for closures.
     let id = cx.props.id;
     let thumb_size = cx.props.thumb_size;
@@ -121,24 +124,20 @@ pub fn h_slider<V: View, F: Fn(SliderChildProps) -> V, S: StyleTuple>(
                       mut writer: EventWriter<ValueChanged<f32>>| {
                     let ds = atoms.get(drag_state);
                     if ds.dragging {
-                        match query.get(ev.listener()) {
-                            Ok((node, transform)) => {
-                                // Measure node width and slider value.
-                                let slider_width =
-                                    node.logical_rect(transform).width() - thumb_size;
-                                let new_value = if range > 0. {
-                                    ds.offset + (ev.distance.x * range) / slider_width
-                                } else {
-                                    min + range * 0.5
-                                };
-                                writer.send(ValueChanged::<f32> {
-                                    target: ev.target,
-                                    id,
-                                    value: new_value.clamp(min, max),
-                                    finish: false,
-                                });
-                            }
-                            _ => return,
+                        if let Ok((node, transform)) = query.get(ev.listener()) {
+                            // Measure node width and slider value.
+                            let slider_width = node.logical_rect(transform).width() - thumb_size;
+                            let new_value = if range > 0. {
+                                ds.offset + (ev.distance.x * range) / slider_width
+                            } else {
+                                min + range * 0.5
+                            };
+                            writer.send(ValueChanged::<f32> {
+                                target: ev.target,
+                                id,
+                                value: new_value.clamp(min, max),
+                                finish: false,
+                            });
                         }
                     }
                 },

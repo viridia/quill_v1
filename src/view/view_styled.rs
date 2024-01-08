@@ -70,7 +70,7 @@ impl<V: View> View for ViewStyled<V> {
 
     fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
         self.inner.update(vc, state);
-        self.insert_styles(&mut self.nodes(vc, state), vc);
+        self.insert_styles(&self.nodes(vc, state), vc);
     }
 
     fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {

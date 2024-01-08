@@ -69,19 +69,19 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
 
     /// Given an array of match params representing the element's ancestor chain, match the
     /// selector expression with the params.
-    pub(crate) fn selector_match<'b>(&self, selector: &'b Selector, entity: &Entity) -> bool {
+    pub(crate) fn selector_match(&self, selector: &Selector, entity: &Entity) -> bool {
         match selector {
             Selector::Accept => true,
             Selector::Class(cls, next) => match self.classes_query.get(*entity) {
                 Ok(classes) => classes.0.contains(cls) && self.selector_match(next, entity),
                 _ => false,
             },
-            Selector::Hover(next) => self.is_hovering(&entity) && self.selector_match(next, entity),
+            Selector::Hover(next) => self.is_hovering(entity) && self.selector_match(next, entity),
             Selector::FirstChild(next) => {
-                self.is_first_child(&entity) && self.selector_match(next, entity)
+                self.is_first_child(entity) && self.selector_match(next, entity)
             }
             Selector::LastChild(next) => {
-                self.is_last_child(&entity) && self.selector_match(next, entity)
+                self.is_last_child(entity) && self.selector_match(next, entity)
             }
             Selector::Current(next) => self.selector_match(next, entity),
             Selector::Parent(next) => match self.parent_query.get(*entity) {

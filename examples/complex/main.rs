@@ -238,13 +238,10 @@ fn ui_main(mut cx: Cx) -> impl View {
                     move |ev: Listener<SplitterEvent>,
                           mut width: ResMut<PanelWidth>,
                           query: Query<(&Node, &GlobalTransform)>| {
-                        match query.get(id) {
-                            Ok((node, transform)) => {
-                                // Measure node width and clamp split position.
-                                let node_width = node.logical_rect(transform).width();
-                                width.value = ev.value.clamp(100., node_width - 100.);
-                            }
-                            _ => return,
+                        if let Ok((node, transform)) = query.get(id) {
+                            // Measure node width and clamp split position.
+                            let node_width = node.logical_rect(transform).width();
+                            width.value = ev.value.clamp(100., node_width - 100.);
                         }
                     },
                 ),));

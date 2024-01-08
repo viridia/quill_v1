@@ -101,7 +101,7 @@ pub fn scroll_view<V: View + Clone>(mut cx: Cx<ScrollViewProps<V>>) -> impl View
     let id_scroll_area = cx.create_entity();
     let id_scrollbar_x = cx.create_entity();
     let id_scrollbar_y = cx.create_entity();
-    let drag_state = cx.create_atom_init(|| DragState::default());
+    let drag_state = cx.create_atom_init(DragState::default);
     Element::new()
         .styled((STYLE_SCROLL_VIEW.clone(), cx.props.style.clone()))
         .children((
@@ -233,7 +233,7 @@ fn scrollbar(mut cx: Cx<ScrollbarProps>) -> impl View {
                             ev.stop_propagation();
                             if let Ok(scroll_area) = query.get(id_scroll_area) {
                                 handle_thumb_drag_start(
-                                    &scroll_area,
+                                    scroll_area,
                                     vertical,
                                     &mut atoms,
                                     drag_state,

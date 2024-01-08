@@ -24,7 +24,7 @@ struct DragState {
 
 // Vertical splitter bar which can be dragged
 pub fn v_splitter<V: View + Clone, S: StyleTuple>(mut cx: Cx<SplitterProps<V, S>>) -> impl View {
-    let drag_state = cx.create_atom_init::<DragState>(|| DragState::default());
+    let drag_state = cx.create_atom_init::<DragState>(DragState::default);
     let id = cx.props.id;
     let current_offset = cx.props.value;
     Element::new()

@@ -35,7 +35,7 @@ static STYLE_DIALOG: StyleHandle = StyleHandle::build(|ss| {
         .width(200)
         .border(2)
         .scale(0.5)
-        .transition(&vec![Transition {
+        .transition(&[Transition {
             property: TransitionProperty::Transform,
             duration: 0.3,
             timing: timing::EASE_IN_OUT,

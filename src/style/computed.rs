@@ -157,40 +157,36 @@ impl Command for UpdateComputedStyle {
             e.insert(next_style);
         }
 
-        match e.get_mut::<Text>() {
-            Some(mut text) => {
-                // White is the default.
-                let color = self.computed.color.unwrap_or(Color::WHITE);
+        if let Some(mut text) = e.get_mut::<Text>() {
+            // White is the default.
+            let color = self.computed.color.unwrap_or(Color::WHITE);
+            for section in text.sections.iter_mut() {
+                if section.style.color != color {
+                    section.style.color = color;
+                }
+            }
+
+            if let Some(ws) = self.computed.line_break {
+                if text.linebreak_behavior != ws {
+                    text.linebreak_behavior = ws;
+                }
+            }
+
+            if let Some(font_size) = self.computed.font_size {
                 for section in text.sections.iter_mut() {
-                    if section.style.color != color {
-                        section.style.color = color;
-                    }
-                }
-
-                if let Some(ws) = self.computed.line_break {
-                    if text.linebreak_behavior != ws {
-                        text.linebreak_behavior = ws;
-                    }
-                }
-
-                if let Some(font_size) = self.computed.font_size {
-                    for section in text.sections.iter_mut() {
-                        if section.style.font_size != font_size {
-                            section.style.font_size = font_size;
-                        }
-                    }
-                }
-
-                if let Some(ref font) = self.computed.font_handle {
-                    for section in text.sections.iter_mut() {
-                        if section.style.font != *font {
-                            section.style.font = font.clone();
-                        }
+                    if section.style.font_size != font_size {
+                        section.style.font_size = font_size;
                     }
                 }
             }
 
-            None => (),
+            if let Some(ref font) = self.computed.font_handle {
+                for section in text.sections.iter_mut() {
+                    if section.style.font != *font {
+                        section.style.font = font.clone();
+                    }
+                }
+            }
         }
 
         if is_animated_bg_color {
@@ -217,7 +213,7 @@ impl Command for UpdateComputedStyle {
                 }
 
                 None => {
-                    if !self.computed.background_color.is_none() {
+                    if self.computed.background_color.is_some() {
                         // Insert a new background
                         e.insert(BackgroundColor(self.computed.background_color.unwrap()));
                     } else if bg_image.is_some() {
@@ -249,7 +245,7 @@ impl Command for UpdateComputedStyle {
                 }
 
                 None => {
-                    if !self.computed.border_color.is_none() {
+                    if self.computed.border_color.is_some() {
                         // Insert a new background color
                         e.insert(BorderColor(self.computed.border_color.unwrap()));
                     }
@@ -355,7 +351,7 @@ impl Command for UpdateComputedStyle {
         transform.scale.y = self.computed.scale_y.unwrap_or(1.);
         transform.rotate_z(self.computed.rotation.unwrap_or(0.));
         if is_animated_transform {
-            let prev_transform = e.get_mut::<Transform>().unwrap().clone();
+            let prev_transform = *e.get_mut::<Transform>().unwrap();
             let transition = self
                 .computed
                 .transitions

@@ -20,14 +20,20 @@ impl Plugin for NodeTreePlugin {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Ord, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct EntityListNode {
     entity: Entity,
 }
 
 impl PartialOrd for EntityListNode {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.entity.partial_cmp(&other.entity)
+        Some(self.entity.cmp(&other.entity))
+    }
+}
+
+impl Ord for EntityListNode {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.entity.cmp(&other.entity)
     }
 }
 
@@ -145,7 +151,7 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
             .styled(STYLE_TREE_NODE_HEADER.clone())
             .class_names((
                 "selected".if_true(selected.0 == Some(cx.props.entity)),
-                "expandable".if_true(children.len() > 0),
+                "expandable".if_true(!children.is_empty()),
             ))
             .with_memo(
                 move |mut e| {
@@ -165,7 +171,7 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
             )
             .children((
                 If::new(
-                    children.len() > 0,
+                    !children.is_empty(),
                     disclosure_triangle.bind(DisclosureTriangleProps {
                         expanded: cx.read_atom(expanded),
                     }),
@@ -187,8 +193,8 @@ pub fn node_item(mut cx: Cx<EntityListNode>) -> impl View {
                 style: STYLE_TREE_NODE_CHILDREN.clone(),
                 children: ViewParam::new(For::keyed(
                     &children,
-                    |e| e.clone(),
-                    |e| node_item.bind(EntityListNode { entity: e.clone() }),
+                    |e| *e,
+                    |e| node_item.bind(EntityListNode { entity: *e }),
                 )),
             }),
             (),
@@ -235,7 +241,7 @@ fn update_node_entities(
             if node.children != child_vec {
                 node.children = child_vec;
             }
-        } else if node.children.len() > 0 {
+        } else if !node.children.is_empty() {
             node.children.clear();
         }
     }

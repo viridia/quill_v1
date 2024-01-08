@@ -6,6 +6,7 @@ use crate::node_span::NodeSpan;
 
 /// Portal behaves just like Element, except that the generated UI nodes are unparented,
 /// making them roots.
+#[derive(Default)]
 pub struct Portal {}
 
 impl Portal {
@@ -19,7 +20,7 @@ impl View for Portal {
     type State = Entity;
 
     fn nodes(&self, _vc: &BuildContext, _state: &Self::State) -> NodeSpan {
-        return NodeSpan::Empty;
+        NodeSpan::Empty
     }
 
     fn build(&self, vc: &mut BuildContext) -> Self::State {
@@ -39,7 +40,7 @@ impl View for Portal {
     fn update(&self, _vc: &mut BuildContext, _state: &mut Self::State) {}
 
     fn assemble(&self, _vc: &mut BuildContext, _state: &mut Self::State) -> NodeSpan {
-        return NodeSpan::Empty;
+        NodeSpan::Empty
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {

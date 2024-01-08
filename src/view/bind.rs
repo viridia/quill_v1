@@ -15,10 +15,7 @@ struct BindState<Marker: 'static, F: PresenterFn<Marker>> {
 
 impl<Marker: 'static, F: PresenterFn<Marker>> BindState<Marker, F> {
     fn new(presenter: F, props: F::Props) -> Self {
-        Self {
-            presenter,
-            props: props,
-        }
+        Self { presenter, props }
     }
 }
 
@@ -49,7 +46,7 @@ impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker,
     fn eq(&self, other: &dyn AnyBindState) -> bool {
         match other.as_any().downcast_ref::<Self>() {
             Some(other) => {
-                &self.presenter as *const _ == &other.presenter as *const _
+                std::ptr::eq(&self.presenter as *const _, &other.presenter as *const _)
                     && self.props == other.props
             }
             None => false,
@@ -58,7 +55,7 @@ impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker,
 
     fn clone(&self) -> Box<dyn AnyBindState> {
         Box::new(Self {
-            presenter: self.presenter.clone(),
+            presenter: self.presenter,
             props: self.props.clone(),
         })
     }
@@ -87,7 +84,7 @@ impl View for Bind {
     fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
         // get the handle from the PresenterState for this invocation.
         let entt = vc.entity(*state);
-        let Some(ref handle) = entt.get::<ViewHandle>() else {
+        let Some(handle) = entt.get::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
         handle.nodes()
@@ -144,7 +141,7 @@ impl Clone for Bind {
 
 impl PartialEq for Bind {
     fn eq(&self, other: &Self) -> bool {
-        if &self as *const _ == &other as *const _ {
+        if std::ptr::eq(&self as *const _, &other as *const _) {
             return true;
         }
         self.binding.eq(&*other.binding)

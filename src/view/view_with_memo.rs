@@ -5,7 +5,7 @@ use crate::{BuildContext, View};
 use crate::node_span::NodeSpan;
 
 /// An implementtion of View that allows a callback to modify the generated elements.
-pub struct ViewWithMemo<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) -> () + Send> {
+pub struct ViewWithMemo<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) + Send> {
     /// Inner view that we're going to modify
     pub(crate) inner: V,
 
@@ -16,9 +16,7 @@ pub struct ViewWithMemo<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldM
     pub(crate) deps: D,
 }
 
-impl<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) -> () + Send>
-    ViewWithMemo<V, D, F>
-{
+impl<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) + Send> ViewWithMemo<V, D, F> {
     fn with_entity(callback: &F, nodes: &NodeSpan, world: &mut World) {
         match nodes {
             NodeSpan::Empty => (),
@@ -33,7 +31,7 @@ impl<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) -> () + Send>
     }
 }
 
-impl<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) -> () + Send> View
+impl<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) + Send> View
     for ViewWithMemo<V, D, F>
 {
     type State = (V::State, D, NodeSpan);
@@ -44,8 +42,8 @@ impl<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) -> () + Send> V
 
     fn build(&self, vc: &mut BuildContext) -> Self::State {
         let state = self.inner.build(vc);
-        let mut nodes = self.inner.nodes(vc, &state);
-        Self::with_entity(&self.callback, &mut nodes, vc.world);
+        let nodes = self.inner.nodes(vc, &state);
+        Self::with_entity(&self.callback, &nodes, vc.world);
         (state, self.deps.clone(), nodes)
     }
 
@@ -55,7 +53,7 @@ impl<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) -> () + Send> V
         if state.1 != self.deps || state.2 != nodes {
             state.1 = self.deps.clone();
             state.2 = nodes;
-            Self::with_entity(&self.callback, &mut self.nodes(vc, state), vc.world);
+            Self::with_entity(&self.callback, &self.nodes(vc, state), vc.world);
         }
     }
 

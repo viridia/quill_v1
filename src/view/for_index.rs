@@ -111,7 +111,7 @@ where
             prev_len -= 1;
             let child_state = &mut state[prev_len];
             if let Some(ref view) = child_state.view {
-                view.raze(&mut vc.world, &mut child_state.state);
+                view.raze(vc.world, &mut child_state.state);
             }
             state.pop();
         }

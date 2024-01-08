@@ -8,7 +8,7 @@ use bevy::prelude::*;
 use std::sync::Arc;
 
 /// A sharable reference to a collection of UI style properties.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct StyleHandle(pub Arc<StyleSet>);
 
 /// Handle which maintains a shared reference to a set of styles and selectors.
@@ -24,7 +24,7 @@ impl StyleHandle {
     }
 
     /// Merge the style properties into a computed `Style` object.
-    pub fn apply_to<'a>(
+    pub fn apply_to(
         &self,
         computed: &mut ComputedStyle,
         matcher: &SelectorMatcher,
@@ -48,12 +48,6 @@ impl PartialEq for StyleHandle {
     fn eq(&self, other: &Self) -> bool {
         // Reference-equality is all we need.
         Arc::as_ptr(&self.0) == Arc::as_ptr(&other.0)
-    }
-}
-
-impl Default for StyleHandle {
-    fn default() -> Self {
-        Self(Default::default())
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, marker::PhantomData};
+use std::{cell::RefCell, cmp::Ordering, marker::PhantomData};
 
 use bevy::prelude::*;
 
@@ -107,14 +107,14 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         let mut tracking = self.tracking.borrow_mut();
         let index = tracking.next_entity_index;
         tracking.next_entity_index = index + 1;
-        if index < tracking.owned_entities.len() {
-            return tracking.owned_entities[index];
-        } else if index == tracking.owned_entities.len() {
-            let id = self.vc.world.spawn_empty().id();
-            tracking.owned_entities.push(id);
-            return id;
-        } else {
-            panic!("Invalid presenter entity index");
+        match index.cmp(&tracking.owned_entities.len()) {
+            Ordering::Less => tracking.owned_entities[index],
+            Ordering::Equal => {
+                let id = self.vc.world.spawn_empty().id();
+                tracking.owned_entities.push(id);
+                id
+            }
+            Ordering::Greater => panic!("Invalid presenter entity index"),
         }
     }
 
@@ -127,7 +127,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         match entt.get_mut::<AtomCell>() {
             Some(_) => {}
             None => {
-                entt.insert(AtomCell(Box::new(T::default())));
+                entt.insert(AtomCell(Box::<T>::default()));
             }
         }
         handle

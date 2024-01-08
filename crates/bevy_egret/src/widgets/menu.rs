@@ -140,7 +140,7 @@ pub fn menu_popup<'a, V: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
         .children(cx.props.children.clone())
 }
 
-pub fn menu_item<'a, V: View + Clone, S: StyleTuple>(mut cx: Cx<MenuItemProps<V, S>>) -> impl View {
+pub fn menu_item<V: View + Clone, S: StyleTuple>(mut cx: Cx<MenuItemProps<V, S>>) -> impl View {
     let _is_selected = cx.create_atom_init::<bool>(|| false);
     // Needs to be a local variable so that it can be captured in the event handler.
     let id = cx.props.id;

@@ -21,7 +21,7 @@ static STYLE_DISCLOSURE_TRIANGLE: StyleHandle = StyleHandle::build(|ss| {
         .align_items(AlignItems::Center)
         .height(16)
         .width(16)
-        .transition(&vec![Transition {
+        .transition(&[Transition {
             property: TransitionProperty::Transform,
             duration: 0.3,
             timing: timing::EASE_IN_OUT,

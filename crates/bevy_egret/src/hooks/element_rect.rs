@@ -12,7 +12,7 @@ impl<'w, 'p, Props> ElementRectApi for Cx<'w, 'p, Props> {
             self.use_component::<Node>(id),
             self.use_component_untracked::<GlobalTransform>(id),
         ) {
-            (Some(ref node), Some(ref transform)) => node.logical_rect(transform),
+            (Some(node), Some(transform)) => node.logical_rect(transform),
             _ => Rect::new(0., 0., 0., 0.),
         }
     }

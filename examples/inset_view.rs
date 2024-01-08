@@ -307,7 +307,6 @@ fn setup(
             },
             camera_2d: Camera2d {
                 clear_color: ClearColorConfig::None,
-                ..default()
             },
             ..default()
         },

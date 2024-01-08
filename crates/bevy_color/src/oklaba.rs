@@ -74,6 +74,7 @@ impl Mix for Oklaba {
     }
 }
 
+#[allow(clippy::excessive_precision)]
 impl From<LinearRgba> for Oklaba {
     fn from(value: LinearRgba) -> Self {
         let LinearRgba {

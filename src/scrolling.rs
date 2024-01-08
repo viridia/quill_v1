@@ -75,6 +75,7 @@ pub struct ScrollBar {
 #[derive(Component)]
 pub struct ScrollBarThumb;
 
+#[allow(clippy::type_complexity)]
 pub(crate) fn update_scroll_positions(
     mut query: Query<(&Node, &mut ScrollArea, &GlobalTransform, &Children)>,
     mut query_content: Query<

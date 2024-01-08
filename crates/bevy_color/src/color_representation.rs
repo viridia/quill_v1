@@ -17,7 +17,7 @@ impl ColorRepresentation {
     pub fn linear(&self) -> LinearRgba {
         match self {
             ColorRepresentation::SRgba(srgba) => (*srgba).into(),
-            ColorRepresentation::LinearRgba(linear) => (*linear).into(),
+            ColorRepresentation::LinearRgba(linear) => *linear,
             ColorRepresentation::Hsla(hsla) => (*hsla).into(),
             ColorRepresentation::Oklaba(oklab) => (*oklab).into(),
         }

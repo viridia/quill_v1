@@ -50,7 +50,10 @@ impl<V: View> View for ViewParam<V> {
 impl<V: View> PartialEq for ViewParam<V> {
     fn eq(&self, other: &Self) -> bool {
         // For now, we're just comparing pointers. However, we should probably do better.
-        &*self.inner.lock().unwrap() as *const _ == &*other.inner.lock().unwrap() as *const _
+        std::ptr::eq(
+            &*self.inner.lock().unwrap() as *const _,
+            &*other.inner.lock().unwrap() as *const _,
+        )
     }
 }
 
