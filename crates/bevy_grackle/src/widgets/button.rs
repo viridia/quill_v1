@@ -35,7 +35,7 @@ pub enum ButtonVariant {
     Danger,
 }
 
-#[derive(PartialEq, Default)]
+#[derive(PartialEq, Clone, Default)]
 pub struct ButtonProps<V: View + Clone, S: StyleTuple = ()> {
     pub id: &'static str,
     pub children: V,

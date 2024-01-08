@@ -78,7 +78,7 @@ static STYLE_THUMB_SHADOW: StyleHandle = StyleHandle::build(|ss| {
         .pointer_events(PointerEvents::None)
 });
 
-#[derive(PartialEq, Default)]
+#[derive(PartialEq, Clone, Default)]
 pub struct SliderProps<S: StyleTuple = ()> {
     pub id: &'static str,
     pub min: f32,

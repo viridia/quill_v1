@@ -53,6 +53,20 @@ impl<V: View, F: Fn(SliderChildProps) -> V, S: StyleTuple> PartialEq for SliderP
     }
 }
 
+impl<V: View, F: Fn(SliderChildProps) -> V, S: StyleTuple> Clone for SliderProps<V, F, S> {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            min: self.min.clone(),
+            max: self.max.clone(),
+            value: self.value.clone(),
+            thumb_size: self.thumb_size.clone(),
+            children: self.children.clone(),
+            style: self.style.clone(),
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Default, Copy)]
 struct DragState {
     dragging: bool,

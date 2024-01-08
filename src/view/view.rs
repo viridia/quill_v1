@@ -324,7 +324,7 @@ where
 /// A trait that allows methods to be added to presenter function references.
 pub trait PresenterFn<Marker: 'static>: Sized + Send + Copy + 'static {
     /// The type of properties expected by this presenter.
-    type Props: Send + PartialEq;
+    type Props: Send + PartialEq + Clone;
 
     /// The type of view produced by this presenter.
     type View: View;
@@ -343,8 +343,11 @@ pub trait PresenterFn<Marker: 'static>: Sized + Send + Copy + 'static {
     ) -> Self::View;
 }
 
-impl<V: View, P: Send + PartialEq + 'static, F: FnMut(Cx<P>) -> V + Copy + Send + 'static>
-    PresenterFn<fn(Cx<P>) -> V> for F
+impl<
+        V: View,
+        P: Send + PartialEq + Clone + 'static,
+        F: FnMut(Cx<P>) -> V + Copy + Send + 'static,
+    > PresenterFn<fn(Cx<P>) -> V> for F
 where
     V: 'static,
 {

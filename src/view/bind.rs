@@ -1,7 +1,4 @@
-use std::{
-    any::Any,
-    sync::{Arc, Mutex},
-};
+use std::any::Any;
 
 use bevy::prelude::*;
 
@@ -13,39 +10,36 @@ use super::presenter_state::PresenterStateChanged;
 
 struct BindState<Marker: 'static, F: PresenterFn<Marker>> {
     presenter: F,
-    props: Option<F::Props>,
+    props: F::Props,
 }
 
 impl<Marker: 'static, F: PresenterFn<Marker>> BindState<Marker, F> {
     fn new(presenter: F, props: F::Props) -> Self {
         Self {
             presenter,
-            props: Some(props),
+            props: props,
         }
     }
 }
 
 trait AnyBindState: Send {
-    fn create_handle(&mut self) -> ViewHandle;
-    fn update_handle_props(&mut self, handle: &mut ViewHandle) -> bool;
+    fn create_handle(&self) -> ViewHandle;
+    fn update_handle_props(&self, handle: &mut ViewHandle) -> bool;
     fn as_any(&self) -> &dyn Any;
     fn eq(&self, other: &dyn AnyBindState) -> bool;
+    fn clone(&self) -> Box<dyn AnyBindState>;
 }
 
 impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker, F> {
-    fn create_handle(&mut self) -> ViewHandle {
-        if self.props.is_none() {
-            panic!("BindState::create_handle called twice");
-        }
-        ViewHandle::new(self.presenter, self.props.take().unwrap())
+    fn create_handle(&self) -> ViewHandle {
+        // if self.props.is_none() {
+        //     panic!("BindState::create_handle called twice");
+        // }
+        ViewHandle::new(self.presenter, self.props.clone())
     }
 
-    fn update_handle_props(&mut self, handle: &mut ViewHandle) -> bool {
-        if let Some(mut props) = self.props.take() {
-            handle.update_props(&mut props)
-        } else {
-            false
-        }
+    fn update_handle_props(&self, handle: &mut ViewHandle) -> bool {
+        handle.update_props(&self.props)
     }
 
     fn as_any(&self) -> &dyn Any {
@@ -61,6 +55,13 @@ impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker,
             None => false,
         }
     }
+
+    fn clone(&self) -> Box<dyn AnyBindState> {
+        Box::new(Self {
+            presenter: self.presenter.clone(),
+            props: self.props.clone(),
+        })
+    }
 }
 
 /// Binds a presenter to properties and implements a view.
@@ -68,13 +69,13 @@ impl<Marker: 'static, F: PresenterFn<Marker>> AnyBindState for BindState<Marker,
 /// recursive presenter invocations (like tree views) will not compile.
 #[doc(hidden)]
 pub struct Bind {
-    binding: Arc<Mutex<dyn AnyBindState>>,
+    binding: Box<dyn AnyBindState>,
 }
 
 impl Bind {
     pub fn new<Marker, F: PresenterFn<Marker>>(presenter: F, props: F::Props) -> Self {
         Self {
-            binding: Arc::new(Mutex::new(BindState::new(presenter, props))),
+            binding: Box::new(BindState::new(presenter, props)),
         }
     }
 }
@@ -92,13 +93,11 @@ impl View for Bind {
         handle.nodes()
     }
 
+    // Spawn a new presenter entity.
     fn build(&self, parent_ecx: &mut BuildContext) -> Self::State {
         let entity = parent_ecx
             .world
-            .spawn((
-                self.binding.lock().unwrap().create_handle(),
-                Name::new("presenter"),
-            ))
+            .spawn((self.binding.create_handle(), Name::new("presenter")))
             .insert(PresenterStateChanged)
             .set_parent(parent_ecx.entity)
             .id();
@@ -115,12 +114,7 @@ impl View for Bind {
         // Update child view properties. This transfers the props from the 'new' presenter
         // that is a member of the Bind, to the 'old' presenter state which is stored in the
         // view handle. The old state is the one that will persist.
-        if self
-            .binding
-            .lock()
-            .unwrap()
-            .update_handle_props(&mut handle)
-        {
+        if self.binding.update_handle_props(&mut handle) {
             entt.insert(PresenterStateChanged);
         }
     }
@@ -153,9 +147,6 @@ impl PartialEq for Bind {
         if &self as *const _ == &other as *const _ {
             return true;
         }
-        self.binding
-            .lock()
-            .unwrap()
-            .eq(&*other.binding.lock().unwrap())
+        self.binding.eq(&*other.binding)
     }
 }

@@ -42,7 +42,7 @@ pub struct FloatPosition {
     pub gap: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, PartialEq)]
 pub struct Floating {
     /// The entity that this floating element is anchored to.
     pub anchor: Entity,
@@ -65,7 +65,9 @@ pub fn position_floating(
     anchor_query: Query<(&Node, &GlobalTransform), Without<Floating>>,
     windows: Query<&Window>,
 ) {
-    let window = windows.single();
+    let Ok(window) = windows.get_single() else {
+        return;
+    };
     let ww = window.resolution.physical_width() as f32;
     let wh = window.resolution.physical_height() as f32;
     let sf = window.resolution.scale_factor() as f32;

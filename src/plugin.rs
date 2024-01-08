@@ -59,16 +59,18 @@ fn render_views(world: &mut World) {
     // Scan changed components
     let mut q = world.query::<(Entity, &mut TrackedComponents)>();
     for (e, tracked_components) in q.iter(world) {
-        if tracked_components.data.iter().any(|(e, cid)| {
-            world
-                .get_entity(*e)
-                .map(|ent| {
-                    ent.get_change_ticks_by_id(*cid)
-                        .map(|ct| ct.is_changed(last_run, this_run))
-                        .unwrap_or(false)
-                })
-                .unwrap_or(false)
-        }) {
+        if !v.contains(&e)
+            && tracked_components.data.iter().any(|(e, cid)| {
+                world
+                    .get_entity(*e)
+                    .map(|ent| {
+                        ent.get_change_ticks_by_id(*cid)
+                            .map(|ct| ct.is_changed(last_run, this_run))
+                            .unwrap_or(false)
+                    })
+                    .unwrap_or(false)
+            })
+        {
             v.insert(e);
         }
     }

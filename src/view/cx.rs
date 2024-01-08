@@ -215,7 +215,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
                         .vc
                         .world
                         .component_id::<ScopedValueMap>()
-                        .expect("Unregistered component type");
+                        .expect("ScopedValueMap component type is not registered");
                     self.tracking.borrow_mut().components.insert((entity, cid));
                     return val.downcast_ref::<T>().cloned();
                 }

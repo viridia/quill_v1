@@ -44,6 +44,9 @@ fn main() {
                 alpha: 1.0,
             },
         })
+        .insert_resource(ThemeSelection {
+            theme: GrackleTheme::Dark,
+        })
         .register_asset_source(
             "grackle",
             AssetSource::build()
@@ -51,7 +54,6 @@ fn main() {
         )
         .add_plugins((
             QuillPlugin,
-            // SliderPlugin,
             NodeTreePlugin,
             DisclosureTrianglePlugin,
             bevy_grackle::GracklePlugin,
@@ -194,6 +196,11 @@ pub struct EditColor {
     color: Color,
 }
 
+#[derive(Resource)]
+pub struct ThemeSelection {
+    theme: GrackleTheme,
+}
+
 impl Default for PanelWidth {
     fn default() -> Self {
         Self { value: 190. }
@@ -208,7 +215,8 @@ fn setup_view_root(mut commands: Commands) {
 }
 
 fn ui_main(mut cx: Cx) -> impl View {
-    init_grackle_theme(&mut cx, GrackleTheme::Light);
+    let theme = cx.use_resource::<ThemeSelection>().theme;
+    init_grackle_theme(&mut cx, theme);
     let target = cx.use_view_entity().id();
     let open = cx.create_atom_init(|| false);
     cx.use_effect(
@@ -254,12 +262,21 @@ fn ui_main(mut cx: Cx) -> impl View {
                 .insert(On::<Clicked>::run(
                     move |ev: Listener<Clicked>,
                           mut atoms: AtomStore,
-                          mut log: ResMut<ClickLog>| {
-                        if ev.id == "save" {
-                            atoms.set(open, true);
+                          mut log: ResMut<ClickLog>,
+                          mut theme: ResMut<ThemeSelection>| {
+                        match ev.id {
+                            "save" => {
+                                atoms.set(open, false);
+                            }
+                            "light-theme" => {
+                                theme.theme = GrackleTheme::Light;
+                            }
+                            "dark-theme" => {
+                                theme.theme = GrackleTheme::Dark;
+                            }
+                            _ => (),
                         }
-                        log.0
-                            .push(format!("Button Clicked: id='{}'", ev.id).to_string());
+                        log.0.push(format!("Clicked: id='{}'", ev.id).to_string());
                     },
                 ))
                 .insert(On::<MenuEvent>::run(

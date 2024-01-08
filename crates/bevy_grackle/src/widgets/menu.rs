@@ -45,6 +45,7 @@ static STYLE_MENU_POPUP: StyleHandle = StyleHandle::build(|ss| {
             timing: timing::EASE_IN_OUT,
             ..default()
         }])
+        .pointer_events(PointerEvents::All)
         .selector(".entering > &,.entered > &", |ss| ss.scale(1.))
         .selector(".enter-start > &", |ss| ss.display(ui::Display::None))
 });
@@ -85,7 +86,7 @@ impl MenuButtonProps<(), (), ()> {
     }
 }
 
-#[derive(PartialEq, Default)]
+#[derive(PartialEq, Clone, Default)]
 pub struct MenuItemProps<V: View + Clone> {
     pub id: &'static str,
     pub label: V,
@@ -152,19 +153,24 @@ pub fn menu_button<
     mut cx: Cx<MenuButtonProps<V, VI, ST>>,
 ) -> impl View {
     let id_anchor = cx.create_entity();
+    let style_typography = cx.get_scoped_value(TYPOGRAPHY);
+    let style_popup = cx.get_scoped_value(MENU_POPUP);
+    let style = cx.props.style.clone();
+    let class_names = "indent".if_true(cx.props.indent);
+    let items = cx.props.items.clone();
     bevy_egret::widgets::menu_button.bind(bevy_egret::widgets::MenuButtonProps {
         anchor: id_anchor,
         children: cx.props.children.clone(),
         popup: ViewParam::new(
             menu_popup
                 .bind(MenuPopupProps {
-                    children: cx.props.items.clone(),
-                    class_names: "indent".if_true(cx.props.indent),
+                    children: items.clone(),
+                    class_names: class_names.clone(),
                     style: (
                         STYLE_MENU_POPUP.clone(),
-                        cx.get_scoped_value(TYPOGRAPHY),
-                        cx.get_scoped_value(MENU_POPUP),
-                        cx.props.style.clone(),
+                        style_typography.clone(),
+                        style_popup.clone(),
+                        style.clone(),
                     ),
                     marker: std::marker::PhantomData,
                 })

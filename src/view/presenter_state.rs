@@ -41,7 +41,7 @@ impl ViewHandle {
     }
 
     /// Update the copy of props in this view state.
-    pub fn update_props<'a>(&mut self, props: &'a mut dyn Any) -> bool {
+    pub fn update_props<'a>(&mut self, props: &'a dyn Any) -> bool {
         self.inner.lock().unwrap().update_props(props)
     }
 }
@@ -95,7 +95,7 @@ pub trait AnyPresenterState: Send {
     fn attach(&mut self, vc: &mut BuildContext, entity: Entity);
 
     /// Update the copy of props in this view state.
-    fn update_props<'a>(&mut self, props: &'a mut dyn Any) -> bool;
+    fn update_props<'a>(&mut self, props: &'a dyn Any) -> bool;
 
     /// Update the copy of props in this view state.
     fn get_props<'a>(&'a mut self) -> &'a mut dyn Any;
@@ -198,14 +198,14 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         self.nodes.clone()
     }
 
-    fn update_props<'a>(&mut self, new_props: &'a mut dyn Any) -> bool {
+    fn update_props<'a>(&mut self, new_props: &'a dyn Any) -> bool {
         let new_props = new_props
-            .downcast_mut::<F::Props>()
+            .downcast_ref::<F::Props>()
             .expect("Mismatched props type");
 
         if self.props != *new_props {
-            std::mem::swap::<F::Props>(new_props, &mut self.props);
-            // self.props.clone_from(new_props);
+            // std::mem::swap::<F::Props>(new_props, &mut self.props);
+            self.props.clone_from(new_props);
             true
         } else {
             false
