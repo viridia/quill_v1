@@ -43,7 +43,6 @@ const MAX_DIVERGENCE_CT: usize = 30;
 fn render_views(world: &mut World) {
     let mut divergence_ct: usize = 0;
     let mut prev_change_ct: usize = 0;
-    let last_run = world.last_change_tick();
     let this_run = world.change_tick();
 
     let mut v = HashSet::new();
@@ -60,12 +59,12 @@ fn render_views(world: &mut World) {
     let mut q = world.query::<(Entity, &mut TrackedComponents)>();
     for (e, tracked_components) in q.iter(world) {
         if !v.contains(&e)
-            && tracked_components.data.iter().any(|(e, cid)| {
+            && tracked_components.data.iter().any(|(cent, cid)| {
                 world
-                    .get_entity(*e)
+                    .get_entity(*cent)
                     .map(|ent| {
                         ent.get_change_ticks_by_id(*cid)
-                            .map(|ct| ct.is_changed(last_run, this_run))
+                            .map(|ct| ct.is_changed(tracked_components.tick, this_run))
                             .unwrap_or(false)
                     })
                     .unwrap_or(false)

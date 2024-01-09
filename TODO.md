@@ -1,7 +1,8 @@
 # TODO:
 
 * :focus
-* ViewTuple: Clone/PartialEq
+* Change popup menu to use closure for items.
+    * Get rid of ViewParam / FragmentClone
 * Migrate to Egret/Grackle:
     * Disclosure
     * Dialog
@@ -18,8 +19,3 @@
 * Change QuillPlugin to add bevy_mod_picking plugins if needed:
 
     .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
-
-# Double-bind problem:
-
-* Calling create_handle twice on a Bind.
-* This is because the View is a param, which persists.

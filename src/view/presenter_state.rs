@@ -134,27 +134,29 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
             }
         };
 
+        let tick = vc.world.change_tick();
         let mut entt = vc.world.entity_mut(entity);
-        if !tracking.resources.is_empty() {
+        if tracking.resources.is_empty() {
+            entt.remove::<TrackedResources>();
+        } else {
             entt.insert(TrackedResources {
                 data: tracking.resources,
             });
-        } else {
-            entt.remove::<TrackedResources>();
         }
 
-        if !tracking.components.is_empty() {
+        if tracking.components.is_empty() {
+            entt.remove::<TrackedComponents>();
+        } else {
             entt.insert(TrackedComponents {
                 data: tracking.components,
+                tick,
             });
-        } else {
-            entt.remove::<TrackedComponents>();
         }
 
-        if !tracking.owned_entities.is_empty() {
-            entt.insert(OwnedEntities(tracking.owned_entities));
-        } else {
+        if tracking.owned_entities.is_empty() {
             entt.remove::<OwnedEntities>();
+        } else {
+            entt.insert(OwnedEntities(tracking.owned_entities));
         }
     }
 

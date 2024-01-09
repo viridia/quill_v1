@@ -1,5 +1,9 @@
 use crate::tracked_resources::TrackedResourceList;
-use bevy::{ecs::component::ComponentId, prelude::*, utils::HashSet};
+use bevy::{
+    ecs::component::{ComponentId, Tick},
+    prelude::*,
+    utils::HashSet,
+};
 
 pub(crate) struct TrackingContext {
     pub(crate) resources: TrackedResourceList,
@@ -9,9 +13,10 @@ pub(crate) struct TrackingContext {
 }
 
 /// Tracks components used by each View tree entity
-#[derive(Component, Default)]
+#[derive(Component)]
 pub(crate) struct TrackedComponents {
     pub(crate) data: HashSet<(Entity, ComponentId)>,
+    pub(crate) tick: Tick,
 }
 
 /// Tracks entities which were explicitly allocated by a presenter.
