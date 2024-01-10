@@ -2,7 +2,7 @@
 
 * :focus
 * Change popup menu to use closure for items.
-    * Get rid of ViewParam / FragmentClone
+    * Get rid of ViewParam
     * This is harder than it sounds.
 * Migrate to Egret/Grackle:
     * Disclosure

@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::{cell::Cell, sync::Arc};
 
 use bevy::{
     prelude::*,
@@ -358,5 +358,26 @@ where
 
     fn call(&mut self, cx: Cx<Self::Props>) -> Self::View {
         self(cx)
+    }
+}
+
+/// View which renders an Arc'd inner view.
+impl<Inner: View + Sync> View for Arc<Inner> {
+    type State = Inner::State;
+
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.as_ref().nodes(bc, state)
+    }
+
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        self.as_ref().build(bc)
+    }
+
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.as_ref().update(bc, state)
+    }
+
+    fn raze(&self, bc: &mut World, state: &mut Self::State) {
+        self.as_ref().raze(bc, state)
     }
 }

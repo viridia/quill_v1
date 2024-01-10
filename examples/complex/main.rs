@@ -8,6 +8,8 @@ mod swatch;
 mod test_scene;
 mod viewport;
 
+use std::sync::Arc;
+
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
     prelude::*,
@@ -290,7 +292,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                         .children((
                             button.bind(ButtonProps {
                                 id: "save",
-                                children: "Save",
+                                children: Arc::new("Save"),
                                 style: STYLE_BUTTON_FLEX.clone(),
                                 ..default()
                             }),

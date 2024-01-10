@@ -62,3 +62,18 @@ impl<V: View, A: ViewTuple> View for ViewChildren<V, A> {
         self.inner.raze(world, &mut state.0);
     }
 }
+
+impl<V: View + PartialEq, A: ViewTuple + PartialEq> PartialEq for ViewChildren<V, A> {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner == other.inner && self.items == other.items
+    }
+}
+
+impl<V: View + Clone, A: ViewTuple + Clone> Clone for ViewChildren<V, A> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            items: self.items.clone(),
+        }
+    }
+}
