@@ -97,36 +97,3 @@ impl ViewTuple for Tuple {
         for_tuples!(#( self.Tuple.raze(world, &mut state.Tuple); )*)
     }
 }
-
-#[doc(hidden)]
-pub trait ViewTupleClone: ViewTuple {
-    fn clone(&self) -> Self;
-    fn eq(&self, other: &Self) -> bool;
-}
-
-impl<A: View> ViewTupleClone for A
-where
-    A: Clone + PartialEq,
-{
-    fn clone(&self) -> Self {
-        self.clone()
-    }
-
-    fn eq(&self, other: &Self) -> bool {
-        self.eq(other)
-    }
-}
-
-#[impl_for_tuples(1, 16)]
-#[tuple_types_custom_trait_bound(View)]
-impl ViewTupleClone for Tuple {
-    for_tuples!( where #( Tuple: Clone + PartialEq ),* );
-
-    fn clone(&self) -> Self {
-        for_tuples!((#( self.Tuple.clone() ),*))
-    }
-
-    fn eq(&self, other: &Self) -> bool {
-        for_tuples!((#( self.Tuple.eq(&other.Tuple) )&*))
-    }
-}

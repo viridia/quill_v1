@@ -298,7 +298,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                                 MenuButtonProps::new()
                                     .children("File…")
                                     .indent(true)
-                                    .items(FragmentClone::new((
+                                    .items(Fragment::new((
                                         menu_item.bind(MenuItemProps {
                                             label: "Light Theme",
                                             id: "light-theme",
@@ -334,7 +334,7 @@ fn ui_main(mut cx: Cx) -> impl View {
                                     .style(STYLE_BUTTON_FLEX.clone()),
                             ),
                         )),
-                    button.bind(ButtonProps::new("load").children(FragmentClone::new((
+                    button.bind(ButtonProps::new("load").children(Fragment::new((
                         "Load",
                         swatch.bind(SwatchProps { color: Color::RED }),
                     )))),

@@ -36,7 +36,7 @@ pub struct SplitterProps {
 pub fn v_splitter(cx: Cx<SplitterProps>) -> impl View {
     bevy_egret::widgets::v_splitter.bind(bevy_egret::widgets::SplitterProps {
         id: cx.props.id,
-        children: FragmentClone::new((
+        children: Fragment::new((
             Element::new().styled((
                 STYLE_VSPLITTER_INNER.clone(),
                 cx.get_scoped_value(SPLITTER_INNER),
