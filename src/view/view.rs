@@ -64,20 +64,20 @@ where
     type State: Send;
 
     /// Return the span of UiNodes produced by this View.
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan;
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan;
 
     /// Construct and patch the tree of UiNodes produced by this view.
     /// This may also spawn child entities representing nested components.
-    fn build(&self, vc: &mut BuildContext) -> Self::State;
+    fn build(&self, bc: &mut BuildContext) -> Self::State;
 
     /// Update the internal state of this view, re-creating any UiNodes.
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State);
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State);
 
     /// Attach child nodes to parents. This is typically called after generating/updating
     /// the display nodes (via build/rebuild), however it can also be called after rebuilding
     /// the display graph of nested presenters.
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        self.nodes(vc, state)
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        self.nodes(bc, state)
     }
 
     /// Recursively despawn any child entities that were created as a result of calling `.build()`.
@@ -169,8 +169,8 @@ impl View for String {
         NodeSpan::Node(*state)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        let id = vc
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        let id = bc
             .world
             .spawn((TextBundle {
                 text: Text::from_section(self.clone(), TextStyle { ..default() }),
@@ -188,11 +188,11 @@ impl View for String {
         id
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
         // If it's a single node and has a text component
-        let nodes = self.nodes(vc, state);
+        let nodes = self.nodes(bc, state);
         if let NodeSpan::Node(text_node) = nodes {
-            if let Some(mut old_text) = vc.entity_mut(text_node).get_mut::<Text>() {
+            if let Some(mut old_text) = bc.entity_mut(text_node).get_mut::<Text>() {
                 // TODO: compare text for equality.
                 old_text.sections.clear();
                 old_text.sections.push(TextSection {
@@ -204,9 +204,9 @@ impl View for String {
         }
 
         // Despawn node and create new text node
-        nodes.despawn(vc.world);
-        vc.mark_changed_shape();
-        *state = self.build(vc)
+        nodes.despawn(bc.world);
+        bc.mark_changed_shape();
+        *state = self.build(bc)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {
@@ -224,8 +224,8 @@ impl View for &str {
         NodeSpan::Node(*state)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        let id = vc
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        let id = bc
             .world
             .spawn((TextBundle {
                 text: Text::from_section(self.to_string(), TextStyle { ..default() }),
@@ -243,11 +243,11 @@ impl View for &str {
         id
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
         // If it's a single node and has a text component
-        let nodes = self.nodes(vc, state);
+        let nodes = self.nodes(bc, state);
         if let NodeSpan::Node(text_node) = nodes {
-            if let Some(mut old_text) = vc.entity_mut(text_node).get_mut::<Text>() {
+            if let Some(mut old_text) = bc.entity_mut(text_node).get_mut::<Text>() {
                 // TODO: compare text for equality.
                 old_text.sections.clear();
                 old_text.sections.push(TextSection {
@@ -259,9 +259,9 @@ impl View for &str {
         }
 
         // Despawn node and create new text node
-        nodes.despawn(vc.world);
-        vc.mark_changed_shape();
-        *state = self.build(vc)
+        nodes.despawn(bc.world);
+        bc.mark_changed_shape();
+        *state = self.build(bc)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {
@@ -279,9 +279,9 @@ where
     // State holds the PresenterState entity.
     type State = Entity;
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
         // get the handle from the PresenterState for this invocation.
-        let entt = vc.entity(*state);
+        let entt = bc.entity(*state);
         let Some(handle) = entt.get::<ViewHandle>() else {
             return NodeSpan::Empty;
         };

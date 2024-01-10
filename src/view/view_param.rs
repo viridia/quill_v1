@@ -26,20 +26,20 @@ impl<V: View> ViewParam<V> {
 impl<V: View> View for ViewParam<V> {
     type State = V::State;
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        self.inner.lock().unwrap().nodes(vc, state)
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.inner.lock().unwrap().nodes(bc, state)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        self.inner.lock().unwrap().build(vc)
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        self.inner.lock().unwrap().build(bc)
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.lock().unwrap().update(vc, state);
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.inner.lock().unwrap().update(bc, state);
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        self.inner.lock().unwrap().assemble(vc, state)
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.lock().unwrap().assemble(bc, state)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {

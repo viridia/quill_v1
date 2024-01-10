@@ -33,8 +33,8 @@ impl View for RefElement {
         NodeSpan::Node(self.id)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        vc.world.entity_mut(self.id).insert((NodeBundle {
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        bc.world.entity_mut(self.id).insert((NodeBundle {
             visibility: Visibility::Visible,
             ..default()
         },));

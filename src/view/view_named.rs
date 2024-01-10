@@ -13,18 +13,18 @@ impl<'a, V: View> ViewNamed<'a, V> {
         Self { inner, name }
     }
 
-    fn set_name(&self, nodes: &NodeSpan, vc: &mut BuildContext) {
+    fn set_name(&self, nodes: &NodeSpan, bc: &mut BuildContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
-                let em = &mut vc.entity_mut(*entity);
+                let em = &mut bc.entity_mut(*entity);
                 em.insert(Name::new(self.name.to_string()));
             }
 
             NodeSpan::Fragment(ref nodes) => {
                 for node in nodes.iter() {
                     // Recurse
-                    self.set_name(node, vc);
+                    self.set_name(node, bc);
                 }
             }
         }
@@ -34,24 +34,24 @@ impl<'a, V: View> ViewNamed<'a, V> {
 impl<'a, V: View> View for ViewNamed<'a, V> {
     type State = V::State;
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        self.inner.nodes(vc, state)
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.inner.nodes(bc, state)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        let state = self.inner.build(vc);
-        self.set_name(&self.nodes(vc, &state), vc);
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        let state = self.inner.build(bc);
+        self.set_name(&self.nodes(bc, &state), bc);
         state
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.update(vc, state);
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.inner.update(bc, state);
         // Don't think we need to update on rebuild
-        // self.set_name(&mut self.nodes(vc, state), vc);
+        // self.set_name(&mut self.nodes(bc, state), bc);
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        self.inner.assemble(vc, state)
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.assemble(bc, state)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {

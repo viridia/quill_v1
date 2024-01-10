@@ -19,20 +19,20 @@ impl<A: ViewTuple> Fragment<A> {
 impl<A: ViewTuple> View for Fragment<A> {
     type State = A::State;
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        self.items.span_nodes(vc, state)
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.items.span_nodes(bc, state)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        self.items.build_spans(vc)
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        self.items.build_spans(bc)
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.items.update_spans(vc, state);
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.items.update_spans(bc, state);
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        self.items.assemble_spans(vc, state)
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        self.items.assemble_spans(bc, state)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {

@@ -30,57 +30,57 @@ impl<Pos: View, Neg: View> View for If<Pos, Neg> {
     /// Union of true and false states.
     type State = IfState<Pos::State, Neg::State>;
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
         match state {
-            Self::State::True(ref true_state) => self.pos.nodes(vc, true_state),
-            Self::State::False(ref false_state) => self.neg.nodes(vc, false_state),
+            Self::State::True(ref true_state) => self.pos.nodes(bc, true_state),
+            Self::State::False(ref false_state) => self.neg.nodes(bc, false_state),
         }
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
         if self.test {
-            IfState::True(self.pos.build(vc))
+            IfState::True(self.pos.build(bc))
         } else {
-            IfState::False(self.neg.build(vc))
+            IfState::False(self.neg.build(bc))
         }
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
         if self.test {
             match state {
                 Self::State::True(ref mut true_state) => {
                     // Mutate state in place
-                    self.pos.update(vc, true_state)
+                    self.pos.update(bc, true_state)
                 }
 
                 _ => {
                     // Despawn old state and construct new state
-                    self.raze(vc.world, state);
-                    vc.mark_changed_shape();
-                    *state = Self::State::True(self.pos.build(vc));
+                    self.raze(bc.world, state);
+                    bc.mark_changed_shape();
+                    *state = Self::State::True(self.pos.build(bc));
                 }
             }
         } else {
             match state {
                 Self::State::False(ref mut false_state) => {
                     // Mutate state in place
-                    self.neg.update(vc, false_state)
+                    self.neg.update(bc, false_state)
                 }
 
                 _ => {
                     // Despawn old state and construct new state
-                    self.raze(vc.world, state);
-                    vc.mark_changed_shape();
-                    *state = Self::State::False(self.neg.build(vc));
+                    self.raze(bc.world, state);
+                    bc.mark_changed_shape();
+                    *state = Self::State::False(self.neg.build(bc));
                 }
             }
         }
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
         match state {
-            Self::State::True(ref mut true_state) => self.pos.assemble(vc, true_state),
-            Self::State::False(ref mut false_state) => self.neg.assemble(vc, false_state),
+            Self::State::True(ref mut true_state) => self.pos.assemble(bc, true_state),
+            Self::State::False(ref mut false_state) => self.neg.assemble(bc, false_state),
         }
     }
 

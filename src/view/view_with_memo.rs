@@ -36,29 +36,29 @@ impl<V: View, D: Clone + PartialEq + Send, F: Fn(EntityWorldMut) + Send> View
 {
     type State = (V::State, D, NodeSpan);
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        self.inner.nodes(vc, &state.0)
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.inner.nodes(bc, &state.0)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        let state = self.inner.build(vc);
-        let nodes = self.inner.nodes(vc, &state);
-        Self::with_entity(&self.callback, &nodes, vc.world);
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        let state = self.inner.build(bc);
+        let nodes = self.inner.nodes(bc, &state);
+        Self::with_entity(&self.callback, &nodes, bc.world);
         (state, self.deps.clone(), nodes)
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.update(vc, &mut state.0);
-        let nodes = self.inner.nodes(vc, &state.0);
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.inner.update(bc, &mut state.0);
+        let nodes = self.inner.nodes(bc, &state.0);
         if state.1 != self.deps || state.2 != nodes {
             state.1 = self.deps.clone();
             state.2 = nodes;
-            Self::with_entity(&self.callback, &self.nodes(vc, state), vc.world);
+            Self::with_entity(&self.callback, &self.nodes(bc, state), bc.world);
         }
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        self.inner.assemble(vc, &mut state.0)
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.assemble(bc, &mut state.0)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {

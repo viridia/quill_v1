@@ -24,8 +24,8 @@ impl View for Element {
         NodeSpan::Node(*state)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        let new_entity = vc
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        let new_entity = bc
             .world
             .spawn((
                 NodeBundle {

@@ -31,23 +31,23 @@ impl<V: View, F: Fn(EntityWorldMut) + Send> ViewWith<V, F> {
 impl<V: View, F: Fn(EntityWorldMut) + Send> View for ViewWith<V, F> {
     type State = V::State;
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        self.inner.nodes(vc, state)
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.inner.nodes(bc, state)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        let state = self.inner.build(vc);
-        Self::with_entity(&self.callback, &self.nodes(vc, &state), vc.world);
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        let state = self.inner.build(bc);
+        Self::with_entity(&self.callback, &self.nodes(bc, &state), bc.world);
         state
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.update(vc, state);
-        Self::with_entity(&self.callback, &self.nodes(vc, state), vc.world);
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.inner.update(bc, state);
+        Self::with_entity(&self.callback, &self.nodes(bc, state), bc.world);
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        self.inner.assemble(vc, state)
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.assemble(bc, state)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {

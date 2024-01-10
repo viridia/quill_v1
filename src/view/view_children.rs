@@ -16,32 +16,32 @@ pub struct ViewChildren<V: View, A: ViewTuple> {
 impl<V: View, A: ViewTuple> View for ViewChildren<V, A> {
     type State = (V::State, A::State);
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        self.inner.nodes(vc, &state.0)
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.inner.nodes(bc, &state.0)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
         // Build state for inner view
-        let st = self.inner.build(vc);
+        let st = self.inner.build(bc);
         // Build Views for each child element
-        let ch = self.items.build_spans(vc);
+        let ch = self.items.build_spans(bc);
         (st, ch)
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.update(vc, &mut state.0);
-        self.items.update_spans(vc, &mut state.1);
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.inner.update(bc, &mut state.0);
+        self.items.update_spans(bc, &mut state.1);
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        let nodes = self.inner.assemble(vc, &mut state.0);
-        let children = self.items.assemble_spans(vc, &mut state.1);
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        let nodes = self.inner.assemble(bc, &mut state.0);
+        let children = self.items.assemble_spans(bc, &mut state.1);
         if let NodeSpan::Node(parent) = nodes {
             // Attach child view outputs to parent.
             let mut flat: Vec<Entity> = Vec::with_capacity(children.count());
             children.flatten(&mut flat);
 
-            let mut em = vc.entity_mut(parent);
+            let mut em = bc.entity_mut(parent);
             if let Some(children) = em.get::<Children>() {
                 // See if children changed
                 if !children.eq(&flat) {

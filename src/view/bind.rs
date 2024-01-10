@@ -81,9 +81,9 @@ impl View for Bind {
     // State holds the PresenterState entity.
     type State = Entity;
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
         // get the handle from the PresenterState for this invocation.
-        let entt = vc.entity(*state);
+        let entt = bc.entity(*state);
         let Some(handle) = entt.get::<ViewHandle>() else {
             return NodeSpan::Empty;
         };
@@ -102,9 +102,9 @@ impl View for Bind {
         entity
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
         // get the handle from the current view state
-        let mut entt = vc.entity_mut(*state);
+        let mut entt = bc.entity_mut(*state);
         let Some(mut handle) = entt.get_mut::<ViewHandle>() else {
             return;
         };

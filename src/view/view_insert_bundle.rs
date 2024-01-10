@@ -16,11 +16,11 @@ pub struct ViewInsertBundle<V: View, B: Bundle> {
 }
 
 impl<V: View, B: Bundle> ViewInsertBundle<V, B> {
-    fn insert_bundle(&self, nodes: &NodeSpan, vc: &mut BuildContext) {
+    fn insert_bundle(&self, nodes: &NodeSpan, bc: &mut BuildContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
-                let em = &mut vc.entity_mut(*entity);
+                let em = &mut bc.entity_mut(*entity);
                 em.insert(self.bundle.take().unwrap());
             }
             NodeSpan::Fragment(ref _nodes) => {
@@ -33,29 +33,29 @@ impl<V: View, B: Bundle> ViewInsertBundle<V, B> {
 impl<V: View, B: Bundle> View for ViewInsertBundle<V, B> {
     type State = (V::State, NodeSpan);
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        self.inner.nodes(vc, &state.0)
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.inner.nodes(bc, &state.0)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        let state = self.inner.build(vc);
-        let nodes = self.inner.nodes(vc, &state);
-        self.insert_bundle(&nodes, vc);
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        let state = self.inner.build(bc);
+        let nodes = self.inner.nodes(bc, &state);
+        self.insert_bundle(&nodes, bc);
         (state, nodes)
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.update(vc, &mut state.0);
-        let nodes = self.inner.nodes(vc, &state.0);
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.inner.update(bc, &mut state.0);
+        let nodes = self.inner.nodes(bc, &state.0);
         // Only insert the component when the output entity has changed.
         if state.1 != nodes {
             state.1 = nodes;
-            self.insert_bundle(&state.1, vc);
+            self.insert_bundle(&state.1, bc);
         }
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        self.inner.assemble(vc, &mut state.0)
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.assemble(bc, &mut state.0)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {

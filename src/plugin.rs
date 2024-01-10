@@ -147,8 +147,8 @@ fn render_views(world: &mut World) {
                 continue;
             };
             let inner = view_handle.inner.clone();
-            let mut vc = BuildContext::new(world, e);
-            inner.lock().unwrap().attach(&mut vc, e);
+            let mut bc = BuildContext::new(world, e);
+            inner.lock().unwrap().attach(&mut bc, e);
         }
     }
 }

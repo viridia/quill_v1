@@ -19,16 +19,16 @@ pub trait ViewTuple: Send {
     }
 
     /// Return the output nodes for all spans.
-    fn span_nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan;
+    fn span_nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan;
 
     /// Build the child views.
-    fn build_spans(&self, vc: &mut BuildContext) -> Self::State;
+    fn build_spans(&self, bc: &mut BuildContext) -> Self::State;
 
     /// Update the child views.
-    fn update_spans(&self, vc: &mut BuildContext, state: &mut Self::State);
+    fn update_spans(&self, bc: &mut BuildContext, state: &mut Self::State);
 
     /// Assemble the child views.
-    fn assemble_spans(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan;
+    fn assemble_spans(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan;
 
     /// Despawn the child views.
     fn raze_spans(&self, world: &mut World, state: &mut Self::State);
@@ -41,20 +41,20 @@ impl<A: View> ViewTuple for A {
         1
     }
 
-    fn span_nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        self.nodes(vc, state)
+    fn span_nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.nodes(bc, state)
     }
 
-    fn build_spans(&self, vc: &mut BuildContext) -> Self::State {
-        self.build(vc)
+    fn build_spans(&self, bc: &mut BuildContext) -> Self::State {
+        self.build(bc)
     }
 
-    fn update_spans(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.update(vc, state)
+    fn update_spans(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.update(bc, state)
     }
 
-    fn assemble_spans(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        self.assemble(vc, state)
+    fn assemble_spans(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        self.assemble(bc, state)
     }
 
     fn raze_spans(&self, world: &mut World, state: &mut Self::State) {
@@ -72,24 +72,24 @@ impl ViewTuple for Tuple {
     }
 
     #[rustfmt::skip]
-    fn span_nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
+    fn span_nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
         NodeSpan::Fragment(Box::new([
-            for_tuples!(#( self.Tuple.nodes(vc, &state.Tuple) ),*)
+            for_tuples!(#( self.Tuple.nodes(bc, &state.Tuple) ),*)
         ]))
     }
 
-    fn build_spans(&self, vc: &mut BuildContext) -> Self::State {
-        for_tuples!((#( self.Tuple.build(vc) ),*))
+    fn build_spans(&self, bc: &mut BuildContext) -> Self::State {
+        for_tuples!((#( self.Tuple.build(bc) ),*))
     }
 
-    fn update_spans(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        for_tuples!(#( self.Tuple.update(vc, &mut state.Tuple); )*)
+    fn update_spans(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        for_tuples!(#( self.Tuple.update(bc, &mut state.Tuple); )*)
     }
 
     #[rustfmt::skip]
-    fn assemble_spans(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+    fn assemble_spans(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
         NodeSpan::Fragment(Box::new([
-            for_tuples!(#( self.Tuple.assemble(vc, &mut state.Tuple) ),*)
+            for_tuples!(#( self.Tuple.assemble(bc, &mut state.Tuple) ),*)
         ]))
     }
 

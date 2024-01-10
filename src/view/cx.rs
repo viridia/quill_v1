@@ -15,7 +15,7 @@ use super::{
 pub struct Cx<'w, 'p, Props = ()> {
     /// The properties that were passed to the presenter from it's parent.
     pub props: &'p Props,
-    pub(crate) vc: &'p mut BuildContext<'w>,
+    pub(crate) bc: &'p mut BuildContext<'w>,
     /// Set of reactive resources referenced by the presenter.
     pub(crate) tracking: RefCell<&'p mut TrackingContext>,
 }
@@ -23,12 +23,12 @@ pub struct Cx<'w, 'p, Props = ()> {
 impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     pub(crate) fn new(
         props: &'p Props,
-        vc: &'p mut BuildContext<'w>,
+        bc: &'p mut BuildContext<'w>,
         tracking: &'p mut TrackingContext,
     ) -> Self {
         Self {
             props,
-            vc,
+            bc,
             tracking: RefCell::new(tracking),
         }
     }
@@ -37,12 +37,12 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// adds the resource as a dependency of the current presenter invocation.
     pub fn use_resource<T: Resource>(&self) -> &T {
         self.add_tracked_resource::<T>();
-        self.vc.world.resource::<T>()
+        self.bc.world.resource::<T>()
     }
 
     /// Return a reference to the Component `C` on the given entity.
     pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
-        match self.vc.world.get_entity(entity) {
+        match self.bc.world.get_entity(entity) {
             Some(c) => {
                 self.add_tracked_component::<C>(entity);
                 c.get::<C>()
@@ -55,7 +55,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// add the component to the tracking scope, and is intended for components that update
     /// frequently.
     pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
-        match self.vc.world.get_entity(entity) {
+        match self.bc.world.get_entity(entity) {
             Some(c) => c.get::<C>(),
             None => None,
         }
@@ -64,8 +64,8 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// Return a reference to the Component `C` on the entity that contains the current
     /// presenter invocation.
     pub fn use_view_component<C: Component>(&self) -> Option<&C> {
-        self.add_tracked_component::<C>(self.vc.entity);
-        self.vc.world.entity(self.vc.entity).get::<C>()
+        self.add_tracked_component::<C>(self.bc.entity);
+        self.bc.world.entity(self.bc.entity).get::<C>()
     }
 
     /// Run a function on the view entity. Will only re-run when [`deps`] changes.
@@ -75,30 +75,30 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         deps: D,
     ) {
         let handle = self.create_atom_handle::<D>();
-        let mut entt = self.vc.world.entity_mut(handle.id);
+        let mut entt = self.bc.world.entity_mut(handle.id);
         match entt.get_mut::<AtomCell>() {
             Some(mut cell) => {
                 let deps_old = cell.0.downcast_mut::<D>().expect("Atom is incorrect type");
                 if *deps_old != deps {
                     *deps_old = deps;
-                    (effect)(self.vc.world.entity_mut(self.vc.entity));
+                    (effect)(self.bc.world.entity_mut(self.bc.entity));
                 }
             }
             None => {
                 entt.insert(AtomCell(Box::new(deps)));
-                (effect)(self.vc.world.entity_mut(self.vc.entity));
+                (effect)(self.bc.world.entity_mut(self.bc.entity));
             }
         }
     }
 
     /// Return a reference to the entity that holds the current presenter invocation.
     pub fn use_view_entity(&self) -> EntityRef<'_> {
-        self.vc.world.entity(self.vc.entity)
+        self.bc.world.entity(self.bc.entity)
     }
 
     /// Return a mutable reference to the entity that holds the current presenter invocation.
     pub fn use_view_entity_mut(&mut self) -> EntityWorldMut<'_> {
-        self.vc.world.entity_mut(self.vc.entity)
+        self.bc.world.entity_mut(self.bc.entity)
     }
 
     /// Spawn an empty [`Entity`] which is owned by this presenter. The entity will be
@@ -110,7 +110,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         match index.cmp(&tracking.owned_entities.len()) {
             Ordering::Less => tracking.owned_entities[index],
             Ordering::Equal => {
-                let id = self.vc.world.spawn_empty().id();
+                let id = self.bc.world.spawn_empty().id();
                 tracking.owned_entities.push(id);
                 id
             }
@@ -123,7 +123,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// invocation is razed.
     pub fn create_atom<T: Clone + Sync + Send + Default + 'static>(&mut self) -> AtomHandle<T> {
         let handle = self.create_atom_handle::<T>();
-        let mut entt = self.vc.world.entity_mut(handle.id);
+        let mut entt = self.bc.world.entity_mut(handle.id);
         match entt.get_mut::<AtomCell>() {
             Some(_) => {}
             None => {
@@ -141,7 +141,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         init: impl FnOnce() -> T,
     ) -> AtomHandle<T> {
         let handle = self.create_atom_handle::<T>();
-        let mut entt = self.vc.world.entity_mut(handle.id);
+        let mut entt = self.bc.world.entity_mut(handle.id);
         match entt.get_mut::<AtomCell>() {
             Some(_) => {}
             None => {
@@ -155,7 +155,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
     /// presenter, so that it will re-render when the atom changes.
     pub fn read_atom<T: Clone + Sync + Send + 'static>(&self, handle: AtomHandle<T>) -> T {
         let cid = self
-            .vc
+            .bc
             .world
             .component_id::<AtomCell>()
             .expect("Unregistered component type");
@@ -163,7 +163,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
             .borrow_mut()
             .components
             .insert((handle.id, cid));
-        self.vc.world.get_atom(handle)
+        self.bc.world.get_atom(handle)
     }
 
     /// Write the value of an atom. Panics if the atom handle is invalid.
@@ -172,7 +172,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         handle: AtomHandle<T>,
         value: T,
     ) {
-        self.vc.world.set_atom(handle, value);
+        self.bc.world.set_atom(handle, value);
     }
 
     /// Create a scoped value. This can be used to pass data to child presenters.
@@ -182,7 +182,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         key: ScopedValueKey<T>,
         value: T,
     ) {
-        let mut ec = self.vc.world.entity_mut(self.vc.entity);
+        let mut ec = self.bc.world.entity_mut(self.bc.entity);
         match ec.get_mut::<ScopedValueMap>() {
             Some(mut ctx) => {
                 if let Some(v) = ctx.0.get(&key.id()) {
@@ -206,13 +206,13 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
         &self,
         key: ScopedValueKey<T>,
     ) -> Option<T> {
-        let mut entity = self.vc.entity;
+        let mut entity = self.bc.entity;
         loop {
-            let ec = self.vc.world.entity(entity);
+            let ec = self.bc.world.entity(entity);
             if let Some(ctx) = ec.get::<ScopedValueMap>() {
                 if let Some(val) = ctx.0.get(&key.id()) {
                     let cid = self
-                        .vc
+                        .bc
                         .world
                         .component_id::<ScopedValueMap>()
                         .expect("ScopedValueMap component type is not registered");
@@ -252,7 +252,7 @@ impl<'w, 'p, Props> Cx<'w, 'p, Props> {
 
     fn add_tracked_component<C: Component>(&self, entity: Entity) {
         let cid = self
-            .vc
+            .bc
             .world
             .component_id::<C>()
             .expect("Unregistered component type");

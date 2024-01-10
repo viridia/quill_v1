@@ -86,13 +86,13 @@ pub trait AnyPresenterState: Send {
     fn nodes(&self) -> NodeSpan;
 
     /// Rebuild the NodeSpans for this view and update the state.
-    fn build(&mut self, vc: &mut BuildContext, entity: Entity);
+    fn build(&mut self, bc: &mut BuildContext, entity: Entity);
 
     /// Release all state and despawn all child entities.
     fn raze(&mut self, world: &mut World, entity: Entity);
 
     /// Rebuild the display graph connections.
-    fn attach(&mut self, vc: &mut BuildContext, entity: Entity);
+    fn attach(&mut self, bc: &mut BuildContext, entity: Entity);
 
     /// Update the copy of props in this view state.
     fn update_props(&mut self, props: &dyn Any) -> bool;
@@ -102,12 +102,12 @@ pub trait AnyPresenterState: Send {
 }
 
 impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker, F> {
-    fn build(&mut self, vc: &mut BuildContext, entity: Entity) {
-        let atom_handles: Vec<Entity> = match vc.world.entity(entity).get::<OwnedEntities>() {
+    fn build(&mut self, bc: &mut BuildContext, entity: Entity) {
+        let atom_handles: Vec<Entity> = match bc.world.entity(entity).get::<OwnedEntities>() {
             Some(owned) => owned.0.clone(),
             None => Vec::new(),
         };
-        let mut child_context = vc.for_entity(entity);
+        let mut child_context = bc.for_entity(entity);
         let mut tracking = TrackingContext {
             resources: Vec::new(),
             components: HashSet::new(),
@@ -122,20 +122,20 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
                     .as_ref()
                     .unwrap()
                     .update(&mut child_context, state);
-                self.attach(vc, entity);
+                self.attach(bc, entity);
             }
             None => {
                 let state = self.view.as_ref().unwrap().build(&mut child_context);
                 self.state = Some(state);
-                vc.mark_changed_shape();
-                if let Some(parent) = vc.entity(vc.entity).get::<Parent>() {
-                    vc.entity_mut(parent.get()).insert(PresenterGraphChanged);
+                bc.mark_changed_shape();
+                if let Some(parent) = bc.entity(bc.entity).get::<Parent>() {
+                    bc.entity_mut(parent.get()).insert(PresenterGraphChanged);
                 }
             }
         };
 
-        let tick = vc.world.change_tick();
-        let mut entt = vc.world.entity_mut(entity);
+        let tick = bc.world.change_tick();
+        let mut entt = bc.world.entity_mut(entity);
         if tracking.resources.is_empty() {
             entt.remove::<TrackedResources>();
         } else {
@@ -180,8 +180,8 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         }
     }
 
-    fn attach(&mut self, vc: &mut BuildContext, entity: Entity) {
-        let mut child_context = vc.for_entity(entity);
+    fn attach(&mut self, bc: &mut BuildContext, entity: Entity) {
+        let mut child_context = bc.for_entity(entity);
         let nodes = self
             .view
             .as_ref()
@@ -190,8 +190,8 @@ impl<Marker, F: PresenterFn<Marker>> AnyPresenterState for PresenterState<Marker
         if self.nodes != nodes {
             self.nodes = nodes;
             // Parent needs to rebuild children
-            if let Some(parent) = vc.entity(vc.entity).get::<Parent>() {
-                vc.entity_mut(parent.get()).insert(PresenterGraphChanged);
+            if let Some(parent) = bc.entity(bc.entity).get::<Parent>() {
+                bc.entity_mut(parent.get()).insert(PresenterGraphChanged);
             }
         }
     }

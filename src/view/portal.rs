@@ -23,8 +23,8 @@ impl View for Portal {
         NodeSpan::Empty
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        let new_entity = vc
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        let new_entity = bc
             .world
             .spawn((
                 NodeBundle {

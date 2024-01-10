@@ -17,11 +17,11 @@ impl<V: View> ViewStyled<V> {
         }
     }
 
-    fn insert_styles(&self, nodes: &NodeSpan, vc: &mut BuildContext) {
+    fn insert_styles(&self, nodes: &NodeSpan, bc: &mut BuildContext) {
         match nodes {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
-                let em = &mut vc.entity_mut(*entity);
+                let em = &mut bc.entity_mut(*entity);
                 let selector_depth = self.styles.iter().map(|s| s.depth()).max().unwrap_or(0);
                 let uses_hover = self.styles.iter().any(|s| s.uses_hover());
 
@@ -48,7 +48,7 @@ impl<V: View> ViewStyled<V> {
             NodeSpan::Fragment(ref nodes) => {
                 for node in nodes.iter() {
                     // Recurse
-                    self.insert_styles(node, vc);
+                    self.insert_styles(node, bc);
                 }
             }
         }
@@ -58,23 +58,23 @@ impl<V: View> ViewStyled<V> {
 impl<V: View> View for ViewStyled<V> {
     type State = V::State;
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        self.inner.nodes(vc, state)
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        self.inner.nodes(bc, state)
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
-        let state = self.inner.build(vc);
-        self.insert_styles(&self.nodes(vc, &state), vc);
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
+        let state = self.inner.build(bc);
+        self.insert_styles(&self.nodes(bc, &state), bc);
         state
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
-        self.inner.update(vc, state);
-        self.insert_styles(&self.nodes(vc, state), vc);
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
+        self.inner.update(bc, state);
+        self.insert_styles(&self.nodes(bc, state), bc);
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        self.inner.assemble(vc, state)
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        self.inner.assemble(bc, state)
     }
 
     fn raze(&self, world: &mut World, state: &mut Self::State) {

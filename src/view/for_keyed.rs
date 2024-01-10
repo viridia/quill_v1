@@ -13,18 +13,18 @@ pub struct KeyedListItem<Key: Send + PartialEq, V: View> {
 }
 
 impl<Key: Send + PartialEq, V: View> KeyedListItem<Key, V> {
-    fn nodes(&self, vc: &BuildContext) -> NodeSpan {
+    fn nodes(&self, bc: &BuildContext) -> NodeSpan {
         self.view
             .as_ref()
             .unwrap()
-            .nodes(vc, self.state.as_ref().unwrap())
+            .nodes(bc, self.state.as_ref().unwrap())
     }
 
-    fn assemble(&mut self, vc: &mut BuildContext) -> NodeSpan {
+    fn assemble(&mut self, bc: &mut BuildContext) -> NodeSpan {
         self.view
             .as_ref()
             .unwrap()
-            .assemble(vc, self.state.as_mut().unwrap())
+            .assemble(bc, self.state.as_mut().unwrap())
     }
 }
 
@@ -70,14 +70,14 @@ where
     ///
     /// # Arguments
     ///
-    /// * `vc` - [`ViewContext`] used to build individual elements.
+    /// * `bc` - [`BuildContext`] used to build individual elements.
     /// * `prev_state` - Array of view state elements from previous update.
     /// * `prev_range` - The range of elements we are comparing in `prev_state`.
     /// * `next_state` - Array of view state elements to be built.
     /// * `next_range` - The range of elements we are comparing in `next_state`.
     fn build_recursive(
         &self,
-        vc: &mut BuildContext,
+        bc: &mut BuildContext,
         prev_state: &mut [KeyedListItem<Key, V>],
         prev_range: Range<usize>,
         next_state: &mut [KeyedListItem<Key, V>],
@@ -97,14 +97,14 @@ where
             for i in prev_range {
                 let prev = &mut prev_state[i];
                 if let Some(ref view) = prev.view {
-                    view.raze(vc.world, prev.state.as_mut().unwrap());
+                    view.raze(bc.world, prev.state.as_mut().unwrap());
                 }
             }
             // Build new elements
             for i in next_range {
                 let next = &mut next_state[i];
                 let view = (self.each)(&self.items[i]);
-                next.state = Some(view.build(vc));
+                next.state = Some(view.build(bc));
                 next.view = Some(view);
             }
             return;
@@ -119,7 +119,7 @@ where
             if next_start > next_range.start {
                 // Both prev and next have entries before lcs, so recurse
                 self.build_recursive(
-                    vc,
+                    bc,
                     prev_state,
                     prev_range.start..prev_start,
                     next_state,
@@ -130,7 +130,7 @@ where
                 for i in prev_range.start..prev_start {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(vc.world, prev.state.as_mut().unwrap());
+                        view.raze(bc.world, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -139,7 +139,7 @@ where
             for i in next_range.start..next_start {
                 let next = &mut next_state[i];
                 let view = (self.each)(&self.items[i]);
-                next.state = Some(view.build(vc));
+                next.state = Some(view.build(bc));
                 next.view = Some(view);
             }
         }
@@ -151,7 +151,7 @@ where
             // Take the old state, update with new View for this element.
             next.state = prev.state.take();
             let v = (self.each)(&self.items[next_start + i]);
-            v.update(vc, next.state.as_mut().unwrap());
+            v.update(bc, next.state.as_mut().unwrap());
             next.view = Some(v);
         }
 
@@ -162,7 +162,7 @@ where
             if next_end < next_range.end {
                 // Both prev and next have entries after lcs, so recurse
                 self.build_recursive(
-                    vc,
+                    bc,
                     prev_state,
                     prev_end..prev_range.end,
                     next_state,
@@ -173,7 +173,7 @@ where
                 for i in prev_end..prev_range.end {
                     let prev = &mut prev_state[i];
                     if let Some(ref view) = prev.view {
-                        view.raze(vc.world, prev.state.as_mut().unwrap());
+                        view.raze(bc.world, prev.state.as_mut().unwrap());
                     }
                 }
             }
@@ -182,7 +182,7 @@ where
             for i in next_end..next_range.end {
                 let next = &mut next_state[i];
                 let view = (self.each)(&self.items[i]);
-                next.state = Some(view.build(vc));
+                next.state = Some(view.build(bc));
                 next.view = Some(view);
             }
         }
@@ -202,19 +202,19 @@ where
 {
     type State = Vec<KeyedListItem<Key, V>>;
 
-    fn nodes(&self, vc: &BuildContext, state: &Self::State) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(vc)).collect();
+    fn nodes(&self, bc: &BuildContext, state: &Self::State) -> NodeSpan {
+        let child_spans: Vec<NodeSpan> = state.iter().map(|item| item.nodes(bc)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
-    fn build(&self, vc: &mut BuildContext) -> Self::State {
+    fn build(&self, bc: &mut BuildContext) -> Self::State {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
 
         // Initialize next state array to default values; fill in keys.
         for j in 0..next_len {
             let view = (self.each)(&self.items[j]);
-            let state = view.build(vc);
+            let state = view.build(bc);
             next_state.push({
                 KeyedListItem {
                     view: Some(view),
@@ -227,7 +227,7 @@ where
         next_state
     }
 
-    fn update(&self, vc: &mut BuildContext, state: &mut Self::State) {
+    fn update(&self, bc: &mut BuildContext, state: &mut Self::State) {
         let next_len = self.items.len();
         let mut next_state: Self::State = Vec::with_capacity(next_len);
         let prev_len = state.len();
@@ -243,15 +243,15 @@ where
             });
         }
 
-        self.build_recursive(vc, state, 0..prev_len, &mut next_state, 0..next_len);
+        self.build_recursive(bc, state, 0..prev_len, &mut next_state, 0..next_len);
         for j in 0..next_len {
             assert!(next_state[j].state.is_some(), "Empty state: {}", j);
         }
         std::mem::swap(state, &mut next_state);
     }
 
-    fn assemble(&self, vc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.assemble(vc)).collect();
+    fn assemble(&self, bc: &mut BuildContext, state: &mut Self::State) -> NodeSpan {
+        let child_spans: Vec<NodeSpan> = state.iter_mut().map(|item| item.assemble(bc)).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
@@ -294,14 +294,14 @@ mod tests {
     fn test_update() {
         let mut world = World::new();
         let entity = world.spawn_empty().id();
-        let mut vc = BuildContext {
+        let mut bc = BuildContext {
             world: &mut world,
             entity,
         };
 
         // Initial render
         let view = ForKeyed::new(&[1, 2, 3], |item| *item, |item| format!("{}", item));
-        let mut state = view.build(&mut vc);
+        let mut state = view.build(&mut bc);
         assert_eq!(state.len(), 3);
         assert_eq!(state[0].key, 1);
         assert!(state[0].state.is_some());
@@ -313,7 +313,7 @@ mod tests {
 
         // Insert at start
         let view = ForKeyed::new(&[0, 1, 2, 3], |item| *item, |item| format!("{}", item));
-        view.update(&mut vc, &mut state);
+        view.update(&mut bc, &mut state);
         assert_eq!(state.len(), 4);
         assert_eq!(state[0].key, 0);
         assert_eq!(state[3].key, 3);
@@ -321,7 +321,7 @@ mod tests {
 
         // Delete at start
         let view = ForKeyed::new(&[1, 2, 3], |item| *item, |item| format!("{}", item));
-        view.update(&mut vc, &mut state);
+        view.update(&mut bc, &mut state);
         assert_eq!(state.len(), 3);
         assert_eq!(state[0].key, 1);
         assert_eq!(state[2].key, 3);
@@ -329,7 +329,7 @@ mod tests {
 
         // Insert at end
         let view = ForKeyed::new(&[1, 2, 3, 4], |item| *item, |item| format!("{}", item));
-        view.update(&mut vc, &mut state);
+        view.update(&mut bc, &mut state);
         assert_eq!(state.len(), 4);
         assert_eq!(state[0].key, 1);
         assert_eq!(state[3].key, 4);
@@ -337,7 +337,7 @@ mod tests {
 
         // Delete at end
         let view = ForKeyed::new(&[1, 2, 3], |item| *item, |item| format!("{}", item));
-        view.update(&mut vc, &mut state);
+        view.update(&mut bc, &mut state);
         assert_eq!(state.len(), 3);
         assert_eq!(state[0].key, 1);
         assert_eq!(state[2].key, 3);
@@ -345,7 +345,7 @@ mod tests {
 
         // Delete in middle
         let view = ForKeyed::new(&[1, 3], |item| *item, |item| format!("{}", item));
-        view.update(&mut vc, &mut state);
+        view.update(&mut bc, &mut state);
         assert_eq!(state.len(), 2);
         assert_eq!(state[0].key, 1);
         assert_eq!(state[1].key, 3);
@@ -353,7 +353,7 @@ mod tests {
 
         // Insert in middle
         let view = ForKeyed::new(&[1, 2, 3], |item| *item, |item| format!("{}", item));
-        view.update(&mut vc, &mut state);
+        view.update(&mut bc, &mut state);
         assert_eq!(state.len(), 3);
         assert_eq!(state[0].key, 1);
         assert_eq!(state[1].key, 2);
@@ -362,7 +362,7 @@ mod tests {
 
         // Replace in the middle
         let view = ForKeyed::new(&[1, 5, 3], |item| *item, |item| format!("{}", item));
-        view.update(&mut vc, &mut state);
+        view.update(&mut bc, &mut state);
         assert_eq!(state.len(), 3);
         assert_eq!(state[0].key, 1);
         assert_eq!(state[1].key, 5);
