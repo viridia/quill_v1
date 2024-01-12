@@ -38,16 +38,6 @@ pub struct TabGroup {
     pub trapped: bool,
 }
 
-/// Resource which contains the current list of tabbable entities as a flat vector.
-/// If the current focus entity is inside a trapped group, then this list only contains
-/// the entities in that group. Otherwise, it contains all tabbable entities that are not
-/// in trapped groups.
-// #[derive(Debug, Default, Resource)]
-// pub struct FocusableEntities {
-//     /// The list of tabbable entities.
-//     pub entities: Vec<Entity>,
-// }
-
 /// An injectable object that provides tab navigation functionality.
 #[doc(hidden)]
 #[derive(SystemParam)]
