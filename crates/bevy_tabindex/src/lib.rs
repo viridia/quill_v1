@@ -31,11 +31,11 @@ pub struct TabGroup {
     /// The order of the tab group relative to other tab groups.
     pub order: i32,
 
-    /// Whether this is a 'trapped' group. If true, then tabbing within the group (that is,
+    /// Whether this is a 'modal' group. If true, then tabbing within the group (that is,
     /// if the current focus entity is a child of this group) will cycle through the children
-    /// of this group. If false, then tabbing within the group will cycle through all non-trapped
+    /// of this group. If false, then tabbing within the group will cycle through all non-modal
     /// tab groups.
-    pub trapped: bool,
+    pub modal: bool,
 }
 
 /// An injectable object that provides tab navigation functionality.
@@ -71,7 +71,7 @@ impl TabNavigation<'_, '_> {
         }
 
         // Start by identifying which tab group we are in. Mainly what we want to know is if
-        // we're in a trapped group.
+        // we're in a modal group.
         let mut tabgroup: Option<(Entity, &TabGroup)> = None;
         let mut entity = focus;
         while let Some(ent) = entity {
@@ -86,16 +86,16 @@ impl TabNavigation<'_, '_> {
         let mut focusable: Vec<(Entity, TabIndex)> = Vec::with_capacity(self.tabindex.iter().len());
 
         match tabgroup {
-            Some((tg_entity, tg)) if tg.trapped => {
-                // We're in a trapped tab group, then gather all tab indices in that group.
+            Some((tg_entity, tg)) if tg.modal => {
+                // We're in a modal tab group, then gather all tab indices in that group.
                 self.gather_focusable(&mut focusable, tg_entity);
             }
             _ => {
-                // Otherwise, gather all tab indices in all non-trapped tab groups.
+                // Otherwise, gather all tab indices in all non-modal tab groups.
                 let mut tab_groups: Vec<(Entity, TabGroup)> = self
                     .tabgroup
                     .iter()
-                    .filter(|(_, tg, _)| !tg.trapped)
+                    .filter(|(_, tg, _)| !tg.modal)
                     .map(|(e, tg, _)| (e, *tg))
                     .collect();
                 // Stable sort by group order
@@ -143,7 +143,7 @@ impl TabNavigation<'_, '_> {
                 }
             }
         } else if let Ok((_, tabgroup, children)) = self.tabgroup.get(parent) {
-            if !tabgroup.trapped {
+            if !tabgroup.modal {
                 for child in children.iter() {
                     self.gather_focusable(out, *child);
                 }
