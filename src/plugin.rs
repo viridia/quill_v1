@@ -7,7 +7,7 @@ use crate::{
     presenter_state::{PresenterGraphChanged, PresenterStateChanged},
     tracked_resources::TrackedResources,
     tracking::TrackedComponents,
-    update::update_styles,
+    update::{update_styles, PreviousFocus},
     update_scroll_positions, BuildContext, ScrollWheel, ViewHandle,
 };
 
@@ -16,20 +16,21 @@ pub struct QuillPlugin;
 
 impl Plugin for QuillPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                (render_views, update_styles).chain(),
-                animate_transforms,
-                animate_bg_colors,
-                animate_border_colors,
-                animate_layout,
-                update_scroll_positions,
-                handle_scroll_events,
-            ),
-        )
-        .add_plugins(EventListenerPlugin::<ScrollWheel>::default())
-        .add_event::<ScrollWheel>();
+        app.init_resource::<PreviousFocus>()
+            .add_systems(
+                Update,
+                (
+                    (render_views, update_styles).chain(),
+                    animate_transforms,
+                    animate_bg_colors,
+                    animate_border_colors,
+                    animate_layout,
+                    update_scroll_positions,
+                    handle_scroll_events,
+                ),
+            )
+            .add_plugins(EventListenerPlugin::<ScrollWheel>::default())
+            .add_event::<ScrollWheel>();
     }
 }
 

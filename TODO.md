@@ -4,6 +4,7 @@
 * Change popup menu to use closure for items.
     * Get rid of ViewParam
     * This is harder than it sounds.
+* Floating doesn't reposition on window size.
 * Migrate to Egret/Grackle:
     * Disclosure
     * Dialog

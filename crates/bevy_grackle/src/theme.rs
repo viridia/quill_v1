@@ -82,6 +82,11 @@ static STYLE_LT_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
         .selector(".pressed", |ss| ss.background_color(COLOR_GRAY_300))
         .selector(":hover", |ss| ss.background_color(COLOR_GRAY_400))
         .selector(":hover.pressed", |ss| ss.background_color(COLOR_GRAY_200))
+        .selector(":focus", |ss| {
+            ss.outline_color(COLOR_GRAY_400)
+                .outline_width(2)
+                .outline_offset(1)
+        })
 });
 
 #[dynamic]
@@ -93,6 +98,11 @@ static STYLE_DK_BUTTON_DEFAULT: StyleHandle = StyleHandle::build(|ss| {
         .selector(":hover.pressed", |ss| {
             ss.background_color(COLOR_BLUEGRAY_500)
         })
+        .selector(":focus", |ss| {
+            ss.outline_color(COLOR_GRAY_400)
+                .outline_width(2)
+                .outline_offset(1)
+        })
 });
 
 #[dynamic]
@@ -102,6 +112,11 @@ static STYLE_DK_BUTTON_PRIMARY: StyleHandle = StyleHandle::build(|ss| {
         .selector(".pressed", |ss| ss.background_color(COLOR_PRIMARY))
         .selector(":hover", |ss| ss.background_color(COLOR_PRIMARY))
         .selector(":hover.pressed", |ss| ss.background_color(COLOR_PRIMARY))
+        .selector(":focus", |ss| {
+            ss.outline_color(COLOR_GRAY_400)
+                .outline_width(2)
+                .outline_offset(1)
+        })
 });
 
 #[dynamic]
@@ -111,6 +126,11 @@ static STYLE_DK_BUTTON_DANGER: StyleHandle = StyleHandle::build(|ss| {
         .selector(".pressed", |ss| ss.background_color(COLOR_DANGER))
         .selector(":hover", |ss| ss.background_color(COLOR_DANGER))
         .selector(":hover.pressed", |ss| ss.background_color(COLOR_DANGER))
+        .selector(":focus", |ss| {
+            ss.outline_color(COLOR_GRAY_400)
+                .outline_width(2)
+                .outline_offset(1)
+        })
 });
 
 // Splitter

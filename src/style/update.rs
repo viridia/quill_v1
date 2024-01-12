@@ -1,4 +1,5 @@
 use bevy::{
+    a11y::Focus,
     prelude::*,
     render::texture::{ImageLoaderSettings, ImageSampler},
 };
@@ -10,6 +11,9 @@ use crate::{
 };
 
 use super::style_handle::TextStyles;
+
+#[derive(Resource, Default)]
+pub(crate) struct PreviousFocus(Option<Entity>);
 
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::type_complexity)]
@@ -31,18 +35,22 @@ pub(crate) fn update_styles(
     hover_map: Res<HoverMap>,
     hover_map_prev: Res<PreviousHoverMap>,
     assets: Res<AssetServer>,
+    focus: Res<Focus>,
+    mut focus_prev: ResMut<PreviousFocus>,
 ) {
     let matcher = SelectorMatcher::new(
         &query_element_classes,
         &query_parents,
         &query_children,
         &hover_map.0,
+        focus.0,
     );
     let matcher_prev = SelectorMatcher::new(
         &query_element_classes,
         &query_parents,
         &query_children,
         &hover_map_prev.0,
+        focus_prev.0,
     );
 
     for root_node in &query_root {
@@ -60,6 +68,8 @@ pub(crate) fn update_styles(
             false,
         )
     }
+
+    focus_prev.0 = focus.0;
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -211,6 +221,24 @@ fn is_changed(
                     changed = true;
                     break;
                 }
+
+                if matcher.is_focused(&e) != matcher_prev.is_focused(&e) {
+                    changed = true;
+                    break;
+                }
+
+                if matcher.is_focus_visible(&e) != matcher_prev.is_focus_visible(&e) {
+                    changed = true;
+                    break;
+                }
+
+                if element_styles.uses_focus_within
+                    && matcher.is_focus_within(&e) != matcher_prev.is_focus_within(&e)
+                {
+                    changed = true;
+                    break;
+                }
+
                 if a_classes.is_changed() {
                     changed = true;
                     break;

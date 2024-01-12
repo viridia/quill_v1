@@ -10,6 +10,7 @@ pub struct SelectorMatcher<'w, 's, 'h> {
     parent_query: &'h Query<'w, 's, &'static Parent, (With<Node>, With<Visibility>)>,
     children_query: &'h Query<'w, 's, &'static Children, (With<Node>, With<Visibility>)>,
     hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
+    focus: Option<Entity>,
 }
 
 impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
@@ -18,16 +19,18 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
         parent_query: &'h Query<'w, 's, &'static Parent, (With<Node>, With<Visibility>)>,
         children_query: &'h Query<'w, 's, &'static Children, (With<Node>, With<Visibility>)>,
         hover_map: &'h HashMap<PointerId, HashMap<Entity, HitData>>,
+        focus: Option<Entity>,
     ) -> Self {
         Self {
             classes_query: query,
             parent_query,
             children_query,
             hover_map,
+            focus,
         }
     }
 
-    /// True if the given entity, or a descendant of it, is in the hover map for PointerId::Mouse.
+    /// True if the given entity, or an ancestor of it, is in the hover map for PointerId::Mouse.
     ///
     /// This is used to determine whether to apply the :hover pseudo-class.
     pub fn is_hovering(&self, e: &Entity) -> bool {
@@ -43,6 +46,38 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
             }),
             None => false,
         }
+    }
+
+    /// True if the given entity has keyboard focus.
+    ///
+    /// This is used to determine whether to apply the :focus pseudo-class.
+    pub fn is_focused(&self, e: &Entity) -> bool {
+        Some(e) == self.focus.as_ref()
+    }
+
+    /// True if the given entity, or a descendant of it has keyboard focus.
+    ///
+    /// This is used to determine whether to apply the :focus-within pseudo-class.
+    pub fn is_focus_within(&self, e: &Entity) -> bool {
+        let mut focus = self.focus;
+        while let Some(ha) = focus {
+            if ha == *e {
+                return true;
+            }
+            match self.parent_query.get(ha) {
+                Ok(parent) => focus = Some(parent.get()),
+                _ => return false,
+            }
+        }
+        false
+    }
+
+    /// True if the given entity has focus and focus visibility is enabled.
+    ///
+    /// This is used to determine whether to apply the :focus-visible pseudo-class.
+    pub fn is_focus_visible(&self, e: &Entity) -> bool {
+        // TODO: Add configuration flag for whether focus should be visible.
+        Some(e) == self.focus.as_ref()
     }
 
     /// True if this entity is the first child of its parent.
@@ -77,6 +112,13 @@ impl<'w, 's, 'h> SelectorMatcher<'w, 's, 'h> {
                 _ => false,
             },
             Selector::Hover(next) => self.is_hovering(entity) && self.selector_match(next, entity),
+            Selector::Focus(next) => self.is_focused(entity) && self.selector_match(next, entity),
+            Selector::FocusWithin(next) => {
+                self.is_focus_within(entity) && self.selector_match(next, entity)
+            }
+            Selector::FocusVisible(next) => {
+                self.is_focus_visible(entity) && self.selector_match(next, entity)
+            }
             Selector::FirstChild(next) => {
                 self.is_first_child(entity) && self.selector_match(next, entity)
             }

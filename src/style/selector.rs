@@ -40,6 +40,15 @@ pub enum Selector {
     /// Element that is being hovered.
     Hover(Box<Selector>),
 
+    /// Element that currently has keyboard focus.
+    Focus(Box<Selector>),
+
+    /// Element that currently has keyboard focus, or contains a descendant that does.
+    FocusWithin(Box<Selector>),
+
+    /// Element that currently has keyboard focus, when focus is shown.
+    FocusVisible(Box<Selector>),
+
     /// Element is the first child of its parent.
     FirstChild(Box<Selector>),
 
@@ -62,6 +71,9 @@ enum SelectorToken<'s> {
     Hover,
     FirstChild,
     LastChild,
+    Focus,
+    FocusWithin,
+    FocusVisible,
 }
 
 fn parent(input: &mut &str) -> PResult<()> {
@@ -88,6 +100,27 @@ fn hover<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
         .parse_next(input)
 }
 
+fn focus<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
+    ":focus"
+        .recognize()
+        .map(|_| SelectorToken::Focus)
+        .parse_next(input)
+}
+
+fn focus_within<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
+    ":focus-within"
+        .recognize()
+        .map(|_| SelectorToken::FocusWithin)
+        .parse_next(input)
+}
+
+fn focus_visible<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
+    ":focus-visible"
+        .recognize()
+        .map(|_| SelectorToken::FocusVisible)
+        .parse_next(input)
+}
+
 fn first_child<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
     ":first-child"
         .recognize()
@@ -105,7 +138,18 @@ fn last_child<'s>(input: &mut &'s str) -> PResult<SelectorToken<'s>> {
 fn simple_selector<'s>(input: &mut &'s str) -> PResult<(Option<char>, Vec<SelectorToken<'s>>)> {
     (
         opt(alt(('*', '&'))),
-        repeat(0.., alt((class_name, hover, first_child, last_child))),
+        repeat(
+            0..,
+            alt((
+                class_name,
+                hover,
+                first_child,
+                last_child,
+                focus,
+                focus_within,
+                focus_visible,
+            )),
+        ),
     )
         .parse_next(input)
 }
@@ -126,6 +170,15 @@ fn combo_selector(input: &mut &str) -> PResult<Box<Selector>> {
             }
             SelectorToken::LastChild => {
                 sel = Box::new(Selector::LastChild(sel));
+            }
+            SelectorToken::Focus => {
+                sel = Box::new(Selector::Focus(sel));
+            }
+            SelectorToken::FocusWithin => {
+                sel = Box::new(Selector::FocusWithin(sel));
+            }
+            SelectorToken::FocusVisible => {
+                sel = Box::new(Selector::FocusVisible(sel));
             }
         }
     }
@@ -173,6 +226,15 @@ impl Selector {
                     SelectorToken::LastChild => {
                         sel = Box::new(Selector::LastChild(sel));
                     }
+                    SelectorToken::Focus => {
+                        sel = Box::new(Selector::Focus(sel));
+                    }
+                    SelectorToken::FocusWithin => {
+                        sel = Box::new(Selector::FocusWithin(sel));
+                    }
+                    SelectorToken::FocusVisible => {
+                        sel = Box::new(Selector::FocusVisible(sel));
+                    }
                 }
             }
             if let Some(ch) = prefix {
@@ -191,9 +253,12 @@ impl Selector {
         match self {
             Selector::Accept => 1,
             Selector::Class(_, next) => next.depth(),
-            Selector::Hover(next) => next.depth(),
-            Selector::FirstChild(next) => next.depth(),
-            Selector::LastChild(next) => next.depth(),
+            Selector::Hover(next)
+            | Selector::Focus(next)
+            | Selector::FocusWithin(next)
+            | Selector::FocusVisible(next)
+            | Selector::FirstChild(next)
+            | Selector::LastChild(next) => next.depth(),
             Selector::Current(next) => next.depth(),
             Selector::Parent(next) => next.depth() + 1,
             Selector::Either(opts) => opts.iter().map(|next| next.depth()).max().unwrap_or(0),
@@ -206,9 +271,33 @@ impl Selector {
             Selector::Accept => false,
             Selector::Class(_, next) => next.uses_hover(),
             Selector::Hover(_) => true,
-            Selector::FirstChild(next) => next.uses_hover(),
-            Selector::LastChild(next) => next.uses_hover(),
-            Selector::Current(next) => next.uses_hover(),
+            Selector::Focus(next)
+            | Selector::FocusWithin(next)
+            | Selector::FocusVisible(next)
+            | Selector::FirstChild(next)
+            | Selector::LastChild(next)
+            | Selector::Current(next) => next.uses_hover(),
+            Selector::Parent(next) => next.uses_hover(),
+            Selector::Either(opts) => opts
+                .iter()
+                .map(|next| next.uses_hover())
+                .max()
+                .unwrap_or(false),
+        }
+    }
+
+    /// Returns whether this selector uses the hover pseudo-class.
+    pub(crate) fn uses_focus_within(&self) -> bool {
+        match self {
+            Selector::Accept => false,
+            Selector::Class(_, next) => next.uses_hover(),
+            Selector::FocusWithin(_) => true,
+            Selector::Hover(next)
+            | Selector::Focus(next)
+            | Selector::FocusVisible(next)
+            | Selector::FirstChild(next)
+            | Selector::LastChild(next)
+            | Selector::Current(next) => next.uses_hover(),
             Selector::Parent(next) => next.uses_hover(),
             Selector::Either(opts) => opts
                 .iter()
@@ -249,6 +338,9 @@ impl fmt::Display for Selector {
 
             Selector::Class(name, prev) => write!(f, "{}.{}", prev, name),
             Selector::Hover(prev) => write!(f, "{}:hover", prev),
+            Selector::Focus(prev) => write!(f, "{}:focus", prev),
+            Selector::FocusWithin(prev) => write!(f, "{}:focus-within", prev),
+            Selector::FocusVisible(prev) => write!(f, "{}:focus-visible", prev),
             Selector::FirstChild(prev) => write!(f, "{}:first-child", prev),
             Selector::LastChild(prev) => write!(f, "{}:last-child", prev),
             Selector::Parent(prev) => match prev.as_ref() {

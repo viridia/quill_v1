@@ -42,6 +42,11 @@ impl StyleHandle {
     pub fn uses_hover(&self) -> bool {
         self.0.as_ref().uses_hover()
     }
+
+    /// Return whether any of the selectors use the ':focus-within' pseudo-class.
+    pub fn uses_focus_within(&self) -> bool {
+        self.0.as_ref().uses_focus_within()
+    }
 }
 
 impl PartialEq for StyleHandle {
@@ -62,6 +67,9 @@ pub struct ElementStyles {
 
     /// Whether any selectors use the :hover pseudo-class
     pub(crate) uses_hover: bool,
+
+    /// Whether any selectors use the :focus-within pseudo-class
+    pub(crate) uses_focus_within: bool,
 }
 
 /// Component used to store inherited text style properties. This is set whenever an element

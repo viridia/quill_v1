@@ -3,6 +3,7 @@ members = [
     "crates/bevy_color",
     "crates/bevy_egret",
     "crates/bevy_grackle",
+    "crates/bevy_tabindex",
 ]
 
 [package]
@@ -28,6 +29,7 @@ winnow = "0.5.19"
 
 [dev-dependencies]
 bevy_grackle = { path = "crates/bevy_grackle" }
+bevy_tabindex = { path = "crates/bevy_tabindex" }
 
 # Enable max optimizations for dependencies, but not for our code:
 [profile.dev.package."*"]

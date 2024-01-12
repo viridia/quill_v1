@@ -1,6 +1,13 @@
-use bevy::prelude::*;
+use bevy::{
+    a11y::{
+        accesskit::{NodeBuilder, Role},
+        AccessibilityNode,
+    },
+    prelude::*,
+};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_quill::prelude::*;
+use bevy_tabindex::TabIndex;
 
 use crate::Clicked;
 
@@ -32,6 +39,8 @@ pub fn button<'a, V: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
             CLS_DISABLED.if_true(disabled),
         ))
         .insert((
+            TabIndex(0),
+            AccessibilityNode::from(NodeBuilder::new(Role::Button)),
             On::<Pointer<Click>>::run(
                 move |ev: Listener<Pointer<Click>>, mut writer: EventWriter<Clicked>| {
                     if !disabled {

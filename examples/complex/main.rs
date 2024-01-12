@@ -11,6 +11,7 @@ mod viewport;
 use std::sync::Arc;
 
 use bevy::{
+    a11y::Focus,
     asset::io::{file::FileAssetReader, AssetSource},
     prelude::*,
     ui,
@@ -26,6 +27,7 @@ use bevy_mod_picking::{
     prelude::*,
 };
 use bevy_quill::prelude::*;
+use bevy_tabindex::{TabGroup, TabNavigation};
 use dialog::{dialog, RequestClose};
 use disclosure::DisclosureTrianglePlugin;
 use node_tree::{node_tree, NodeTreePlugin};
@@ -79,6 +81,7 @@ fn main() {
                 test_scene::rotate,
                 test_scene::update_viewport_inset,
                 test_scene::update_camera_viewport,
+                handle_tab,
             ),
         )
         .run();
@@ -233,6 +236,7 @@ fn ui_main(mut cx: Cx) -> impl View {
     Element::new()
         .named("main-ui")
         .styled(STYLE_MAIN.clone())
+        .insert(TabGroup::default())
         .with_memo(
             move |mut e| {
                 let id = e.id();
@@ -412,6 +416,18 @@ fn color_edit(cx: Cx) -> impl View {
                 style: STYLE_SLIDER.clone(),
             }),
         ))
+}
+
+fn handle_tab(nav: TabNavigation, key: Res<Input<KeyCode>>, mut focus: ResMut<Focus>) {
+    if key.just_pressed(KeyCode::Tab) {
+        let next = nav.navigate(
+            focus.0,
+            key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight),
+        );
+        if next.is_some() {
+            focus.0 = next;
+        }
+    }
 }
 
 fn event_log(cx: Cx) -> impl View {

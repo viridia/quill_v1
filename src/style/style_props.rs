@@ -181,6 +181,11 @@ impl StyleSet {
         self.selectors.iter().any(|s| s.0.uses_hover())
     }
 
+    /// Return whether any of the selectors use the ':focus-within' pseudo-class.
+    pub fn uses_focus_within(&self) -> bool {
+        self.selectors.iter().any(|s| s.0.uses_focus_within())
+    }
+
     /// Merge the style properties into a computed `Style` object.
     pub fn apply_to(
         &self,

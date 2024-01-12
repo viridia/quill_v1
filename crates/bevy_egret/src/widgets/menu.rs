@@ -1,6 +1,13 @@
-use bevy::prelude::*;
+use bevy::{
+    a11y::{
+        accesskit::{HasPopup, NodeBuilder, Role},
+        AccessibilityNode,
+    },
+    prelude::*,
+};
 use bevy_mod_picking::prelude::*;
 use bevy_quill::prelude::*;
+use bevy_tabindex::TabIndex;
 
 use crate::{
     hooks::{EnterExitApi, EnterExitState},
@@ -60,6 +67,13 @@ pub fn menu_button<'a, V: View + Clone, VP: View + Clone, S: StyleTuple, C: Clas
             CLS_OPEN.if_true(cx.read_atom(is_open)),
         ))
         .insert((
+            TabIndex(0),
+            AccessibilityNode::from({
+                let mut builder = NodeBuilder::new(Role::Button);
+                builder.set_has_popup(HasPopup::Menu);
+                builder.set_expanded(cx.read_atom(is_open));
+                builder
+            }),
             On::<Pointer<Click>>::run(
                 move |ev: Listener<Pointer<Click>>,
                       mut writer: EventWriter<MenuEvent>,
