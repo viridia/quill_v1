@@ -22,24 +22,12 @@ impl<V: View> ViewStyled<V> {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
                 let em = &mut bc.entity_mut(*entity);
-                let selector_depth = self.styles.iter().map(|s| s.depth()).max().unwrap_or(0);
-                let uses_hover = self.styles.iter().any(|s| s.uses_hover());
-                let uses_focus_within = self.styles.iter().any(|s| s.uses_focus_within());
-
                 match em.get_mut::<ElementStyles>() {
                     Some(mut sc) => {
-                        sc.styles.clone_from(&self.styles);
-                        sc.selector_depth = selector_depth;
-                        sc.uses_hover = uses_hover;
-                        sc.uses_focus_within = uses_focus_within;
+                        sc.update(&self.styles);
                     }
                     None => {
-                        em.insert((ElementStyles {
-                            styles: self.styles.clone(),
-                            selector_depth,
-                            uses_hover,
-                            uses_focus_within,
-                        },));
+                        em.insert(ElementStyles::new(&self.styles));
                     }
                 }
 

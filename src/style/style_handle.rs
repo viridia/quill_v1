@@ -72,6 +72,27 @@ pub struct ElementStyles {
     pub(crate) uses_focus_within: bool,
 }
 
+impl ElementStyles {
+    pub fn new(styles: &[StyleHandle]) -> Self {
+        let selector_depth = styles.iter().map(|s| s.depth()).max().unwrap_or(0);
+        let uses_hover = styles.iter().any(|s| s.uses_hover());
+        let uses_focus_within = styles.iter().any(|s| s.uses_focus_within());
+        Self {
+            styles: styles.to_vec(),
+            selector_depth,
+            uses_hover,
+            uses_focus_within,
+        }
+    }
+
+    pub fn update(&mut self, styles: &[StyleHandle]) {
+        self.styles = styles.to_vec();
+        self.selector_depth = self.styles.iter().map(|s| s.depth()).max().unwrap_or(0);
+        self.uses_hover = self.styles.iter().any(|s| s.uses_hover());
+        self.uses_focus_within = self.styles.iter().any(|s| s.uses_focus_within());
+    }
+}
+
 /// Component used to store inherited text style properties. This is set whenever an element
 /// has one or more style properties which affect text rendering, even if the element is not
 /// a text node itself. This is used to calculate the inherited text style for child nodes,
