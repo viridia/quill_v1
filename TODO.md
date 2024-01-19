@@ -1,9 +1,13 @@
 # TODO:
 
-* :focus
+* Finish up focus behavior:
+    * Space to click
+    * Key event to focus
+    * Click to defocus
+    * focus-visible.
 * Change popup menu to use closure for items.
     * Get rid of ViewParam
-    * This is harder than it sounds.
+    * This is much harder than it sounds.
 * Floating doesn't reposition on window size.
 * Migrate to Egret/Grackle:
     * Disclosure
