@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = "0.12.0"
-bevy_mod_picking = "0.17.0"
+bevy = "0.13.1"
+bevy_mod_picking = "0.18.2"
 bevy_quill = { path = "../.." }
 bevy_egret = { path = "../bevy_egret" }
 static_init = "1.0.3"

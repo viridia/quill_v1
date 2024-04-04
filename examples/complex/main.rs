@@ -418,7 +418,7 @@ fn color_edit(cx: Cx) -> impl View {
         ))
 }
 
-fn handle_tab(nav: TabNavigation, key: Res<Input<KeyCode>>, mut focus: ResMut<Focus>) {
+fn handle_tab(nav: TabNavigation, key: Res<ButtonInput<KeyCode>>, mut focus: ResMut<Focus>) {
     if key.just_pressed(KeyCode::Tab) {
         let next = nav.navigate(
             focus.0,

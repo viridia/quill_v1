@@ -41,7 +41,7 @@ pub struct List {
 
 fn update_counter(
     mut counter: ResMut<List>,
-    key: Res<Input<KeyCode>>,
+    key: Res<ButtonInput<KeyCode>>,
     mut random: ResMut<Random32>,
 ) {
     if key.pressed(KeyCode::Space) {
@@ -72,8 +72,8 @@ fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(50.0).into()),
-        material: materials.add(Color::SILVER.into()),
+        mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
+        material: materials.add(Color::SILVER),
         ..default()
     });
 

@@ -1,12 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    core_pipeline::clear_color::ClearColorConfig,
-    prelude::*,
-    render::{
-        camera::Viewport,
-        render_resource::{Extent3d, TextureDimension, TextureFormat},
-    },
+    prelude::*, render::{camera::{ClearColor, ClearColorConfig, Viewport}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}
 };
 
 use crate::viewport::*;
@@ -34,13 +29,13 @@ pub fn setup(
     });
 
     let shapes = [
-        meshes.add(shape::Cube::default().into()),
-        meshes.add(shape::Box::default().into()),
-        meshes.add(shape::Capsule::default().into()),
-        meshes.add(shape::Torus::default().into()),
-        meshes.add(shape::Cylinder::default().into()),
-        meshes.add(shape::Icosphere::default().try_into().unwrap()),
-        meshes.add(shape::UVSphere::default().into()),
+        meshes.add(Cuboid::default().mesh().scaled_by(Vec3::new(1.0, 1.0, 1.0))),
+        meshes.add(Cuboid::default().mesh().scaled_by(Vec3::new(1.0, 2.0, 1.0))),
+        meshes.add(Capsule3d::default().mesh()),
+        meshes.add(Torus::default().mesh()),
+        meshes.add(Cylinder::default().mesh()),
+        meshes.add(Sphere::default().mesh().ico(5).unwrap()),
+        meshes.add(Sphere::default().mesh().uv(32, 18)),
     ];
 
     let num_shapes = shapes.len();
@@ -75,35 +70,32 @@ pub fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(50.0).into()),
-        material: materials.add(Color::SILVER.into()),
+        mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
+        material: materials.add(Color::SILVER),
         ..default()
     });
 
-    commands.spawn((
+    let camera2d = commands.spawn((
         Camera2dBundle {
             camera: Camera {
                 // HUD goes on top of 3D
                 order: 1,
-                ..default()
-            },
-            camera_2d: Camera2d {
                 clear_color: ClearColorConfig::None,
+                ..default()
             },
             ..default()
         },
-        UiCameraConfig { show_ui: true },
-    ));
+    )).id();
 
-    commands.spawn((
+    let camera3d = commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(0.0, 6., 12.0)
                 .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
             ..default()
         },
         PrimaryCamera,
-        UiCameraConfig { show_ui: false },
-    ));
+    )).id();
+
 }
 
 pub(crate) fn update_viewport_inset(
@@ -207,5 +199,6 @@ fn uv_debug_texture() -> Image {
         TextureDimension::D2,
         &texture_data,
         TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::default()
     )
 }
