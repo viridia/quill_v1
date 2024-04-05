@@ -3,7 +3,7 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    math::primitives, prelude::*, render::{mesh::SphereKind, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}
+    prelude::*, render::{render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}
 };
 use bevy_mod_picking::{
     backends::bevy_ui::BevyUiBackend,

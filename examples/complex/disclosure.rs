@@ -45,6 +45,7 @@ pub struct DisclosureTriangleProps {
 }
 
 #[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
 pub struct ToggleExpand {
     #[target]
     pub target: Entity,

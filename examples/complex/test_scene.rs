@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    prelude::*, render::{camera::{ClearColor, ClearColorConfig, Viewport}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}
+    prelude::*, render::{camera::Viewport, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}
 };
 
 use crate::viewport::*;
@@ -75,26 +75,14 @@ pub fn setup(
         ..default()
     });
 
-    let camera2d = commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                // HUD goes on top of 3D
-                order: 1,
-                clear_color: ClearColorConfig::None,
-                ..default()
-            },
-            ..default()
-        },
-    )).id();
-
-    let camera3d = commands.spawn((
+    commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(0.0, 6., 12.0)
                 .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
             ..default()
         },
         PrimaryCamera,
-    )).id();
+    ));
 
 }
 

@@ -8,7 +8,6 @@ use bevy::ecs::system::Command;
 use bevy::prelude::*;
 use bevy::text::BreakLineOn;
 use bevy::ui::widget::UiImageSize;
-use bevy::ui::widget::TextFlags;
 use bevy::ui::ContentSize;
 use bevy::utils::HashMap;
 use bevy_mod_picking::prelude::Pickable;

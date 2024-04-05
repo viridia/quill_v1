@@ -5,7 +5,9 @@ use std::f32::consts::PI;
 use bevy::{
     prelude::*,
     render::{
-        camera::{ClearColorConfig, Viewport}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}
+        camera::{ClearColorConfig, Viewport},
+        render_asset::RenderAssetUsages,
+        render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
     ui,
 };
@@ -141,7 +143,19 @@ impl Default for PanelWidth {
 }
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn(ViewHandle::new(ui_main, ()));
+    let camera2d = commands
+        .spawn((Camera2dBundle {
+            camera: Camera {
+                // HUD goes on top of 3D
+                order: 1,
+                clear_color: ClearColorConfig::None,
+                ..default()
+            },
+            ..default()
+        },))
+        .id();
+
+    commands.spawn((TargetCamera(camera2d), ViewHandle::new(ui_main, ())));
 }
 
 fn ui_main(cx: Cx) -> impl View {
@@ -204,6 +218,7 @@ struct ButtonProps<V: View> {
 }
 
 #[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
 struct Clicked {
     #[target]
     target: Entity,
@@ -249,34 +264,23 @@ fn setup(
         ..default()
     });
 
-
-    let camera2d = commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                // HUD goes on top of 3D
-                order: 1,
-                clear_color: ClearColorConfig::None,
-                ..default()
-            },
-            ..default()
-        },
-    )).id();
-
-    let camera3d = commands.spawn((
+    commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(0.0, 6., 12.0)
                 .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
             ..default()
         },
         PrimaryCamera,
-    )).id();
+    ));
 
     // ground plane
-    commands.spawn((PbrBundle {
-        mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
-        material: materials.add(Color::SILVER),
-        ..default()
-    }, TargetCamera(camera3d)));
+    commands.spawn(
+        PbrBundle {
+            mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
+            material: materials.add(Color::SILVER),
+            ..default()
+        },
+    );
 
     let shapes = [
         meshes.add(Cuboid::default().mesh().scaled_by(Vec3::new(1.0, 1.0, 1.0))),
@@ -304,21 +308,21 @@ fn setup(
                 ..default()
             },
             Shape,
-            TargetCamera(camera3d),
         ));
     }
 
-    commands.spawn((PointLightBundle {
-        point_light: PointLight {
-            intensity: 9_000_000.0,
-            range: 100.,
-            shadows_enabled: true,
+    commands.spawn(
+        PointLightBundle {
+            point_light: PointLight {
+                intensity: 9_000_000.0,
+                range: 100.,
+                shadows_enabled: true,
+                ..default()
+            },
+            transform: Transform::from_xyz(8.0, 16.0, 8.0),
             ..default()
         },
-        transform: Transform::from_xyz(8.0, 16.0, 8.0),
-        ..default()
-    }, TargetCamera(camera3d)));
-
+    );
 }
 
 pub fn update_viewport_inset(
@@ -422,6 +426,6 @@ fn uv_debug_texture() -> Image {
         TextureDimension::D2,
         &texture_data,
         TextureFormat::Rgba8UnormSrgb,
-        RenderAssetUsages::default()
+        RenderAssetUsages::default(),
     )
 }

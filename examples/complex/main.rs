@@ -216,7 +216,23 @@ impl Default for PanelWidth {
 pub struct ClickLog(Vec<String>);
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn((ViewHandle::new(ui_main, ()), Name::new("ViewRoot")));
+    let camera2d = commands
+        .spawn((Camera2dBundle {
+            camera: Camera {
+                // HUD goes on top of 3D
+                order: 1,
+                clear_color: ClearColorConfig::None,
+                ..default()
+            },
+            ..default()
+        },))
+        .id();
+
+    commands.spawn((
+        ViewHandle::new(ui_main, ()),
+        Name::new("ViewRoot"),
+        TargetCamera(camera2d)
+    ));
 }
 
 fn ui_main(mut cx: Cx) -> impl View {

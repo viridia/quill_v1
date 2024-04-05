@@ -21,7 +21,11 @@ impl<V: View, B: Bundle> ViewInsertBundle<V, B> {
             NodeSpan::Empty => (),
             NodeSpan::Node(entity) => {
                 let em = &mut bc.entity_mut(*entity);
-                em.insert(self.bundle.take().unwrap());
+                if let Some(bundle) = self.bundle.take() {
+                    em.insert(bundle);
+                } else {
+                    panic!("No bundle to insert");
+                }
             }
             NodeSpan::Fragment(ref _nodes) => {
                 panic!("Can only insert into a singular node")
