@@ -94,6 +94,7 @@ pub struct DemoDialogProps {
 }
 
 #[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
 pub struct RequestClose {
     #[target]
     pub target: Entity,

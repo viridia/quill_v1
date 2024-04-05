@@ -19,7 +19,7 @@ pub struct ComputedStyle {
     pub style: Style,
 
     // Text properties
-    pub alignment: Option<TextAlignment>,
+    pub alignment: Option<JustifyText>,
     pub color: Option<Color>,
     pub font_size: Option<f32>,
     pub font: Option<AssetPath<'static>>,
@@ -331,7 +331,7 @@ impl Command for UpdateComputedStyle {
         match (self.computed.pickable, e.get_mut::<Pickable>()) {
             (Some(pe), Some(mut pickable)) => {
                 pickable.should_block_lower = pe == PointerEvents::All;
-                pickable.should_emit_events = pe == PointerEvents::All;
+                pickable.is_hoverable = pe == PointerEvents::All;
             }
             (None, Some(_)) => {
                 e.remove::<Pickable>();
@@ -339,7 +339,7 @@ impl Command for UpdateComputedStyle {
             (Some(pe), None) => {
                 e.insert(Pickable {
                     should_block_lower: pe == PointerEvents::All,
-                    should_emit_events: pe == PointerEvents::All,
+                    is_hoverable: pe == PointerEvents::All,
                 });
             }
             (None, None) => {}

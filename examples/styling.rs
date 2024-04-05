@@ -102,7 +102,7 @@ pub struct Counter {
     pub foo: usize,
 }
 
-fn update_counter(mut counter: ResMut<Counter>, key: Res<Input<KeyCode>>) {
+fn update_counter(mut counter: ResMut<Counter>, key: Res<ButtonInput<KeyCode>>) {
     if key.pressed(KeyCode::Space) {
         counter.count += 1;
     }
@@ -116,7 +116,7 @@ fn setup(
 ) {
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            intensity: 9000.0,
+            intensity: 9_000_000.0,
             range: 100.,
             shadows_enabled: true,
             ..default()
@@ -127,8 +127,8 @@ fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(50.0).into()),
-        material: materials.add(Color::SILVER.into()),
+        mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
+        material: materials.add(Color::SILVER),
         ..default()
     });
 

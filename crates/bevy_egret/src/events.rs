@@ -21,6 +21,7 @@ impl Plugin for EgretEventsPlugin {
 
 /// Event that is triggered when a button is clicked
 #[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
 pub struct Clicked {
     #[target]
     pub target: Entity,
@@ -29,6 +30,7 @@ pub struct Clicked {
 
 /// Event emitted by a widget that contains a value; indicates that the value has changed.
 #[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
 pub struct ValueChanged<T: Clone + Send + Sync + 'static> {
     #[target]
     pub target: Entity,
@@ -65,6 +67,7 @@ pub enum MenuAction {
 
 /// Sent by MenuButton to toggle menu open/closed.
 #[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
 pub struct MenuEvent {
     #[target]
     pub target: Entity,
@@ -72,6 +75,7 @@ pub struct MenuEvent {
 }
 
 #[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
 pub struct SplitterEvent {
     #[target]
     pub target: Entity,
